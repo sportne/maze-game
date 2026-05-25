@@ -1,11 +1,16 @@
 package io.github.sportne.mazegame;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
+import io.github.sportne.mazegame.model.GridPosition;
+import io.github.sportne.mazegame.model.Levels;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +23,15 @@ final class MazeGameTest {
   @Test
   void gameCanBeConstructed() {
     assertNotNull(new MazeGame());
+  }
+
+  @Test
+  void gameStartsInBuildPhaseForMilestoneOne() {
+    MazeGame game = new MazeGame();
+
+    assertFalse(game.runRequested());
+    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+    assertEquals(Levels.milestoneOne(), game.mazeState().levelDefinition());
   }
 
   @Test
@@ -72,6 +86,91 @@ final class MazeGameTest {
 
     assertTrue(music.looping);
     assertEquals(0.1F, music.volume);
+  }
+
+  @Test
+  void buildTimerCountsDownWithoutGoingNegative() {
+    MazeGame game = new MazeGame();
+
+    game.updateBuildTimer(31.0F);
+
+    assertEquals(0.0F, game.buildTimeRemainingSeconds());
+  }
+
+  @Test
+  void startRunLocksOutBuildTimerUpdatesAndWallPlacement() {
+    MazeGame game = new MazeGame();
+    GridPosition wall = new GridPosition(2, 2);
+
+    game.startRun();
+    game.updateBuildTimer(1.0F);
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+
+    assertTrue(game.runRequested());
+    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+    assertFalse(game.mazeState().hasWallAt(wall));
+  }
+
+  @Test
+  void startRunClearsRejectedPlacementFlash() {
+    MazeGame game = new MazeGame();
+
+    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    game.startRun();
+
+    assertNull(game.rejectedPosition());
+  }
+
+  @Test
+  void leftClickPlacesWallAndRightClickClearsWall() {
+    MazeGame game = new MazeGame();
+    GridPosition wall = new GridPosition(2, 2);
+
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+    assertTrue(game.mazeState().hasWallAt(wall));
+
+    game.handleGridClick(wall, Input.Buttons.RIGHT);
+    assertFalse(game.mazeState().hasWallAt(wall));
+  }
+
+  @Test
+  void rejectedPlacementDoesNotMutateMaze() {
+    MazeGame game = new MazeGame();
+
+    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+
+    assertTrue(game.mazeState().walls().isEmpty());
+  }
+
+  @Test
+  void rejectedPlacementFlashExpiresDuringBuildTimerUpdates() {
+    MazeGame game = new MazeGame();
+
+    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    assertEquals(Levels.milestoneOne().mouseStart(), game.rejectedPosition());
+
+    game.updateBuildTimer(0.5F);
+
+    assertNull(game.rejectedPosition());
+  }
+
+  @Test
+  void cellColorReflectsCurrentCellContentAndRejectedPlacement() {
+    MazeGame game = new MazeGame();
+    GridPosition wall = new GridPosition(2, 2);
+
+    assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
+    assertEquals(
+        new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.milestoneOne().mouseStart()));
+    assertEquals(
+        new Color(0.95F, 0.77F, 0.18F, 1.0F), game.cellColor(Levels.milestoneOne().cheese()));
+
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+    assertEquals(Color.WHITE, game.cellColor(wall));
+
+    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    assertEquals(
+        new Color(0.95F, 0.42F, 0.42F, 1.0F), game.cellColor(Levels.milestoneOne().mouseStart()));
   }
 
   @Test

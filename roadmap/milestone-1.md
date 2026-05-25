@@ -53,15 +53,15 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 3. Build Phase Interaction
 
-- [ ] Render the 5x5 grid in the libGDX scene.
-- [ ] Map mouse clicks to grid cells.
-- [ ] Left click toggles or places a normal wall during the build phase.
-- [ ] Right click clears a wall during the build phase.
-- [ ] Show available cells as black and placed walls as white.
-- [ ] Briefly show rejected placement attempts as light red.
-- [ ] Render mouse start and cheese cells distinctly from regular cells.
-- [ ] Display the 30 second build timer.
-- [ ] Add a start/run control so the player can launch the mouse early.
+- [x] Render the 5x5 grid in the libGDX scene.
+- [x] Map mouse clicks to grid cells.
+- [x] Left click toggles or places a normal wall during the build phase.
+- [x] Right click clears a wall during the build phase.
+- [x] Show available cells as black and placed walls as white.
+- [x] Briefly show rejected placement attempts as light red.
+- [x] Render mouse start and cheese cells distinctly from regular cells.
+- [x] Display the 30 second build timer.
+- [x] Add a start/run control so the player can launch the mouse early.
 
 ### 4. Mouse Simulation
 
