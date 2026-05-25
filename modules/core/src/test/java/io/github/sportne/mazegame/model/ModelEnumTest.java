@@ -14,7 +14,13 @@ final class ModelEnumTest {
   void gamePhasesCoverTheMilestoneOneLoop() {
     assertArrayEquals(
         new GamePhase[] {
-          GamePhase.BUILDING, GamePhase.MOUSE_RUNNING, GamePhase.RESULT, GamePhase.REPLAY
+          GamePhase.MAIN_MENU,
+          GamePhase.LEVEL_SELECT,
+          GamePhase.SETTINGS,
+          GamePhase.BUILDING,
+          GamePhase.MOUSE_RUNNING,
+          GamePhase.RESULT,
+          GamePhase.REPLAY
         },
         GamePhase.values());
   }

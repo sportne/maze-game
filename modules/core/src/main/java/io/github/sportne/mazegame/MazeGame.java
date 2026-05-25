@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -85,6 +86,30 @@ public final class MazeGame extends ApplicationAdapter {
   /** Result button width in pixels. */
   private static final float RESULT_BUTTON_WIDTH = 140.0F;
 
+  /** Shared menu button height in virtual pixels. */
+  private static final float MENU_BUTTON_HEIGHT = 52.0F;
+
+  /** Shared menu button width in virtual pixels. */
+  private static final float MENU_BUTTON_WIDTH = 220.0F;
+
+  /** Vertical space between stacked menu buttons. */
+  private static final float MENU_BUTTON_GAP = 18.0F;
+
+  /** Level-select card height in virtual pixels. */
+  private static final float LEVEL_BUTTON_HEIGHT = 88.0F;
+
+  /** Level-select card width in virtual pixels. */
+  private static final float LEVEL_BUTTON_WIDTH = 220.0F;
+
+  /** Horizontal and vertical gap between level-select cards. */
+  private static final float LEVEL_BUTTON_GAP = 24.0F;
+
+  /** Shared back button height in virtual pixels. */
+  private static final float BACK_BUTTON_HEIGHT = 44.0F;
+
+  /** Shared back button width in virtual pixels. */
+  private static final float BACK_BUTTON_WIDTH = 140.0F;
+
   /** Baseline y coordinate for the title at the default desktop size. */
   private static final float TITLE_TEXT_Y = 682.0F;
 
@@ -123,6 +148,12 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Optional one-frame screenshot request supplied by the launcher. */
   private final ScreenshotCapture screenshotCapture;
+
+  /** Whether the backend audio system is available for this run. */
+  private final boolean audioAvailable;
+
+  /** Hook used by the quit menu action. */
+  private final Runnable exitAction;
 
   /** Currently playing background music instance. */
   private Music backgroundMusic;
@@ -175,6 +206,9 @@ public final class MazeGame extends ApplicationAdapter {
   /** Current high-level game phase. */
   private GamePhase gamePhase;
 
+  /** Whether session audio is currently enabled. */
+  private boolean audioEnabled;
+
   /** Whether the optional screenshot request has already been fulfilled. */
   private boolean screenshotCaptured;
 
@@ -183,7 +217,7 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Creates the game without screenshot capture. */
   public MazeGame() {
-    this(null, null);
+    this(null, true);
   }
 
   /**
@@ -192,7 +226,17 @@ public final class MazeGame extends ApplicationAdapter {
    * @param screenshotCapture screenshot request to fulfill after rendering, or null
    */
   public MazeGame(ScreenshotCapture screenshotCapture) {
-    this(null, screenshotCapture);
+    this(screenshotCapture, true);
+  }
+
+  /**
+   * Creates the game with an optional screenshot request and audio availability.
+   *
+   * @param screenshotCapture screenshot request to fulfill after rendering, or null
+   * @param audioAvailable true when the backend audio system should be used
+   */
+  public MazeGame(ScreenshotCapture screenshotCapture, boolean audioAvailable) {
+    this(null, screenshotCapture, audioAvailable, MazeGame::requestApplicationExit);
   }
 
   /**
@@ -201,7 +245,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param backgroundMusic music instance to dispose when the game is disposed
    */
   MazeGame(Music backgroundMusic) {
-    this(backgroundMusic, null);
+    this(backgroundMusic, null, true, MazeGame::requestApplicationExit);
   }
 
   /**
@@ -209,11 +253,27 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param backgroundMusic optional injected music
    * @param screenshotCapture optional screenshot capture request
+   * @param audioAvailable true when audio can be toggled on
+   * @param exitAction action to invoke for the Quit menu command
    */
-  private MazeGame(Music backgroundMusic, ScreenshotCapture screenshotCapture) {
+  MazeGame(
+      Music backgroundMusic,
+      ScreenshotCapture screenshotCapture,
+      boolean audioAvailable,
+      Runnable exitAction) {
     this.backgroundMusic = backgroundMusic;
     this.screenshotCapture = screenshotCapture;
-    initializeBuildPhase();
+    this.audioAvailable = audioAvailable;
+    this.audioEnabled = audioAvailable;
+    this.exitAction = Objects.requireNonNull(exitAction, "exitAction");
+    initializeMainMenu();
+  }
+
+  /** Requests a libGDX application exit when the backend is available. */
+  private static void requestApplicationExit() {
+    if (Gdx.app != null) {
+      Gdx.app.exit();
+    }
   }
 
   /**
@@ -314,8 +374,41 @@ public final class MazeGame extends ApplicationAdapter {
     music.setVolume(BACKGROUND_MUSIC_VOLUME);
   }
 
+  /** Creates, configures, and starts background music when audio is available. */
+  private void startBackgroundMusic() {
+    if (!audioAvailable) {
+      return;
+    }
+    if (backgroundMusic == null && Gdx.audio != null) {
+      backgroundMusic = Gdx.audio.newMusic(backgroundMusicFile());
+    }
+    if (backgroundMusic != null) {
+      configureBackgroundMusic(backgroundMusic);
+      backgroundMusic.play();
+    }
+  }
+
+  /**
+   * Resets all model state and enters the startup menu.
+   *
+   * <p>The level model is still initialized so menu rendering, debug snapshots, and tests can read
+   * stable milestone-one defaults before the player starts a level.
+   */
+  private void initializeMainMenu() {
+    initializeLevelState(GamePhase.MAIN_MENU);
+  }
+
   /** Resets all model and phase state for a fresh attempt of the first level. */
-  private void initializeBuildPhase() {
+  void startMilestoneOneLevel() {
+    initializeLevelState(GamePhase.BUILDING);
+  }
+
+  /**
+   * Resets all model state and moves to the requested phase.
+   *
+   * @param initialPhase phase to enter after resetting level state
+   */
+  private void initializeLevelState(GamePhase initialPhase) {
     levelDefinition = Levels.milestoneOne();
     mazeState = MazeState.empty(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
@@ -324,7 +417,7 @@ public final class MazeGame extends ApplicationAdapter {
     runRequested = false;
     mouseSimulation = null;
     mouseRunResult = null;
-    gamePhase = GamePhase.BUILDING;
+    gamePhase = initialPhase;
     screenshotElapsedSeconds = 0.0F;
   }
 
@@ -336,7 +429,7 @@ public final class MazeGame extends ApplicationAdapter {
    */
   @Override
   public void create() {
-    initializeBuildPhase();
+    initializeMainMenu();
     spriteBatch = new SpriteBatch();
     shapeRenderer = new ShapeRenderer();
     viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
@@ -347,9 +440,9 @@ public final class MazeGame extends ApplicationAdapter {
     spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
     cheeseSprite = new TextureRegion(spriteSheet, 1168, 819, 186, 145);
     mouseSprite = new TextureRegion(spriteSheet, 718, 671, 325, 416);
-    backgroundMusic = Gdx.audio.newMusic(backgroundMusicFile());
-    configureBackgroundMusic(backgroundMusic);
-    backgroundMusic.play();
+    if (audioEnabled) {
+      startBackgroundMusic();
+    }
     Gdx.input.setInputProcessor(new BuildInputProcessor());
   }
 
@@ -360,6 +453,21 @@ public final class MazeGame extends ApplicationAdapter {
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
+    if (gamePhase == GamePhase.MAIN_MENU) {
+      drawMainMenu();
+      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
+      return;
+    }
+    if (gamePhase == GamePhase.LEVEL_SELECT) {
+      drawLevelSelect();
+      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
+      return;
+    }
+    if (gamePhase == GamePhase.SETTINGS) {
+      drawSettings();
+      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
+      return;
+    }
     BuildPhaseLayout layout =
         BuildPhaseLayout.centered(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, levelDefinition.gridSize());
     drawGrid(layout.gridBounds());
@@ -462,6 +570,48 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
+   * Returns whether session audio is currently enabled.
+   *
+   * @return true when settings allow music playback
+   */
+  boolean audioEnabled() {
+    return audioEnabled;
+  }
+
+  /** Opens the level-select menu from the startup menu. */
+  void openLevelSelect() {
+    if (gamePhase == GamePhase.MAIN_MENU) {
+      gamePhase = GamePhase.LEVEL_SELECT;
+    }
+  }
+
+  /** Opens the settings menu from the startup menu. */
+  void openSettings() {
+    if (gamePhase == GamePhase.MAIN_MENU) {
+      gamePhase = GamePhase.SETTINGS;
+    }
+  }
+
+  /** Returns to the startup menu and clears any in-progress level attempt. */
+  void returnToMainMenu() {
+    initializeMainMenu();
+  }
+
+  /** Toggles session audio when the backend audio system is available. */
+  void toggleAudio() {
+    if (!audioAvailable) {
+      audioEnabled = false;
+      return;
+    }
+    audioEnabled = !audioEnabled;
+    if (audioEnabled) {
+      startBackgroundMusic();
+    } else if (backgroundMusic != null) {
+      backgroundMusic.stop();
+    }
+  }
+
+  /**
    * Advances the active phase by a frame delta.
    *
    * @param deltaSeconds elapsed frame time in seconds
@@ -469,7 +619,7 @@ public final class MazeGame extends ApplicationAdapter {
   void updateGame(float deltaSeconds) {
     if (gamePhase == GamePhase.BUILDING) {
       updateBuildTimer(deltaSeconds);
-    } else {
+    } else if (gamePhase == GamePhase.MOUSE_RUNNING || gamePhase == GamePhase.REPLAY) {
       updateMouseRun(deltaSeconds);
     }
   }
@@ -552,6 +702,52 @@ public final class MazeGame extends ApplicationAdapter {
    */
   boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
+    float screenYFromBottom = screenHeight - screenY;
+    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.MAIN_MENU) {
+      if (mainMenuStartButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        gamePhase = GamePhase.LEVEL_SELECT;
+        return true;
+      }
+      if (mainMenuSettingsButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        gamePhase = GamePhase.SETTINGS;
+        return true;
+      }
+      if (mainMenuQuitButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        exitAction.run();
+        return true;
+      }
+    }
+    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.LEVEL_SELECT) {
+      if (levelSelectBackButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        gamePhase = GamePhase.MAIN_MENU;
+        return true;
+      }
+      for (int index = 0; index < 6; index++) {
+        if (levelButtonBounds(screenWidth, screenHeight, index)
+            .contains(screenX, screenYFromBottom)) {
+          if (index == 0) {
+            startMilestoneOneLevel();
+          }
+          return true;
+        }
+      }
+    }
+    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.SETTINGS) {
+      if (settingsBackButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        gamePhase = GamePhase.MAIN_MENU;
+        return true;
+      }
+      if (settingsAudioButtonBounds(screenWidth, screenHeight)
+          .contains(screenX, screenYFromBottom)) {
+        toggleAudio();
+        return true;
+      }
+    }
     BuildPhaseLayout layout =
         BuildPhaseLayout.centered(screenWidth, screenHeight, levelDefinition.gridSize());
     if (gamePhase == GamePhase.BUILDING
@@ -561,7 +757,6 @@ public final class MazeGame extends ApplicationAdapter {
       return true;
     }
     if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
-      float screenYFromBottom = screenHeight - screenY;
       if (retryButtonBounds(layout).contains(screenX, screenYFromBottom)) {
         retryLevel();
         return true;
@@ -570,8 +765,15 @@ public final class MazeGame extends ApplicationAdapter {
         replayRun();
         return true;
       }
+      if (resultMainMenuButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+        returnToMainMenu();
+        return true;
+      }
     }
-    Optional<GridPosition> position = layout.gridPositionAt(screenX, screenY, screenHeight);
+    Optional<GridPosition> position =
+        gamePhase == GamePhase.BUILDING
+            ? layout.gridPositionAt(screenX, screenY, screenHeight)
+            : Optional.empty();
     if (position.isPresent()) {
       handleGridClick(position.get(), button);
       return true;
@@ -581,7 +783,7 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
-    initializeBuildPhase();
+    startMilestoneOneLevel();
   }
 
   /** Replays the completed maze from the same deterministic seed. */
@@ -614,6 +816,81 @@ public final class MazeGame extends ApplicationAdapter {
    */
   boolean hasNextLevel() {
     return false;
+  }
+
+  /** Draws the startup menu. */
+  private void drawMainMenu() {
+    drawButton(mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+    drawButton(mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+    drawButton(mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+
+    spriteBatch.begin();
+    font.setColor(TEXT);
+    font.draw(spriteBatch, TITLE, VIRTUAL_WIDTH / 2.0F - 46.0F, 520.0F);
+    font.draw(
+        spriteBatch,
+        "Start",
+        mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 90.0F,
+        mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
+    font.draw(
+        spriteBatch,
+        "Settings",
+        mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 78.0F,
+        mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
+    font.draw(
+        spriteBatch,
+        "Quit",
+        mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 94.0F,
+        mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
+    spriteBatch.end();
+  }
+
+  /** Draws the level-select menu. */
+  private void drawLevelSelect() {
+    for (int index = 0; index < 6; index++) {
+      drawButton(levelButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, index));
+    }
+    drawButton(levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+
+    spriteBatch.begin();
+    font.setColor(TEXT);
+    font.draw(spriteBatch, "Select Level", VIRTUAL_WIDTH / 2.0F - 58.0F, 560.0F);
+    for (int index = 0; index < 6; index++) {
+      ButtonBounds levelButton = levelButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, index);
+      font.setColor(index == 0 ? TEXT : PANEL_TEXT);
+      String title = index == 0 ? "Milestone 1" : "Level " + (index + 1);
+      String subtitle = index == 0 ? "5x5" : "Locked";
+      font.draw(spriteBatch, title, levelButton.x() + 24.0F, levelButton.y() + 56.0F);
+      font.draw(spriteBatch, subtitle, levelButton.x() + 24.0F, levelButton.y() + 32.0F);
+    }
+    font.setColor(TEXT);
+    font.draw(
+        spriteBatch,
+        "Back",
+        levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 52.0F,
+        levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 28.0F);
+    spriteBatch.end();
+  }
+
+  /** Draws the session settings menu. */
+  private void drawSettings() {
+    drawButton(settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+    drawButton(settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+
+    spriteBatch.begin();
+    font.setColor(TEXT);
+    font.draw(spriteBatch, "Settings", VIRTUAL_WIDTH / 2.0F - 42.0F, 520.0F);
+    font.draw(
+        spriteBatch,
+        "Audio: " + (audioEnabled ? "On" : "Off"),
+        settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 62.0F,
+        settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
+    font.draw(
+        spriteBatch,
+        "Back",
+        settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 52.0F,
+        settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 28.0F);
+    spriteBatch.end();
   }
 
   /**
@@ -740,6 +1017,7 @@ public final class MazeGame extends ApplicationAdapter {
     } else if (gamePhase == GamePhase.RESULT) {
       drawButton(retryButtonBounds(layout));
       drawButton(replayButtonBounds(layout));
+      drawButton(resultMainMenuButtonBounds(layout));
     }
   }
 
@@ -823,6 +1101,11 @@ public final class MazeGame extends ApplicationAdapter {
           "Replay",
           replayButtonBounds(layout).x() + 42.0F,
           replayButtonBounds(layout).y() + 28.0F);
+      font.draw(
+          spriteBatch,
+          "Main Menu",
+          resultMainMenuButtonBounds(layout).x() + 38.0F,
+          resultMainMenuButtonBounds(layout).y() + 28.0F);
       if (!hasNextLevel()) {
         font.setColor(PANEL_TEXT);
         font.draw(
@@ -863,6 +1146,131 @@ public final class MazeGame extends ApplicationAdapter {
         layout.gridBounds().x() + layout.gridBounds().width() / 2.0F + RESULT_BUTTON_GAP / 2.0F;
     return new ButtonBounds(
         left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
+  }
+
+  /**
+   * Computes the main-menu button bounds for the result phase.
+   *
+   * @param layout current screen layout
+   * @return main-menu button bounds in bottom-left coordinates
+   */
+  static ButtonBounds resultMainMenuButtonBounds(BuildPhaseLayout layout) {
+    return new ButtonBounds(
+        layout.gridBounds().x() + layout.gridBounds().width() / 2.0F - RESULT_BUTTON_WIDTH / 2.0F,
+        layout.startButtonBounds().y() - RESULT_BUTTON_HEIGHT - RESULT_BUTTON_GAP,
+        RESULT_BUTTON_WIDTH,
+        RESULT_BUTTON_HEIGHT);
+  }
+
+  /**
+   * Computes the Start button bounds for the startup menu.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return start button bounds in bottom-left coordinates
+   */
+  static ButtonBounds mainMenuStartButtonBounds(int screenWidth, int screenHeight) {
+    return menuButtonBounds(screenWidth, screenHeight, 0);
+  }
+
+  /**
+   * Computes the Settings button bounds for the startup menu.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return settings button bounds in bottom-left coordinates
+   */
+  static ButtonBounds mainMenuSettingsButtonBounds(int screenWidth, int screenHeight) {
+    return menuButtonBounds(screenWidth, screenHeight, 1);
+  }
+
+  /**
+   * Computes the Quit button bounds for the startup menu.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return quit button bounds in bottom-left coordinates
+   */
+  static ButtonBounds mainMenuQuitButtonBounds(int screenWidth, int screenHeight) {
+    return menuButtonBounds(screenWidth, screenHeight, 2);
+  }
+
+  /**
+   * Computes stacked startup/settings menu button bounds.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @param index zero-based button index from top to bottom
+   * @return button bounds in bottom-left coordinates
+   */
+  private static ButtonBounds menuButtonBounds(int screenWidth, int screenHeight, int index) {
+    float left = screenWidth / 2.0F - MENU_BUTTON_WIDTH / 2.0F;
+    float topButtonY = screenHeight / 2.0F + 54.0F;
+    float y = topButtonY - index * (MENU_BUTTON_HEIGHT + MENU_BUTTON_GAP);
+    return new ButtonBounds(left, y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);
+  }
+
+  /**
+   * Computes one level-select card bounds.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @param index zero-based level card index
+   * @return level button bounds in bottom-left coordinates
+   */
+  static ButtonBounds levelButtonBounds(int screenWidth, int screenHeight, int index) {
+    int row = index / 3;
+    int column = index % 3;
+    float totalWidth = 3.0F * LEVEL_BUTTON_WIDTH + 2.0F * LEVEL_BUTTON_GAP;
+    float left = screenWidth / 2.0F - totalWidth / 2.0F;
+    float topRowY = screenHeight / 2.0F + 38.0F;
+    return new ButtonBounds(
+        left + column * (LEVEL_BUTTON_WIDTH + LEVEL_BUTTON_GAP),
+        topRowY - row * (LEVEL_BUTTON_HEIGHT + LEVEL_BUTTON_GAP),
+        LEVEL_BUTTON_WIDTH,
+        LEVEL_BUTTON_HEIGHT);
+  }
+
+  /**
+   * Computes the level-select Back button bounds.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return back button bounds in bottom-left coordinates
+   */
+  static ButtonBounds levelSelectBackButtonBounds(int screenWidth, int screenHeight) {
+    return backButtonBounds();
+  }
+
+  /**
+   * Computes the settings audio toggle bounds.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return audio toggle bounds in bottom-left coordinates
+   */
+  static ButtonBounds settingsAudioButtonBounds(int screenWidth, int screenHeight) {
+    return menuButtonBounds(screenWidth, screenHeight, 0);
+  }
+
+  /**
+   * Computes the settings Back button bounds.
+   *
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return back button bounds in bottom-left coordinates
+   */
+  static ButtonBounds settingsBackButtonBounds(int screenWidth, int screenHeight) {
+    return backButtonBounds();
+  }
+
+  /**
+   * Computes shared Back button bounds.
+   *
+   * @return back button bounds in bottom-left coordinates
+   */
+  private static ButtonBounds backButtonBounds() {
+    return new ButtonBounds(40.0F, 40.0F, BACK_BUTTON_WIDTH, BACK_BUTTON_HEIGHT);
   }
 
   /**

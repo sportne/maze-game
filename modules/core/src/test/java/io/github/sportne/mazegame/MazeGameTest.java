@@ -17,6 +17,7 @@ import io.github.sportne.mazegame.model.MouseRunStatus;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -29,13 +30,78 @@ final class MazeGameTest {
   }
 
   @Test
-  void gameStartsInBuildPhaseForMilestoneOne() {
+  void gameStartsAtMainMenuWithMilestoneOneStateReady() {
     MazeGame game = new MazeGame();
 
     assertFalse(game.runRequested());
-    assertEquals(GamePhase.BUILDING, game.gamePhase());
+    assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
     assertEquals(Levels.milestoneOne(), game.mazeState().levelDefinition());
+  }
+
+  @Test
+  void mainMenuStartOpensLevelSelect() {
+    MazeGame game = new MazeGame();
+
+    game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
+
+    assertEquals(GamePhase.LEVEL_SELECT, game.gamePhase());
+  }
+
+  @Test
+  void selectingMilestoneOneStartsFreshBuildPhase() {
+    MazeGame game = new MazeGame();
+
+    game.openLevelSelect();
+    game.handleScreenClick(396, 638 - 398, Input.Buttons.LEFT, 1280, 720);
+
+    assertEquals(GamePhase.BUILDING, game.gamePhase());
+    assertFalse(game.runRequested());
+    assertTrue(game.mazeState().walls().isEmpty());
+  }
+
+  @Test
+  void lockedFutureLevelDoesNotStartGameplay() {
+    MazeGame game = new MazeGame();
+
+    game.openLevelSelect();
+    game.handleScreenClick(640, 638 - 398, Input.Buttons.LEFT, 1280, 720);
+
+    assertEquals(GamePhase.LEVEL_SELECT, game.gamePhase());
+  }
+
+  @Test
+  void settingsAudioToggleUpdatesSessionStateAndBackReturnsToMenu() {
+    FakeMusic music = new FakeMusic();
+    MazeGame game = new MazeGame(music, null, true, () -> {});
+
+    game.openSettings();
+    game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
+    assertFalse(game.audioEnabled());
+    assertTrue(music.stopped);
+
+    game.handleScreenClick(110, 720 - 62, Input.Buttons.LEFT, 1280, 720);
+    assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
+  }
+
+  @Test
+  void unavailableAudioStartsOffAndIgnoresToggle() {
+    MazeGame game = new MazeGame(null, null, false, () -> {});
+
+    game.openSettings();
+    game.toggleAudio();
+
+    assertFalse(game.audioEnabled());
+  }
+
+  @Test
+  void quitClickRunsExitHook() {
+    AtomicBoolean exitRequested = new AtomicBoolean(false);
+    MazeGame game = new MazeGame(null, null, true, () -> exitRequested.set(true));
+
+    game.handleScreenClick(640, 432, Input.Buttons.LEFT, 1280, 720);
+
+    assertTrue(exitRequested.get());
   }
 
   @Test
@@ -120,7 +186,7 @@ final class MazeGameTest {
 
   @Test
   void buildTimerCountsDownWithoutGoingNegative() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.updateBuildTimer(31.0F);
 
@@ -129,7 +195,7 @@ final class MazeGameTest {
 
   @Test
   void buildTimerAutomaticallyStartsMouseRunAtZero() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.updateGame(30.0F);
 
@@ -140,7 +206,7 @@ final class MazeGameTest {
 
   @Test
   void autoStartFrameDoesNotAlsoAdvanceMouseRun() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.updateGame(31.0F);
 
@@ -151,7 +217,7 @@ final class MazeGameTest {
 
   @Test
   void startRunLocksOutBuildTimerUpdatesAndWallPlacement() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
 
     game.startRun();
@@ -166,7 +232,7 @@ final class MazeGameTest {
 
   @Test
   void startRunClearsRejectedPlacementFlash() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
     game.startRun();
@@ -176,7 +242,7 @@ final class MazeGameTest {
 
   @Test
   void leftClickPlacesWallAndRightClickClearsWall() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
@@ -188,7 +254,7 @@ final class MazeGameTest {
 
   @Test
   void mouseRunMovesToResultPhaseWhenTerminal() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.startRun();
     game.updateMouseRun(10.0F);
@@ -200,7 +266,7 @@ final class MazeGameTest {
 
   @Test
   void updateGameAdvancesMouseRunAfterRunStarts() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.startRun();
     game.updateGame(0.25F);
@@ -210,7 +276,7 @@ final class MazeGameTest {
 
   @Test
   void startRunIsIgnoredAfterBuildPhase() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.startRun();
     MouseRunResult initialRun = game.mouseRunResult();
@@ -221,7 +287,7 @@ final class MazeGameTest {
 
   @Test
   void reachingCheeseBeforeTargetFailsTheLevel() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     addVerticalCorridorWalls(game);
 
     game.startRun();
@@ -234,7 +300,7 @@ final class MazeGameTest {
 
   @Test
   void retryResetsLevelToBuildPhase() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.startRun();
@@ -249,8 +315,31 @@ final class MazeGameTest {
   }
 
   @Test
+  void resultMainMenuReturnsToStartupMenuAndResetsLevelState() {
+    MazeGame game = startedGame();
+    GridPosition wall = new GridPosition(2, 2);
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+    game.startRun();
+    game.updateMouseRun(10.0F);
+
+    BuildPhaseLayout layout =
+        BuildPhaseLayout.centered(1280, 720, Levels.milestoneOne().gridSize());
+    ButtonBounds mainMenuButton = MazeGame.resultMainMenuButtonBounds(layout);
+    game.handleScreenClick(
+        Math.round(mainMenuButton.x() + mainMenuButton.width() / 2.0F),
+        Math.round(720.0F - mainMenuButton.y() - mainMenuButton.height() / 2.0F),
+        Input.Buttons.LEFT,
+        1280,
+        720);
+
+    assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
+    assertFalse(game.runRequested());
+    assertTrue(game.mazeState().walls().isEmpty());
+  }
+
+  @Test
   void replayRunsSameMazeAndSeedAgain() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     game.startRun();
     game.updateMouseRun(10.0F);
     MouseRunResult firstResult = game.mouseRunResult();
@@ -264,7 +353,7 @@ final class MazeGameTest {
 
   @Test
   void replayIsIgnoredBeforeResultPhase() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.replayRun();
 
@@ -284,7 +373,7 @@ final class MazeGameTest {
 
   @Test
   void rejectedPlacementDoesNotMutateMaze() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
 
@@ -293,7 +382,7 @@ final class MazeGameTest {
 
   @Test
   void rejectedPlacementFlashExpiresDuringBuildTimerUpdates() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
 
     game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
     assertEquals(Levels.milestoneOne().mouseStart(), game.rejectedPosition());
@@ -305,7 +394,7 @@ final class MazeGameTest {
 
   @Test
   void cellColorReflectsCurrentCellContentAndRejectedPlacement() {
-    MazeGame game = new MazeGame();
+    MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
 
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
@@ -338,6 +427,12 @@ final class MazeGameTest {
     game.dispose();
 
     assertNotNull(game);
+  }
+
+  private static MazeGame startedGame() {
+    MazeGame game = new MazeGame();
+    game.startMilestoneOneLevel();
+    return game;
   }
 
   private static final class FakeMusic implements Music {

@@ -62,7 +62,8 @@ public final class Lwjgl3Launcher {
    */
   private static Lwjgl3Application createApplication(String[] args) {
     return new Lwjgl3Application(
-        new MazeGame(screenshotCapture(args).orElse(null)), defaultConfiguration(args));
+        new MazeGame(screenshotCapture(args).orElse(null), audioEnabled(args)),
+        defaultConfiguration(args));
   }
 
   /**

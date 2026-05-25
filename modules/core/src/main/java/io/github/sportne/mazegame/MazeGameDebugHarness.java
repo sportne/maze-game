@@ -29,7 +29,7 @@ public final class MazeGameDebugHarness {
 
   /** Creates a harness using the default desktop window size. */
   public MazeGameDebugHarness() {
-    this(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT);
+    this(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, true);
   }
 
   /**
@@ -39,10 +39,33 @@ public final class MazeGameDebugHarness {
    * @param screenHeight virtual window height in pixels
    */
   public MazeGameDebugHarness(int screenWidth, int screenHeight) {
+    this(screenWidth, screenHeight, true);
+  }
+
+  /**
+   * Creates a harness that begins on the startup menu.
+   *
+   * @return harness that can drive menu navigation before gameplay
+   */
+  public static MazeGameDebugHarness forStartupMenu() {
+    return new MazeGameDebugHarness(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, false);
+  }
+
+  /**
+   * Creates a harness for a specific virtual screen size.
+   *
+   * @param screenWidth virtual window width in pixels
+   * @param screenHeight virtual window height in pixels
+   * @param startInLevel true to jump directly to Milestone 1 for legacy interaction tests
+   */
+  private MazeGameDebugHarness(int screenWidth, int screenHeight, boolean startInLevel) {
     if (screenWidth <= 0 || screenHeight <= 0) {
       throw new IllegalArgumentException("screen dimensions must be positive");
     }
     this.game = new MazeGame();
+    if (startInLevel) {
+      game.startMilestoneOneLevel();
+    }
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
   }
@@ -98,6 +121,78 @@ public final class MazeGameDebugHarness {
    */
   public MazeGameDebugHarness clickStartRun() {
     clickButton(currentLayout().startButtonBounds(), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the startup menu Start button.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMainMenuStart() {
+    clickButton(MazeGame.mainMenuStartButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the startup menu Settings button.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMainMenuSettings() {
+    clickButton(
+        MazeGame.mainMenuSettingsButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the enabled Milestone 1 card.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMilestoneOneLevel() {
+    clickButton(MazeGame.levelButtonBounds(screenWidth, screenHeight, 0), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking a locked future level card.
+   *
+   * @param index zero-based level card index from 1 to 5
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickLockedLevel(int index) {
+    clickButton(MazeGame.levelButtonBounds(screenWidth, screenHeight, index), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the settings audio toggle.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickSettingsAudio() {
+    clickButton(MazeGame.settingsAudioButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the settings Back button.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickSettingsBack() {
+    clickButton(MazeGame.settingsBackButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the result screen Main Menu button.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickResultMainMenu() {
+    clickButton(MazeGame.resultMainMenuButtonBounds(currentLayout()), Input.Buttons.LEFT);
     return this;
   }
 

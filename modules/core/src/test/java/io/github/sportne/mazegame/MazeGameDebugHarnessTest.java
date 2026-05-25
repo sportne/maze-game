@@ -30,6 +30,31 @@ final class MazeGameDebugHarnessTest {
   }
 
   @Test
+  void canDriveStartupMenuIntoMilestoneOne() {
+    MazeGameDebugHarness harness = MazeGameDebugHarness.forStartupMenu();
+
+    assertEquals(GamePhase.MAIN_MENU, harness.snapshot().gamePhase());
+
+    harness.clickMainMenuStart();
+    assertEquals(GamePhase.LEVEL_SELECT, harness.snapshot().gamePhase());
+
+    harness.clickLockedLevel(1);
+    assertEquals(GamePhase.LEVEL_SELECT, harness.snapshot().gamePhase());
+
+    harness.clickMilestoneOneLevel();
+    assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
+  }
+
+  @Test
+  void canReturnFromResultToStartupMenu() {
+    MazeGameDebugHarness harness = new MazeGameDebugHarness();
+
+    harness.clickStartRun().advance(Duration.ofSeconds(10)).clickResultMainMenu();
+
+    assertEquals(GamePhase.MAIN_MENU, harness.snapshot().gamePhase());
+  }
+
+  @Test
   void simulatesRejectedPlacementFeedback() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
