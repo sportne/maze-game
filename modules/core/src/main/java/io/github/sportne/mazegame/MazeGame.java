@@ -34,95 +34,244 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Main libGDX application for Maze Game. */
+/**
+ * Main libGDX application for Maze Game.
+ *
+ * <p>This class is the bridge between the immutable core model and the desktop runtime. It owns the
+ * current level, maze state, build timer, mouse simulation, simple primitive rendering, sprite
+ * rendering, and optional one-frame screenshot capture. The domain rules remain in {@code
+ * io.github.sportne.mazegame.model}; this class turns those rules into input handling and drawing.
+ */
 public final class MazeGame extends ApplicationAdapter {
+  /** Background clear color for every frame. */
   private static final Color BACKGROUND = new Color(0.07F, 0.08F, 0.10F, 1.0F);
+
+  /** Fill color for simple rectangle buttons. */
   private static final Color BUTTON = new Color(0.18F, 0.20F, 0.24F, 1.0F);
+
+  /** Border color for simple rectangle buttons. */
   private static final Color BUTTON_BORDER = new Color(0.70F, 0.76F, 0.84F, 1.0F);
+
+  /** Fill color for empty walkable cells. */
   private static final Color CELL_OPEN = Color.BLACK;
+
+  /** Temporary fill color for rejected wall placements. */
   private static final Color CELL_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
+
+  /** Fill color for the mouse start cell before the mouse sprite is active. */
   private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
+
+  /** Fill color for player-placed wall cells. */
   private static final Color CELL_WALL = Color.WHITE;
+
+  /** Grid line color drawn over cell fills. */
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
+
+  /** Secondary text color for instructions and non-primary result messages. */
   private static final Color PANEL_TEXT = new Color(0.62F, 0.70F, 0.78F, 1.0F);
+
+  /** Primary text color. */
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
+
+  /** Horizontal space between result-phase buttons. */
   private static final float RESULT_BUTTON_GAP = 16.0F;
+
+  /** Result button height in pixels. */
   private static final float RESULT_BUTTON_HEIGHT = 44.0F;
+
+  /** Result button width in pixels. */
   private static final float RESULT_BUTTON_WIDTH = 140.0F;
+
+  /** Baseline y coordinate for the title at the default desktop size. */
   private static final float TITLE_TEXT_Y = 682.0F;
+
+  /** Environment variable that can point the app at an external asset directory. */
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
+
+  /** Asset-relative path for background music. */
   private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
+
+  /** Project-relative fallback for background music when the working directory is not assets/. */
   private static final String PROJECT_BACKGROUND_MUSIC_PATH = "assets/" + BACKGROUND_MUSIC_PATH;
+
+  /** Asset-relative path for the mouse and cheese sprite sheet. */
   private static final String SPRITE_SHEET_PATH = "mouse-sprites.png";
+
+  /** Project-relative fallback for the sprite sheet when the working directory is not assets/. */
   private static final String PROJECT_SPRITE_SHEET_PATH = "assets/" + SPRITE_SHEET_PATH;
+
+  /** Fraction of a cell occupied by centered sprites. */
   private static final float CELL_SPRITE_SCALE = 0.90F;
+
+  /** Quiet default music volume. */
   private static final float BACKGROUND_MUSIC_VOLUME = 0.1F;
+
+  /** Duration of rejected-placement visual feedback. */
   private static final float REJECTED_FLASH_SECONDS = 0.5F;
+
+  /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
+
+  /** Optional one-frame screenshot request supplied by the launcher. */
   private final ScreenshotCapture screenshotCapture;
+
+  /** Currently playing background music instance. */
   private Music backgroundMusic;
+
+  /** Sprite batch used for fonts and sprite sheet regions. */
   private SpriteBatch spriteBatch;
+
+  /** Primitive renderer used for cells, grid lines, and buttons. */
   private ShapeRenderer shapeRenderer;
+
+  /** Default libGDX bitmap font used by the simple UI. */
   private BitmapFont font;
+
+  /** Texture loaded from the mouse/cheese sprite sheet asset. */
   private Texture spriteSheet;
+
+  /** Cropped cheese sprite drawn over the endpoint cell. */
   private TextureRegion cheeseSprite;
+
+  /** Cropped mouse sprite drawn at the current mouse position. */
   private TextureRegion mouseSprite;
+
+  /** Current level definition. */
   private LevelDefinition levelDefinition;
+
+  /** Current immutable maze layout. */
   private MazeState mazeState;
+
+  /** Seconds remaining before the mouse starts automatically. */
   private float buildTimeRemainingSeconds;
+
+  /** Cell currently flashing as a rejected placement, or null when no flash is active. */
   private GridPosition rejectedPosition;
+
+  /** Seconds remaining in the rejected-placement flash. */
   private float rejectedFlashRemainingSeconds;
+
+  /** Whether a run has been requested or auto-started for the current level attempt. */
   private boolean runRequested;
+
+  /** Active deterministic mouse simulation, or null before a run starts. */
   private RandomMouseSimulation mouseSimulation;
+
+  /** Latest mouse simulation snapshot, or null before a run starts. */
   private MouseRunResult mouseRunResult;
+
+  /** Current high-level game phase. */
   private GamePhase gamePhase;
+
+  /** Whether the optional screenshot request has already been fulfilled. */
   private boolean screenshotCaptured;
+
+  /** Accumulated rendered time used to support delayed screenshot capture. */
   private float screenshotElapsedSeconds;
 
+  /** Creates the game without screenshot capture. */
   public MazeGame() {
     this(null, null);
   }
 
+  /**
+   * Creates the game with an optional screenshot request.
+   *
+   * @param screenshotCapture screenshot request to fulfill after rendering, or null
+   */
   public MazeGame(ScreenshotCapture screenshotCapture) {
     this(null, screenshotCapture);
   }
 
+  /**
+   * Creates the game with injected music for tests.
+   *
+   * @param backgroundMusic music instance to dispose when the game is disposed
+   */
   MazeGame(Music backgroundMusic) {
     this(backgroundMusic, null);
   }
 
+  /**
+   * Creates the game with test/runtime dependencies.
+   *
+   * @param backgroundMusic optional injected music
+   * @param screenshotCapture optional screenshot capture request
+   */
   private MazeGame(Music backgroundMusic, ScreenshotCapture screenshotCapture) {
     this.backgroundMusic = backgroundMusic;
     this.screenshotCapture = screenshotCapture;
     initializeBuildPhase();
   }
 
-  /** Returns the display title used by launchers. */
+  /**
+   * Returns the display title used by launchers.
+   *
+   * @return desktop window title
+   */
   public static String title() {
     return TITLE;
   }
 
+  /**
+   * Returns a copy of the frame clear color.
+   *
+   * @return background color for the renderer
+   */
   static Color background() {
     return new Color(BACKGROUND);
   }
 
+  /**
+   * Returns the asset-relative background music path.
+   *
+   * @return default music asset path
+   */
   static String backgroundMusicPath() {
     return BACKGROUND_MUSIC_PATH;
   }
 
+  /**
+   * Resolves the background music path for the current runtime environment.
+   *
+   * @param assetsDirectory optional explicit assets directory
+   * @param userDirectory process working directory
+   * @return absolute, asset-relative, or project-relative path to the music file
+   */
   static String backgroundMusicPath(String assetsDirectory, String userDirectory) {
     return assetPath(
         assetsDirectory, userDirectory, BACKGROUND_MUSIC_PATH, PROJECT_BACKGROUND_MUSIC_PATH);
   }
 
+  /**
+   * Returns the asset-relative sprite sheet path.
+   *
+   * @return default sprite sheet asset path
+   */
   static String spriteSheetPath() {
     return SPRITE_SHEET_PATH;
   }
 
+  /**
+   * Resolves the sprite sheet path for the current runtime environment.
+   *
+   * @param assetsDirectory optional explicit assets directory
+   * @param userDirectory process working directory
+   * @return absolute, asset-relative, or project-relative path to the sprite sheet
+   */
   static String spriteSheetPath(String assetsDirectory, String userDirectory) {
     return assetPath(assetsDirectory, userDirectory, SPRITE_SHEET_PATH, PROJECT_SPRITE_SHEET_PATH);
   }
 
+  /**
+   * Resolves an asset using the app's environment/working-directory fallback order.
+   *
+   * @param assetsDirectory optional explicit assets directory
+   * @param userDirectory process working directory
+   * @param assetPath path relative to an assets directory
+   * @param projectAssetPath project-relative fallback path
+   * @return path suitable for libGDX file lookup
+   */
   private static String assetPath(
       String assetsDirectory, String userDirectory, String assetPath, String projectAssetPath) {
     if (assetsDirectory != null && !assetsDirectory.isBlank()) {
@@ -134,15 +283,26 @@ public final class MazeGame extends ApplicationAdapter {
     return projectAssetPath;
   }
 
+  /**
+   * Returns the configured startup music volume.
+   *
+   * @return volume from 0.0 to 1.0
+   */
   static float backgroundMusicVolume() {
     return BACKGROUND_MUSIC_VOLUME;
   }
 
+  /**
+   * Applies looping and volume settings to the background music.
+   *
+   * @param music music instance created by libGDX
+   */
   static void configureBackgroundMusic(Music music) {
     music.setLooping(true);
     music.setVolume(BACKGROUND_MUSIC_VOLUME);
   }
 
+  /** Resets all model and phase state for a fresh attempt of the first level. */
   private void initializeBuildPhase() {
     levelDefinition = Levels.milestoneOne();
     mazeState = MazeState.empty(levelDefinition);
@@ -156,6 +316,12 @@ public final class MazeGame extends ApplicationAdapter {
     screenshotElapsedSeconds = 0.0F;
   }
 
+  /**
+   * Creates libGDX resources after the backend is initialized.
+   *
+   * <p>libGDX objects such as textures and fonts require an active application context, so they are
+   * loaded here rather than in the constructor.
+   */
   @Override
   public void create() {
     initializeBuildPhase();
@@ -173,6 +339,7 @@ public final class MazeGame extends ApplicationAdapter {
     Gdx.input.setInputProcessor(new BuildInputProcessor());
   }
 
+  /** Advances game state, draws one frame, and fulfills screenshot capture when requested. */
   @Override
   public void render() {
     updateGame(Gdx.graphics.getDeltaTime());
@@ -188,6 +355,12 @@ public final class MazeGame extends ApplicationAdapter {
     captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
   }
 
+  /**
+   * Updates projection matrices when the desktop window changes size.
+   *
+   * @param width new window width in pixels
+   * @param height new window height in pixels
+   */
   @Override
   public void resize(int width, int height) {
     if (spriteBatch != null) {
@@ -198,6 +371,7 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /** Releases libGDX resources and clears the input processor. */
   @Override
   public void dispose() {
     if (Gdx.input != null) {
@@ -228,26 +402,56 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /**
+   * Returns whether the mouse run has been started for the current attempt.
+   *
+   * @return true after manual or automatic run start
+   */
   boolean runRequested() {
     return runRequested;
   }
 
+  /**
+   * Returns the current game phase.
+   *
+   * @return active phase
+   */
   GamePhase gamePhase() {
     return gamePhase;
   }
 
+  /**
+   * Returns the current immutable maze state.
+   *
+   * @return current maze
+   */
   MazeState mazeState() {
     return mazeState;
   }
 
+  /**
+   * Returns the current mouse run snapshot.
+   *
+   * @return latest run result, or null before the mouse starts
+   */
   MouseRunResult mouseRunResult() {
     return mouseRunResult;
   }
 
+  /**
+   * Returns build time remaining.
+   *
+   * @return seconds left before automatic run start
+   */
   float buildTimeRemainingSeconds() {
     return buildTimeRemainingSeconds;
   }
 
+  /**
+   * Advances the active phase by a frame delta.
+   *
+   * @param deltaSeconds elapsed frame time in seconds
+   */
   void updateGame(float deltaSeconds) {
     if (gamePhase == GamePhase.BUILDING) {
       updateBuildTimer(deltaSeconds);
@@ -256,10 +460,20 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /**
+   * Returns the cell currently shown as a rejected placement.
+   *
+   * @return rejected cell, or null when no rejection flash is active
+   */
   GridPosition rejectedPosition() {
     return rejectedPosition;
   }
 
+  /**
+   * Advances the build timer and starts the mouse when it reaches zero.
+   *
+   * @param deltaSeconds elapsed frame time in seconds
+   */
   void updateBuildTimer(float deltaSeconds) {
     if (gamePhase != GamePhase.BUILDING) {
       return;
@@ -276,6 +490,7 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /** Starts the mouse run from the current maze if the player is still building. */
   void startRun() {
     if (gamePhase != GamePhase.BUILDING) {
       return;
@@ -288,6 +503,12 @@ public final class MazeGame extends ApplicationAdapter {
     mouseRunResult = mouseSimulation.result();
   }
 
+  /**
+   * Applies a grid click to the current maze.
+   *
+   * @param position clicked grid cell
+   * @param button libGDX mouse button code
+   */
   void handleGridClick(GridPosition position, int button) {
     if (gamePhase != GamePhase.BUILDING) {
       return;
@@ -305,6 +526,16 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /**
+   * Handles a desktop mouse click in top-left input coordinates.
+   *
+   * @param screenX x coordinate from the left edge of the window
+   * @param screenY y coordinate from the top edge of the window
+   * @param button libGDX mouse button code
+   * @param screenWidth current window width in pixels
+   * @param screenHeight current window height in pixels
+   * @return true when the click was consumed by a cell or control
+   */
   boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
     BuildPhaseLayout layout =
@@ -334,10 +565,12 @@ public final class MazeGame extends ApplicationAdapter {
     return false;
   }
 
+  /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
     initializeBuildPhase();
   }
 
+  /** Replays the completed maze from the same deterministic seed. */
   void replayRun() {
     if (gamePhase != GamePhase.RESULT) {
       return;
@@ -348,6 +581,11 @@ public final class MazeGame extends ApplicationAdapter {
     mouseRunResult = mouseSimulation.result();
   }
 
+  /**
+   * Returns whether the completed result passed the level target.
+   *
+   * @return true when result phase is active and elapsed solve time exceeded the target
+   */
   boolean resultPassed() {
     if (gamePhase != GamePhase.RESULT || mouseRunResult == null) {
       return false;
@@ -355,10 +593,20 @@ public final class MazeGame extends ApplicationAdapter {
     return mouseRunResult.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0;
   }
 
+  /**
+   * Returns whether another level can be selected after this result.
+   *
+   * @return false for milestone 1 because only one level exists
+   */
   boolean hasNextLevel() {
     return false;
   }
 
+  /**
+   * Draws cell fills and grid lines.
+   *
+   * @param gridBounds rendered grid bounds
+   */
   private void drawGrid(GridBounds gridBounds) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     for (int row = 0; row < levelDefinition.gridSize().rows(); row++) {
@@ -392,6 +640,11 @@ public final class MazeGame extends ApplicationAdapter {
     shapeRenderer.end();
   }
 
+  /**
+   * Draws the mouse sprite at the current simulation position.
+   *
+   * @param gridBounds rendered grid bounds
+   */
   private void drawMouse(GridBounds gridBounds) {
     if (mouseRunResult == null) {
       return;
@@ -399,10 +652,22 @@ public final class MazeGame extends ApplicationAdapter {
     drawSpriteInCell(gridBounds, mouseRunResult.position(), mouseSprite);
   }
 
+  /**
+   * Draws non-wall sprites that are attached to fixed cells.
+   *
+   * @param gridBounds rendered grid bounds
+   */
   private void drawCellSprites(GridBounds gridBounds) {
     drawSpriteInCell(gridBounds, levelDefinition.cheese(), cheeseSprite);
   }
 
+  /**
+   * Draws a sprite centered inside one grid cell while preserving aspect ratio.
+   *
+   * @param gridBounds rendered grid bounds
+   * @param position cell where the sprite should be drawn
+   * @param spriteRegion cropped sprite sheet region to draw
+   */
   private void drawSpriteInCell(
       GridBounds gridBounds, GridPosition position, TextureRegion spriteRegion) {
     if (spriteRegion == null) {
@@ -431,6 +696,12 @@ public final class MazeGame extends ApplicationAdapter {
     spriteBatch.end();
   }
 
+  /**
+   * Returns the background/fill color for a grid cell.
+   *
+   * @param position cell to inspect
+   * @return color used before any sprite overlay is drawn
+   */
   Color cellColor(GridPosition position) {
     if (position.equals(rejectedPosition) && rejectedFlashRemainingSeconds > 0.0F) {
       return CELL_REJECTED;
@@ -444,6 +715,11 @@ public final class MazeGame extends ApplicationAdapter {
     };
   }
 
+  /**
+   * Draws phase-appropriate button rectangles.
+   *
+   * @param layout current screen layout
+   */
   private void drawControls(BuildPhaseLayout layout) {
     if (gamePhase == GamePhase.BUILDING) {
       drawButton(layout.startButtonBounds());
@@ -453,6 +729,11 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /**
+   * Draws one simple rectangle button.
+   *
+   * @param bounds button bounds in bottom-left coordinates
+   */
   private void drawButton(ButtonBounds bounds) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     shapeRenderer.setColor(BUTTON);
@@ -475,6 +756,11 @@ public final class MazeGame extends ApplicationAdapter {
     shapeRenderer.end();
   }
 
+  /**
+   * Draws all text for the current phase.
+   *
+   * @param layout current screen layout
+   */
   private void drawText(BuildPhaseLayout layout) {
     spriteBatch.begin();
     if (gamePhase == GamePhase.BUILDING) {
@@ -536,6 +822,12 @@ public final class MazeGame extends ApplicationAdapter {
     spriteBatch.end();
   }
 
+  /**
+   * Computes the retry button bounds for the result phase.
+   *
+   * @param layout current screen layout
+   * @return retry button bounds in bottom-left coordinates
+   */
   static ButtonBounds retryButtonBounds(BuildPhaseLayout layout) {
     float left =
         layout.gridBounds().x()
@@ -546,6 +838,12 @@ public final class MazeGame extends ApplicationAdapter {
         left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
   }
 
+  /**
+   * Computes the replay button bounds for the result phase.
+   *
+   * @param layout current screen layout
+   * @return replay button bounds in bottom-left coordinates
+   */
   static ButtonBounds replayButtonBounds(BuildPhaseLayout layout) {
     float left =
         layout.gridBounds().x() + layout.gridBounds().width() / 2.0F + RESULT_BUTTON_GAP / 2.0F;
@@ -553,6 +851,11 @@ public final class MazeGame extends ApplicationAdapter {
         left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
   }
 
+  /**
+   * Advances the active mouse simulation.
+   *
+   * @param deltaSeconds elapsed frame time in seconds
+   */
   void updateMouseRun(float deltaSeconds) {
     if ((gamePhase != GamePhase.MOUSE_RUNNING && gamePhase != GamePhase.REPLAY)
         || mouseSimulation == null
@@ -567,6 +870,11 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /**
+   * Returns a libGDX handle for the background music asset.
+   *
+   * @return file handle resolved through the app's asset fallback rules
+   */
   private static FileHandle backgroundMusicFile() {
     String path =
         backgroundMusicPath(
@@ -574,6 +882,11 @@ public final class MazeGame extends ApplicationAdapter {
     return fileHandle(path);
   }
 
+  /**
+   * Returns a libGDX handle for the sprite sheet asset.
+   *
+   * @return file handle resolved through the app's asset fallback rules
+   */
   private static FileHandle spriteSheetFile() {
     String path =
         spriteSheetPath(
@@ -581,6 +894,12 @@ public final class MazeGame extends ApplicationAdapter {
     return fileHandle(path);
   }
 
+  /**
+   * Converts a path string into the correct libGDX file handle type.
+   *
+   * @param path absolute or internal path
+   * @return absolute handle for absolute paths, internal handle otherwise
+   */
   private static FileHandle fileHandle(String path) {
     if (Path.of(path).isAbsolute()) {
       return Gdx.files.absolute(path);
@@ -588,6 +907,11 @@ public final class MazeGame extends ApplicationAdapter {
     return Gdx.files.internal(path);
   }
 
+  /**
+   * Captures one PNG screenshot after the requested delay has elapsed.
+   *
+   * @param deltaSeconds elapsed frame time in seconds
+   */
   private void captureScreenshotIfRequested(float deltaSeconds) {
     if (screenshotCapture == null || screenshotCaptured) {
       return;
@@ -619,7 +943,17 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  /** Input adapter that forwards desktop clicks into testable screen-click handling. */
   private final class BuildInputProcessor extends InputAdapter {
+    /**
+     * Handles one mouse-button press from libGDX.
+     *
+     * @param screenX x coordinate from the left edge of the window
+     * @param screenY y coordinate from the top edge of the window
+     * @param pointer pointer index supplied by libGDX
+     * @param button libGDX mouse button code
+     * @return true when the click is consumed
+     */
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
       return handleScreenClick(
