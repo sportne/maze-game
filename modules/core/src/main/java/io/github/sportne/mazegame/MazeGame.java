@@ -20,6 +20,9 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.CellContent;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
@@ -76,42 +79,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Primary text color. */
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
-
-  /** Horizontal space between result-phase buttons. */
-  private static final float RESULT_BUTTON_GAP = 16.0F;
-
-  /** Result button height in pixels. */
-  private static final float RESULT_BUTTON_HEIGHT = 44.0F;
-
-  /** Result button width in pixels. */
-  private static final float RESULT_BUTTON_WIDTH = 140.0F;
-
-  /** Shared menu button height in virtual pixels. */
-  private static final float MENU_BUTTON_HEIGHT = 52.0F;
-
-  /** Shared menu button width in virtual pixels. */
-  private static final float MENU_BUTTON_WIDTH = 220.0F;
-
-  /** Vertical space between stacked menu buttons. */
-  private static final float MENU_BUTTON_GAP = 18.0F;
-
-  /** Level-select card height in virtual pixels. */
-  private static final float LEVEL_BUTTON_HEIGHT = 88.0F;
-
-  /** Level-select card width in virtual pixels. */
-  private static final float LEVEL_BUTTON_WIDTH = 220.0F;
-
-  /** Horizontal and vertical gap between level-select cards. */
-  private static final float LEVEL_BUTTON_GAP = 24.0F;
-
-  /** Shared back button height in virtual pixels. */
-  private static final float BACK_BUTTON_HEIGHT = 44.0F;
-
-  /** Shared back button width in virtual pixels. */
-  private static final float BACK_BUTTON_WIDTH = 140.0F;
-
-  /** Baseline y coordinate for the title at the default desktop size. */
-  private static final float TITLE_TEXT_Y = 682.0F;
 
   /** Environment variable that can point the app at an external asset directory. */
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
@@ -453,26 +420,26 @@ public final class MazeGame extends ApplicationAdapter {
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
+    ScreenLayout layout = screenLayout(gamePhase, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     if (gamePhase == GamePhase.MAIN_MENU) {
-      drawMainMenu();
+      drawMainMenu(layout);
       captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
       return;
     }
     if (gamePhase == GamePhase.LEVEL_SELECT) {
-      drawLevelSelect();
+      drawLevelSelect(layout);
       captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
       return;
     }
     if (gamePhase == GamePhase.SETTINGS) {
-      drawSettings();
+      drawSettings(layout);
       captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
       return;
     }
-    BuildPhaseLayout layout =
-        BuildPhaseLayout.centered(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, levelDefinition.gridSize());
-    drawGrid(layout.gridBounds());
-    drawCellSprites(layout.gridBounds());
-    drawMouse(layout.gridBounds());
+    GridBounds gridBounds = gridBounds(layout);
+    drawGrid(gridBounds);
+    drawCellSprites(gridBounds);
+    drawMouse(gridBounds);
     drawControls(layout);
     drawText(layout);
     captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
@@ -703,31 +670,29 @@ public final class MazeGame extends ApplicationAdapter {
   boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
     float screenYFromBottom = screenHeight - screenY;
+    ScreenLayout layout = screenLayout(gamePhase, screenWidth, screenHeight);
     if (button == Input.Buttons.LEFT && gamePhase == GamePhase.MAIN_MENU) {
-      if (mainMenuStartButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.MAIN_MENU_START).contains(screenX, screenYFromBottom)) {
         gamePhase = GamePhase.LEVEL_SELECT;
         return true;
       }
-      if (mainMenuSettingsButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.MAIN_MENU_SETTINGS).contains(screenX, screenYFromBottom)) {
         gamePhase = GamePhase.SETTINGS;
         return true;
       }
-      if (mainMenuQuitButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.MAIN_MENU_QUIT).contains(screenX, screenYFromBottom)) {
         exitAction.run();
         return true;
       }
     }
     if (button == Input.Buttons.LEFT && gamePhase == GamePhase.LEVEL_SELECT) {
-      if (levelSelectBackButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK).contains(screenX, screenYFromBottom)) {
         gamePhase = GamePhase.MAIN_MENU;
         return true;
       }
       for (int index = 0; index < 6; index++) {
-        if (levelButtonBounds(screenWidth, screenHeight, index)
+        if (layout
+            .bounds(MazeGameLayout.levelCardId(index + 1))
             .contains(screenX, screenYFromBottom)) {
           if (index == 0) {
             startMilestoneOneLevel();
@@ -737,42 +702,38 @@ public final class MazeGame extends ApplicationAdapter {
       }
     }
     if (button == Input.Buttons.LEFT && gamePhase == GamePhase.SETTINGS) {
-      if (settingsBackButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.SETTINGS_BACK).contains(screenX, screenYFromBottom)) {
         gamePhase = GamePhase.MAIN_MENU;
         return true;
       }
-      if (settingsAudioButtonBounds(screenWidth, screenHeight)
-          .contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.SETTINGS_AUDIO).contains(screenX, screenYFromBottom)) {
         toggleAudio();
         return true;
       }
     }
-    BuildPhaseLayout layout =
-        BuildPhaseLayout.centered(screenWidth, screenHeight, levelDefinition.gridSize());
     if (gamePhase == GamePhase.BUILDING
         && button == Input.Buttons.LEFT
-        && layout.startButtonContains(screenX, screenY, screenHeight)) {
+        && layout.bounds(MazeGameLayout.BUILD_START).contains(screenX, screenYFromBottom)) {
       startRun();
       return true;
     }
     if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
-      if (retryButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.RESULT_RETRY).contains(screenX, screenYFromBottom)) {
         retryLevel();
         return true;
       }
-      if (replayButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.RESULT_REPLAY).contains(screenX, screenYFromBottom)) {
         replayRun();
         return true;
       }
-      if (resultMainMenuButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+      if (layout.bounds(MazeGameLayout.RESULT_MAIN_MENU).contains(screenX, screenYFromBottom)) {
         returnToMainMenu();
         return true;
       }
     }
     Optional<GridPosition> position =
         gamePhase == GamePhase.BUILDING
-            ? layout.gridPositionAt(screenX, screenY, screenHeight)
+            ? gridPositionAt(layout.bounds(MazeGameLayout.GAME_GRID), screenX, screenYFromBottom)
             : Optional.empty();
     if (position.isPresent()) {
       handleGridClick(position.get(), button);
@@ -819,44 +780,36 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /** Draws the startup menu. */
-  private void drawMainMenu() {
-    drawButton(mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
-    drawButton(mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
-    drawButton(mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+  private void drawMainMenu(ScreenLayout layout) {
+    ScreenRectangle startButton = layout.bounds(MazeGameLayout.MAIN_MENU_START);
+    ScreenRectangle settingsButton = layout.bounds(MazeGameLayout.MAIN_MENU_SETTINGS);
+    ScreenRectangle quitButton = layout.bounds(MazeGameLayout.MAIN_MENU_QUIT);
+    drawButton(startButton);
+    drawButton(settingsButton);
+    drawButton(quitButton);
 
     spriteBatch.begin();
     font.setColor(TEXT);
-    font.draw(spriteBatch, TITLE, VIRTUAL_WIDTH / 2.0F - 46.0F, 520.0F);
-    font.draw(
-        spriteBatch,
-        "Start",
-        mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 90.0F,
-        mainMenuStartButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
-    font.draw(
-        spriteBatch,
-        "Settings",
-        mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 78.0F,
-        mainMenuSettingsButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
-    font.draw(
-        spriteBatch,
-        "Quit",
-        mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 94.0F,
-        mainMenuQuitButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
+    drawTextInRegion(TITLE, layout.bounds(MazeGameLayout.MAIN_MENU_TITLE), 94.0F);
+    drawTextInRegion("Start", startButton, 90.0F);
+    drawTextInRegion("Settings", settingsButton, 78.0F);
+    drawTextInRegion("Quit", quitButton, 94.0F);
     spriteBatch.end();
   }
 
   /** Draws the level-select menu. */
-  private void drawLevelSelect() {
+  private void drawLevelSelect(ScreenLayout layout) {
     for (int index = 0; index < 6; index++) {
-      drawButton(levelButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, index));
+      drawButton(layout.bounds(MazeGameLayout.levelCardId(index + 1)));
     }
-    drawButton(levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+    ScreenRectangle backButton = layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK);
+    drawButton(backButton);
 
     spriteBatch.begin();
     font.setColor(TEXT);
-    font.draw(spriteBatch, "Select Level", VIRTUAL_WIDTH / 2.0F - 58.0F, 560.0F);
+    drawTextInRegion("Select Level", layout.bounds(MazeGameLayout.LEVEL_SELECT_TITLE), 72.0F);
     for (int index = 0; index < 6; index++) {
-      ButtonBounds levelButton = levelButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, index);
+      ScreenRectangle levelButton = layout.bounds(MazeGameLayout.levelCardId(index + 1));
       font.setColor(index == 0 ? TEXT : PANEL_TEXT);
       String title = index == 0 ? "Milestone 1" : "Level " + (index + 1);
       String subtitle = index == 0 ? "5x5" : "Locked";
@@ -864,32 +817,22 @@ public final class MazeGame extends ApplicationAdapter {
       font.draw(spriteBatch, subtitle, levelButton.x() + 24.0F, levelButton.y() + 32.0F);
     }
     font.setColor(TEXT);
-    font.draw(
-        spriteBatch,
-        "Back",
-        levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 52.0F,
-        levelSelectBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 28.0F);
+    drawTextInRegion("Back", backButton, 52.0F);
     spriteBatch.end();
   }
 
   /** Draws the session settings menu. */
-  private void drawSettings() {
-    drawButton(settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
-    drawButton(settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+  private void drawSettings(ScreenLayout layout) {
+    ScreenRectangle audioButton = layout.bounds(MazeGameLayout.SETTINGS_AUDIO);
+    ScreenRectangle backButton = layout.bounds(MazeGameLayout.SETTINGS_BACK);
+    drawButton(audioButton);
+    drawButton(backButton);
 
     spriteBatch.begin();
     font.setColor(TEXT);
-    font.draw(spriteBatch, "Settings", VIRTUAL_WIDTH / 2.0F - 42.0F, 520.0F);
-    font.draw(
-        spriteBatch,
-        "Audio: " + (audioEnabled ? "On" : "Off"),
-        settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 62.0F,
-        settingsAudioButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 32.0F);
-    font.draw(
-        spriteBatch,
-        "Back",
-        settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).x() + 52.0F,
-        settingsBackButtonBounds(VIRTUAL_WIDTH, VIRTUAL_HEIGHT).y() + 28.0F);
+    drawTextInRegion("Settings", layout.bounds(MazeGameLayout.SETTINGS_TITLE), 90.0F);
+    drawTextInRegion("Audio: " + (audioEnabled ? "On" : "Off"), audioButton, 62.0F);
+    drawTextInRegion("Back", backButton, 52.0F);
     spriteBatch.end();
   }
 
@@ -1011,13 +954,13 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param layout current screen layout
    */
-  private void drawControls(BuildPhaseLayout layout) {
+  private void drawControls(ScreenLayout layout) {
     if (gamePhase == GamePhase.BUILDING) {
-      drawButton(layout.startButtonBounds());
+      drawButton(layout.bounds(MazeGameLayout.BUILD_START));
     } else if (gamePhase == GamePhase.RESULT) {
-      drawButton(retryButtonBounds(layout));
-      drawButton(replayButtonBounds(layout));
-      drawButton(resultMainMenuButtonBounds(layout));
+      drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
+      drawButton(layout.bounds(MazeGameLayout.RESULT_REPLAY));
+      drawButton(layout.bounds(MazeGameLayout.RESULT_MAIN_MENU));
     }
   }
 
@@ -1026,7 +969,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param bounds button bounds in bottom-left coordinates
    */
-  private void drawButton(ButtonBounds bounds) {
+  private void drawButton(ScreenRectangle bounds) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     shapeRenderer.setColor(BUTTON);
     shapeRenderer.rect(bounds.x(), bounds.y(), bounds.width(), bounds.height());
@@ -1053,35 +996,31 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param layout current screen layout
    */
-  private void drawText(BuildPhaseLayout layout) {
+  private void drawText(ScreenLayout layout) {
     spriteBatch.begin();
     if (gamePhase == GamePhase.BUILDING) {
       font.setColor(TEXT);
-      font.draw(spriteBatch, "Maze Game", layout.gridBounds().x(), TITLE_TEXT_Y);
+      drawTextInRegion("Maze Game", layout.bounds(MazeGameLayout.BUILD_TITLE), 0.0F);
       font.draw(
           spriteBatch,
           "Build: " + String.format(Locale.ROOT, "%.1fs", buildTimeRemainingSeconds),
-          layout.gridBounds().x(),
-          layout.gridBounds().y() + layout.gridBounds().height() + 32.0F);
+          layout.bounds(MazeGameLayout.BUILD_STATUS).x(),
+          textBaseline(layout.bounds(MazeGameLayout.BUILD_STATUS)));
       font.setColor(PANEL_TEXT);
       font.draw(
           spriteBatch,
           "Left click: wall   Right click: clear",
-          layout.gridBounds().x(),
-          layout.gridBounds().y() - 16.0F);
+          layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
+          textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
       font.setColor(TEXT);
-      font.draw(
-          spriteBatch,
-          "Start Mouse",
-          layout.startButtonBounds().x() + 44.0F,
-          layout.startButtonBounds().y() + 28.0F);
+      drawTextInRegion("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START), 44.0F);
     } else if (gamePhase == GamePhase.RESULT) {
       font.setColor(TEXT);
       font.draw(
           spriteBatch,
           resultPassed() ? "Pass" : "Fail",
-          layout.gridBounds().x(),
-          layout.gridBounds().y() + layout.gridBounds().height() + 48.0F);
+          layout.bounds(MazeGameLayout.RESULT_STATUS).x(),
+          textBaseline(layout.bounds(MazeGameLayout.RESULT_STATUS)));
       font.draw(
           spriteBatch,
           "Time: "
@@ -1089,30 +1028,18 @@ public final class MazeGame extends ApplicationAdapter {
                   Locale.ROOT, "%.2fs", mouseRunResult.elapsedTime().toMillis() / 1000.0F)
               + "  Moves: "
               + mouseRunResult.moveCount(),
-          layout.gridBounds().x(),
-          layout.gridBounds().y() + layout.gridBounds().height() + 24.0F);
-      font.draw(
-          spriteBatch,
-          "Retry",
-          retryButtonBounds(layout).x() + 46.0F,
-          retryButtonBounds(layout).y() + 28.0F);
-      font.draw(
-          spriteBatch,
-          "Replay",
-          replayButtonBounds(layout).x() + 42.0F,
-          replayButtonBounds(layout).y() + 28.0F);
-      font.draw(
-          spriteBatch,
-          "Main Menu",
-          resultMainMenuButtonBounds(layout).x() + 38.0F,
-          resultMainMenuButtonBounds(layout).y() + 28.0F);
+          layout.bounds(MazeGameLayout.RESULT_STATS).x(),
+          textBaseline(layout.bounds(MazeGameLayout.RESULT_STATS)));
+      drawTextInRegion("Retry", layout.bounds(MazeGameLayout.RESULT_RETRY), 46.0F);
+      drawTextInRegion("Replay", layout.bounds(MazeGameLayout.RESULT_REPLAY), 42.0F);
+      drawTextInRegion("Main Menu", layout.bounds(MazeGameLayout.RESULT_MAIN_MENU), 38.0F);
       if (!hasNextLevel()) {
         font.setColor(PANEL_TEXT);
         font.draw(
             spriteBatch,
             "No next level in this milestone",
-            layout.gridBounds().x(),
-            layout.gridBounds().y() - 16.0F);
+            layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL).x(),
+            textBaseline(layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL)));
       }
     }
     font.setColor(TEXT);
@@ -1120,157 +1047,69 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Computes the retry button bounds for the result phase.
+   * Draws a text label inside a declared region.
+   *
+   * @param text label to draw
+   * @param region reserved text region
+   * @param xOffset label offset from the region's left edge
+   */
+  private void drawTextInRegion(String text, ScreenRectangle region, float xOffset) {
+    font.draw(spriteBatch, text, region.x() + xOffset, textBaseline(region));
+  }
+
+  /**
+   * Returns the baseline used for simple bitmap-font labels inside a declared region.
+   *
+   * @param region text region
+   * @return font baseline y coordinate
+   */
+  private static float textBaseline(ScreenRectangle region) {
+    return region.y() + Math.min(22.0F, region.height());
+  }
+
+  /**
+   * Creates the current screen layout.
+   *
+   * @param phase phase to describe
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return declared screen layout
+   */
+  private ScreenLayout screenLayout(GamePhase phase, int screenWidth, int screenHeight) {
+    return MazeGameLayout.forPhase(phase, screenWidth, screenHeight, levelDefinition.gridSize());
+  }
+
+  /**
+   * Converts the declared grid rectangle into the grid adapter used by rendering and hit testing.
    *
    * @param layout current screen layout
-   * @return retry button bounds in bottom-left coordinates
+   * @return grid bounds with cell-size metadata
    */
-  static ButtonBounds retryButtonBounds(BuildPhaseLayout layout) {
-    float left =
-        layout.gridBounds().x()
-            + layout.gridBounds().width() / 2.0F
-            - RESULT_BUTTON_WIDTH
-            - RESULT_BUTTON_GAP / 2.0F;
-    return new ButtonBounds(
-        left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
+  private GridBounds gridBounds(ScreenLayout layout) {
+    ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
+    return new GridBounds(
+        grid.x(),
+        grid.y(),
+        grid.width() / levelDefinition.gridSize().columns(),
+        levelDefinition.gridSize());
   }
 
   /**
-   * Computes the replay button bounds for the result phase.
+   * Converts a bottom-left screen point into a grid row and column.
    *
-   * @param layout current screen layout
-   * @return replay button bounds in bottom-left coordinates
+   * @param grid declared grid rectangle
+   * @param pointX x coordinate from the left edge
+   * @param pointY y coordinate from the bottom edge
+   * @return grid position, or empty when outside the grid
    */
-  static ButtonBounds replayButtonBounds(BuildPhaseLayout layout) {
-    float left =
-        layout.gridBounds().x() + layout.gridBounds().width() / 2.0F + RESULT_BUTTON_GAP / 2.0F;
-    return new ButtonBounds(
-        left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
-  }
-
-  /**
-   * Computes the main-menu button bounds for the result phase.
-   *
-   * @param layout current screen layout
-   * @return main-menu button bounds in bottom-left coordinates
-   */
-  static ButtonBounds resultMainMenuButtonBounds(BuildPhaseLayout layout) {
-    return new ButtonBounds(
-        layout.gridBounds().x() + layout.gridBounds().width() / 2.0F - RESULT_BUTTON_WIDTH / 2.0F,
-        layout.startButtonBounds().y() - RESULT_BUTTON_HEIGHT - RESULT_BUTTON_GAP,
-        RESULT_BUTTON_WIDTH,
-        RESULT_BUTTON_HEIGHT);
-  }
-
-  /**
-   * Computes the Start button bounds for the startup menu.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return start button bounds in bottom-left coordinates
-   */
-  static ButtonBounds mainMenuStartButtonBounds(int screenWidth, int screenHeight) {
-    return menuButtonBounds(screenWidth, screenHeight, 0);
-  }
-
-  /**
-   * Computes the Settings button bounds for the startup menu.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return settings button bounds in bottom-left coordinates
-   */
-  static ButtonBounds mainMenuSettingsButtonBounds(int screenWidth, int screenHeight) {
-    return menuButtonBounds(screenWidth, screenHeight, 1);
-  }
-
-  /**
-   * Computes the Quit button bounds for the startup menu.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return quit button bounds in bottom-left coordinates
-   */
-  static ButtonBounds mainMenuQuitButtonBounds(int screenWidth, int screenHeight) {
-    return menuButtonBounds(screenWidth, screenHeight, 2);
-  }
-
-  /**
-   * Computes stacked startup/settings menu button bounds.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @param index zero-based button index from top to bottom
-   * @return button bounds in bottom-left coordinates
-   */
-  private static ButtonBounds menuButtonBounds(int screenWidth, int screenHeight, int index) {
-    float left = screenWidth / 2.0F - MENU_BUTTON_WIDTH / 2.0F;
-    float topButtonY = screenHeight / 2.0F + 54.0F;
-    float y = topButtonY - index * (MENU_BUTTON_HEIGHT + MENU_BUTTON_GAP);
-    return new ButtonBounds(left, y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);
-  }
-
-  /**
-   * Computes one level-select card bounds.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @param index zero-based level card index
-   * @return level button bounds in bottom-left coordinates
-   */
-  static ButtonBounds levelButtonBounds(int screenWidth, int screenHeight, int index) {
-    int row = index / 3;
-    int column = index % 3;
-    float totalWidth = 3.0F * LEVEL_BUTTON_WIDTH + 2.0F * LEVEL_BUTTON_GAP;
-    float left = screenWidth / 2.0F - totalWidth / 2.0F;
-    float topRowY = screenHeight / 2.0F + 38.0F;
-    return new ButtonBounds(
-        left + column * (LEVEL_BUTTON_WIDTH + LEVEL_BUTTON_GAP),
-        topRowY - row * (LEVEL_BUTTON_HEIGHT + LEVEL_BUTTON_GAP),
-        LEVEL_BUTTON_WIDTH,
-        LEVEL_BUTTON_HEIGHT);
-  }
-
-  /**
-   * Computes the level-select Back button bounds.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return back button bounds in bottom-left coordinates
-   */
-  static ButtonBounds levelSelectBackButtonBounds(int screenWidth, int screenHeight) {
-    return backButtonBounds();
-  }
-
-  /**
-   * Computes the settings audio toggle bounds.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return audio toggle bounds in bottom-left coordinates
-   */
-  static ButtonBounds settingsAudioButtonBounds(int screenWidth, int screenHeight) {
-    return menuButtonBounds(screenWidth, screenHeight, 0);
-  }
-
-  /**
-   * Computes the settings Back button bounds.
-   *
-   * @param screenWidth virtual screen width
-   * @param screenHeight virtual screen height
-   * @return back button bounds in bottom-left coordinates
-   */
-  static ButtonBounds settingsBackButtonBounds(int screenWidth, int screenHeight) {
-    return backButtonBounds();
-  }
-
-  /**
-   * Computes shared Back button bounds.
-   *
-   * @return back button bounds in bottom-left coordinates
-   */
-  private static ButtonBounds backButtonBounds() {
-    return new ButtonBounds(40.0F, 40.0F, BACK_BUTTON_WIDTH, BACK_BUTTON_HEIGHT);
+  private Optional<GridPosition> gridPositionAt(ScreenRectangle grid, float pointX, float pointY) {
+    GridBounds gridBounds =
+        new GridBounds(
+            grid.x(),
+            grid.y(),
+            grid.width() / levelDefinition.gridSize().columns(),
+            levelDefinition.gridSize());
+    return gridBounds.gridPositionAt(pointX, pointY);
   }
 
   /**

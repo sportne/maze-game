@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.Levels;
@@ -322,9 +325,9 @@ final class MazeGameTest {
     game.startRun();
     game.updateMouseRun(10.0F);
 
-    BuildPhaseLayout layout =
-        BuildPhaseLayout.centered(1280, 720, Levels.milestoneOne().gridSize());
-    ButtonBounds mainMenuButton = MazeGame.resultMainMenuButtonBounds(layout);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.RESULT, 1280, 720, Levels.milestoneOne().gridSize());
+    ScreenRectangle mainMenuButton = layout.bounds(MazeGameLayout.RESULT_MAIN_MENU);
     game.handleScreenClick(
         Math.round(mainMenuButton.x() + mainMenuButton.width() / 2.0F),
         Math.round(720.0F - mainMenuButton.y() - mainMenuButton.height() / 2.0F),
@@ -335,6 +338,23 @@ final class MazeGameTest {
     assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
     assertFalse(game.runRequested());
     assertTrue(game.mazeState().walls().isEmpty());
+  }
+
+  @Test
+  void resultButtonsFitInsideTheVirtualScreen() {
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.RESULT, 1280, 720, Levels.milestoneOne().gridSize());
+    ScreenRectangle retry = layout.bounds(MazeGameLayout.RESULT_RETRY);
+    ScreenRectangle replay = layout.bounds(MazeGameLayout.RESULT_REPLAY);
+    ScreenRectangle mainMenu = layout.bounds(MazeGameLayout.RESULT_MAIN_MENU);
+
+    assertTrue(retry.x() >= 0.0F);
+    assertTrue(retry.y() >= 0.0F);
+    assertTrue(replay.y() >= 0.0F);
+    assertTrue(mainMenu.y() >= 0.0F);
+    assertTrue(mainMenu.x() + mainMenu.width() <= 1280.0F);
+    assertEquals(retry.y(), replay.y());
+    assertEquals(retry.y(), mainMenu.y());
   }
 
   @Test

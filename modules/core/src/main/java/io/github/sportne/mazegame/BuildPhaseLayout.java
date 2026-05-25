@@ -1,5 +1,9 @@
 package io.github.sportne.mazegame;
 
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.GridSize;
 import java.util.Optional;
@@ -16,18 +20,6 @@ import java.util.Optional;
  * @param startButtonBounds bounds of the Start Mouse button in bottom-left screen coordinates
  */
 record BuildPhaseLayout(GridBounds gridBounds, ButtonBounds startButtonBounds) {
-  /** Fraction of the shorter screen dimension used for the square grid. */
-  private static final float GRID_SCREEN_RATIO = 0.62F;
-
-  /** Pixel width of the primary build-phase button. */
-  private static final float BUTTON_WIDTH = 180.0F;
-
-  /** Pixel height of the primary build-phase button. */
-  private static final float BUTTON_HEIGHT = 44.0F;
-
-  /** Vertical space between the grid/instructions area and the primary button. */
-  private static final float BUTTON_GAP = 52.0F;
-
   /**
    * Creates a centered layout for a screen and level grid.
    *
@@ -37,18 +29,14 @@ record BuildPhaseLayout(GridBounds gridBounds, ButtonBounds startButtonBounds) {
    * @return a layout whose grid is centered and whose button sits below it
    */
   static BuildPhaseLayout centered(int screenWidth, int screenHeight, GridSize gridSize) {
-    int longestGridSide = Math.max(gridSize.rows(), gridSize.columns());
-    float availableGridSize = Math.min(screenWidth, screenHeight) * GRID_SCREEN_RATIO;
-    float cellSize = (float) Math.floor(availableGridSize / longestGridSide);
-    float gridWidth = cellSize * gridSize.columns();
-    float gridHeight = cellSize * gridSize.rows();
-    float gridX = (screenWidth - gridWidth) / 2.0F;
-    float gridY = (screenHeight - gridHeight) / 2.0F;
-    float buttonX = (screenWidth - BUTTON_WIDTH) / 2.0F;
-    float buttonY = Math.max(24.0F, gridY - BUTTON_GAP - BUTTON_HEIGHT);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.BUILDING, screenWidth, screenHeight, gridSize);
+    ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
+    ScreenRectangle startButton = layout.bounds(MazeGameLayout.BUILD_START);
     return new BuildPhaseLayout(
-        new GridBounds(gridX, gridY, cellSize, gridSize),
-        new ButtonBounds(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT));
+        new GridBounds(grid.x(), grid.y(), grid.width() / gridSize.columns(), gridSize),
+        new ButtonBounds(
+            startButton.x(), startButton.y(), startButton.width(), startButton.height()));
   }
 
   /**

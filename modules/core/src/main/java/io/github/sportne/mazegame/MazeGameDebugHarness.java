@@ -1,6 +1,10 @@
 package io.github.sportne.mazegame;
 
 import com.badlogic.gdx.Input;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import java.time.Duration;
 
@@ -120,7 +124,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickStartRun() {
-    clickButton(currentLayout().startButtonBounds(), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.BUILDING).bounds(MazeGameLayout.BUILD_START),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -130,7 +136,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickMainMenuStart() {
-    clickButton(MazeGame.mainMenuStartButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.MAIN_MENU).bounds(MazeGameLayout.MAIN_MENU_START),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -141,7 +149,8 @@ public final class MazeGameDebugHarness {
    */
   public MazeGameDebugHarness clickMainMenuSettings() {
     clickButton(
-        MazeGame.mainMenuSettingsButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+        currentScreenLayout(GamePhase.MAIN_MENU).bounds(MazeGameLayout.MAIN_MENU_SETTINGS),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -151,7 +160,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickMilestoneOneLevel() {
-    clickButton(MazeGame.levelButtonBounds(screenWidth, screenHeight, 0), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(1)),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -162,7 +173,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickLockedLevel(int index) {
-    clickButton(MazeGame.levelButtonBounds(screenWidth, screenHeight, index), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(index + 1)),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -172,7 +185,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickSettingsAudio() {
-    clickButton(MazeGame.settingsAudioButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.SETTINGS).bounds(MazeGameLayout.SETTINGS_AUDIO),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -182,7 +197,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickSettingsBack() {
-    clickButton(MazeGame.settingsBackButtonBounds(screenWidth, screenHeight), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.SETTINGS).bounds(MazeGameLayout.SETTINGS_BACK),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -192,7 +209,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickResultMainMenu() {
-    clickButton(MazeGame.resultMainMenuButtonBounds(currentLayout()), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.RESULT).bounds(MazeGameLayout.RESULT_MAIN_MENU),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -202,7 +221,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickRetry() {
-    clickButton(MazeGame.retryButtonBounds(currentLayout()), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.RESULT).bounds(MazeGameLayout.RESULT_RETRY),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -212,7 +233,9 @@ public final class MazeGameDebugHarness {
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickReplay() {
-    clickButton(MazeGame.replayButtonBounds(currentLayout()), Input.Buttons.LEFT);
+    clickButton(
+        currentScreenLayout(GamePhase.RESULT).bounds(MazeGameLayout.RESULT_REPLAY),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -264,7 +287,7 @@ public final class MazeGameDebugHarness {
    * @param bounds button bounds to click
    * @param button libGDX mouse button code
    */
-  private void clickButton(ButtonBounds bounds, int button) {
+  private void clickButton(ScreenRectangle bounds, int button) {
     clickAtBottomLeftCoordinates(
         bounds.x() + bounds.width() / 2.0F, bounds.y() + bounds.height() / 2.0F, button);
   }
@@ -289,5 +312,16 @@ public final class MazeGameDebugHarness {
   private BuildPhaseLayout currentLayout() {
     return BuildPhaseLayout.centered(
         screenWidth, screenHeight, game.mazeState().levelDefinition().gridSize());
+  }
+
+  /**
+   * Returns the declared screen layout for the harness screen size.
+   *
+   * @param phase game phase to describe
+   * @return declared screen layout
+   */
+  private ScreenLayout currentScreenLayout(GamePhase phase) {
+    return MazeGameLayout.forPhase(
+        phase, screenWidth, screenHeight, game.mazeState().levelDefinition().gridSize());
   }
 }
