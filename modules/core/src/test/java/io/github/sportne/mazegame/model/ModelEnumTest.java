@@ -31,4 +31,13 @@ final class ModelEnumTest {
         },
         WallPlacementStatus.values());
   }
+
+  @Test
+  void mouseRunStatusesCoverRunningAndTerminalOutcomes() {
+    assertArrayEquals(
+        new MouseRunStatus[] {
+          MouseRunStatus.RUNNING, MouseRunStatus.REACHED_CHEESE, MouseRunStatus.TIMED_OUT
+        },
+        MouseRunStatus.values());
+  }
 }

@@ -16,9 +16,13 @@ import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.LevelDefinition;
 import io.github.sportne.mazegame.model.Levels;
 import io.github.sportne.mazegame.model.MazeState;
+import io.github.sportne.mazegame.model.MouseRunResult;
+import io.github.sportne.mazegame.model.MouseRunStatus;
+import io.github.sportne.mazegame.model.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.WallPlacementResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -33,6 +37,7 @@ public final class MazeGame extends ApplicationAdapter {
   private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
   private static final Color CELL_WALL = Color.WHITE;
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
+  private static final Color MOUSE = new Color(0.78F, 0.58F, 0.42F, 1.0F);
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
   private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
@@ -50,6 +55,8 @@ public final class MazeGame extends ApplicationAdapter {
   private GridPosition rejectedPosition;
   private float rejectedFlashRemainingSeconds;
   private boolean runRequested;
+  private RandomMouseSimulation mouseSimulation;
+  private MouseRunResult mouseRunResult;
 
   public MazeGame() {
     this(null);
@@ -99,6 +106,8 @@ public final class MazeGame extends ApplicationAdapter {
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
     runRequested = false;
+    mouseSimulation = null;
+    mouseRunResult = null;
   }
 
   @Override
@@ -117,11 +126,13 @@ public final class MazeGame extends ApplicationAdapter {
   @Override
   public void render() {
     updateBuildTimer(Gdx.graphics.getDeltaTime());
+    updateMouseRun(Gdx.graphics.getDeltaTime());
     ScreenUtils.clear(background());
     BuildPhaseLayout layout =
         BuildPhaseLayout.centered(
             Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
     drawGrid(layout.gridBounds());
+    drawMouse(layout.gridBounds());
     drawStartButton(layout.startButtonBounds());
     drawText(layout);
   }
@@ -168,6 +179,10 @@ public final class MazeGame extends ApplicationAdapter {
     return mazeState;
   }
 
+  MouseRunResult mouseRunResult() {
+    return mouseRunResult;
+  }
+
   float buildTimeRemainingSeconds() {
     return buildTimeRemainingSeconds;
   }
@@ -193,6 +208,8 @@ public final class MazeGame extends ApplicationAdapter {
     runRequested = true;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
+    mouseSimulation = new RandomMouseSimulation(mazeState);
+    mouseRunResult = mouseSimulation.result();
   }
 
   void handleGridClick(GridPosition position, int button) {
@@ -245,6 +262,23 @@ public final class MazeGame extends ApplicationAdapter {
     shapeRenderer.end();
   }
 
+  private void drawMouse(GridBounds gridBounds) {
+    if (mouseRunResult == null) {
+      return;
+    }
+    GridPosition position = mouseRunResult.position();
+    float centerX =
+        gridBounds.x() + position.column() * gridBounds.cellSize() + gridBounds.cellSize() / 2.0F;
+    float centerY =
+        gridBounds.y()
+            + (levelDefinition.gridSize().rows() - 1 - position.row()) * gridBounds.cellSize()
+            + gridBounds.cellSize() / 2.0F;
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    shapeRenderer.setColor(MOUSE);
+    shapeRenderer.circle(centerX, centerY, gridBounds.cellSize() * 0.22F);
+    shapeRenderer.end();
+  }
+
   Color cellColor(GridPosition position) {
     if (position.equals(rejectedPosition) && rejectedFlashRemainingSeconds > 0.0F) {
       return CELL_REJECTED;
@@ -293,6 +327,16 @@ public final class MazeGame extends ApplicationAdapter {
         layout.startButtonBounds().x() + 44.0F,
         layout.startButtonBounds().y() + 28.0F);
     spriteBatch.end();
+  }
+
+  private void updateMouseRun(float deltaSeconds) {
+    if (mouseSimulation == null
+        || mouseRunResult == null
+        || mouseRunResult.status() != MouseRunStatus.RUNNING) {
+      return;
+    }
+    long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
+    mouseRunResult = mouseSimulation.update(Duration.ofMillis(deltaMillis));
   }
 
   private static FileHandle backgroundMusicFile() {

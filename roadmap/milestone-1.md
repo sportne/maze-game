@@ -65,13 +65,13 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 4. Mouse Simulation
 
-- [ ] Implement deterministic random mouse movement using the level seed.
-- [ ] Allow movement to any free neighboring cell, including the previous cell.
-- [ ] Move once every 0.25 seconds.
-- [ ] Stop with success when the mouse reaches the cheese.
-- [ ] Stop with timeout when the run reaches 10 seconds.
-- [ ] Track exact elapsed solve time and move count.
-- [ ] Add unit tests for deterministic movement, legal moves, timeout behavior, and cheese arrival.
+- [x] Implement deterministic random mouse movement using the level seed.
+- [x] Allow movement to any free neighboring cell, including the previous cell.
+- [x] Move once every 0.25 seconds.
+- [x] Stop with success when the mouse reaches the cheese.
+- [x] Stop with timeout when the run reaches 10 seconds.
+- [x] Track exact elapsed solve time and move count.
+- [x] Add unit tests for deterministic movement, legal moves, timeout behavior, and cheese arrival.
 
 ### 5. Run And Result Flow
 

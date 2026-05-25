@@ -109,6 +109,7 @@ final class MazeGameTest {
     assertTrue(game.runRequested());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
     assertFalse(game.mazeState().hasWallAt(wall));
+    assertEquals(Levels.milestoneOne().mouseStart(), game.mouseRunResult().position());
   }
 
   @Test
