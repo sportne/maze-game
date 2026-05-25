@@ -7,3 +7,5 @@ Small Java/libGDX maze game.
 - `./gradlew checkAll`
 - `./gradlew qualityGate`
 - `./gradlew :modules:lwjgl3:run`
+- `./gradlew nativeImage`
+- `./gradlew nativeRun`

@@ -11,6 +11,7 @@ spotbugsPlugin = "6.5.4"
 spotlessPlugin = "8.5.1"
 errorpronePlugin = "5.1.0"
 errorproneCore = "2.49.0"
+graalNativePlugin = "1.1.0"
 
 [libraries]
 gdx-core = { module = "com.badlogicgames.gdx:gdx", version.ref = "gdx" }
@@ -26,3 +27,4 @@ errorprone-core = { module = "com.google.errorprone:error_prone_core", version.r
 spotless = { id = "com.diffplug.spotless", version.ref = "spotlessPlugin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugsPlugin" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorpronePlugin" }
+graal-native = { id = "org.graalvm.buildtools.native", version.ref = "graalNativePlugin" }

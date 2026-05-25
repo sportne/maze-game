@@ -26,3 +26,15 @@ tasks.register('qualityGate') {
     dependsOn tasks.named('pmdCheck')
     dependsOn tasks.named('cpdCheck')
 }
+
+tasks.register('nativeImage') {
+    group = 'build'
+    description = 'Builds the GraalVM Native Image desktop executable.'
+    dependsOn ':modules:lwjgl3:nativeCompile'
+}
+
+tasks.register('nativeRun') {
+    group = 'application'
+    description = 'Runs the GraalVM Native Image desktop executable.'
+    dependsOn ':modules:lwjgl3:nativeRun'
+}

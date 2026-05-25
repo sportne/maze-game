@@ -1,6 +1,7 @@
 plugins {
     id 'mazegame.application-conventions'
     id 'mazegame.quality-conventions'
+    id 'mazegame.native-conventions'
 }
 
 description = 'LWJGL3 desktop launcher for Maze Game.'

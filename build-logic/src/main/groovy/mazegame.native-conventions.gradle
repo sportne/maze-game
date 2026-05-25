@@ -1,0 +1,47 @@
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+
+plugins {
+    id 'org.graalvm.buildtools.native'
+}
+
+abstract class MazeGameNativeImageBuildService implements BuildService<BuildServiceParameters.None> {}
+
+def nativeImageBuildService = gradle.sharedServices.registerIfAbsent(
+    'mazeGameNativeImageBuildService',
+    MazeGameNativeImageBuildService
+) {
+    maxParallelUsages = 1
+}
+
+graalvmNative {
+    toolchainDetection = true
+    metadataRepository {
+        enabled = false
+    }
+    binaries {
+        main {
+            imageName = 'maze-game'
+            mainClass = 'io.github.sportne.mazegame.lwjgl3.Lwjgl3Launcher'
+            quickBuild = true
+            sharedLibrary = false
+            useFatJar = false
+            fallback = false
+            buildArgs.add('-H:+ReportExceptionStackTraces')
+            buildArgs.add('-H:+UnlockExperimentalVMOptions')
+            buildArgs.add('-H:IncludeResources=.*\\.(so|dll|dylib)$')
+        }
+    }
+}
+
+tasks.withType(org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask).configureEach {
+    usesService(nativeImageBuildService)
+}
+
+tasks.withType(org.graalvm.buildtools.gradle.tasks.GenerateResourcesConfigFile).configureEach {
+    usesService(nativeImageBuildService)
+}
+
+tasks.withType(org.graalvm.buildtools.gradle.tasks.NativeRunTask).configureEach {
+    usesService(nativeImageBuildService)
+}
