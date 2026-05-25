@@ -1,9 +1,12 @@
 package io.github.sportne.mazegame.lwjgl3;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
 
@@ -44,10 +47,27 @@ final class Lwjgl3LauncherTest {
     }
   }
 
+  @Test
+  void desktopLauncherInstallsWindowCloseListener() throws ReflectiveOperationException {
+    assertNotNull(windowListener(Lwjgl3Launcher.defaultConfiguration()));
+  }
+
+  @Test
+  void closeListenerCancelsNativeCloseAndUsesApplicationExit() {
+    assertFalse(Lwjgl3Launcher.closeThroughApplicationExit().closeRequested());
+  }
+
   private static boolean disableAudio(Lwjgl3ApplicationConfiguration configuration)
       throws ReflectiveOperationException {
     Field disableAudio = configuration.getClass().getDeclaredField("disableAudio");
     disableAudio.setAccessible(true);
     return disableAudio.getBoolean(configuration);
+  }
+
+  private static Lwjgl3WindowListener windowListener(Lwjgl3ApplicationConfiguration configuration)
+      throws ReflectiveOperationException {
+    Field windowListener = Lwjgl3WindowConfiguration.class.getDeclaredField("windowListener");
+    windowListener.setAccessible(true);
+    return (Lwjgl3WindowListener) windowListener.get(configuration);
   }
 }

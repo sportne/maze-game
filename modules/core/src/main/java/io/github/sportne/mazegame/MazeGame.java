@@ -74,6 +74,7 @@ public final class MazeGame extends ApplicationAdapter {
   @Override
   public void dispose() {
     if (backgroundMusic != null) {
+      backgroundMusic.stop();
       backgroundMusic.dispose();
       backgroundMusic = null;
     }

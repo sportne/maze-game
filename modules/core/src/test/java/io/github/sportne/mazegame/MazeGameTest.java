@@ -80,6 +80,7 @@ final class MazeGameTest {
 
     new MazeGame(music).dispose();
 
+    assertTrue(music.stopped);
     assertTrue(music.disposed);
   }
 
@@ -95,6 +96,7 @@ final class MazeGameTest {
   private static final class FakeMusic implements Music {
     private boolean disposed;
     private boolean looping;
+    private boolean stopped;
     private float volume;
 
     @Override
@@ -104,7 +106,9 @@ final class MazeGameTest {
     public void pause() {}
 
     @Override
-    public void stop() {}
+    public void stop() {
+      stopped = true;
+    }
 
     @Override
     public boolean isPlaying() {

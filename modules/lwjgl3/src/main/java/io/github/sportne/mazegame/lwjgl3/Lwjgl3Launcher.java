@@ -1,7 +1,10 @@
 package io.github.sportne.mazegame.lwjgl3;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
 import io.github.sportne.mazegame.MazeGame;
 import java.util.Arrays;
 
@@ -27,6 +30,7 @@ public final class Lwjgl3Launcher {
     configuration.useVsync(true);
     configuration.setForegroundFPS(60);
     configuration.disableAudio(!audioEnabled(args));
+    configuration.setWindowListener(closeThroughApplicationExit());
     return configuration;
   }
 
@@ -46,5 +50,38 @@ public final class Lwjgl3Launcher {
       return Boolean.parseBoolean(audioEnvironment);
     }
     return true;
+  }
+
+  static Lwjgl3WindowListener closeThroughApplicationExit() {
+    return new Lwjgl3WindowListener() {
+      @Override
+      public void created(Lwjgl3Window window) {}
+
+      @Override
+      public void iconified(boolean isIconified) {}
+
+      @Override
+      public void maximized(boolean isMaximized) {}
+
+      @Override
+      public void focusLost() {}
+
+      @Override
+      public void focusGained() {}
+
+      @Override
+      public boolean closeRequested() {
+        if (Gdx.app != null) {
+          Gdx.app.exit();
+        }
+        return false;
+      }
+
+      @Override
+      public void filesDropped(String[] files) {}
+
+      @Override
+      public void refreshRequested() {}
+    };
   }
 }
