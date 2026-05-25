@@ -2,3 +2,18 @@ plugins {
     id 'mazegame.java-conventions'
     id 'application'
 }
+
+def wslgPulseServer = file('/mnt/wslg/PulseServer')
+def mazeGameAssetsDirectory = rootProject.file('assets')
+
+tasks.withType(JavaExec).configureEach {
+    environment 'MAZE_GAME_ASSETS_DIR', mazeGameAssetsDirectory.absolutePath
+    if (wslgPulseServer.exists()) {
+        if (System.getenv('ALSOFT_DRIVERS') == null) {
+            environment 'ALSOFT_DRIVERS', 'pulse'
+        }
+        if (System.getenv('PULSE_SERVER') == null) {
+            environment 'PULSE_SERVER', "unix:${wslgPulseServer.absolutePath}"
+        }
+    }
+}

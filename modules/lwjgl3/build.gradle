@@ -17,5 +17,6 @@ tasks.named('run') {
 dependencies {
     implementation project(':modules:core')
     implementation libs.gdx.backend.lwjgl3
+    compileOnly libs.graal.nativeimage
     runtimeOnly "com.badlogicgames.gdx:gdx-platform:${libs.versions.gdx.get()}:natives-desktop"
 }

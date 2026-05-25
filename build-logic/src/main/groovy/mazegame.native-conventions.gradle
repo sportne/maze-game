@@ -14,6 +14,9 @@ def nativeImageBuildService = gradle.sharedServices.registerIfAbsent(
     maxParallelUsages = 1
 }
 
+def wslgPulseServer = file('/mnt/wslg/PulseServer')
+def mazeGameAssetsDirectory = rootProject.file('assets')
+
 graalvmNative {
     toolchainDetection = true
     metadataRepository {
@@ -29,7 +32,8 @@ graalvmNative {
             fallback = false
             buildArgs.add('-H:+ReportExceptionStackTraces')
             buildArgs.add('-H:+UnlockExperimentalVMOptions')
-            buildArgs.add('-H:IncludeResources=.*\\.(so|dll|dylib)$')
+            buildArgs.add('-H:IncludeResources=(.*\\.(so|dll|dylib)|sfd\\.ser)$')
+            buildArgs.add('--initialize-at-build-time=javazoom.jl.decoder.SynthesisFilter')
         }
     }
 }
@@ -44,4 +48,13 @@ tasks.withType(org.graalvm.buildtools.gradle.tasks.GenerateResourcesConfigFile).
 
 tasks.withType(org.graalvm.buildtools.gradle.tasks.NativeRunTask).configureEach {
     usesService(nativeImageBuildService)
+    environment.put('MAZE_GAME_ASSETS_DIR', mazeGameAssetsDirectory.absolutePath)
+    if (wslgPulseServer.exists()) {
+        if (System.getenv('ALSOFT_DRIVERS') == null) {
+            environment.put('ALSOFT_DRIVERS', 'pulse')
+        }
+        if (System.getenv('PULSE_SERVER') == null) {
+            environment.put('PULSE_SERVER', "unix:${wslgPulseServer.absolutePath}")
+        }
+    }
 }

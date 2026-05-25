@@ -12,6 +12,7 @@ spotlessPlugin = "8.5.1"
 errorpronePlugin = "5.1.0"
 errorproneCore = "2.49.0"
 graalNativePlugin = "1.1.0"
+graalSdk = "23.1.2"
 
 [libraries]
 gdx-core = { module = "com.badlogicgames.gdx:gdx", version.ref = "gdx" }
@@ -22,6 +23,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorproneCore" }
+graal-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graalSdk" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotlessPlugin" }
