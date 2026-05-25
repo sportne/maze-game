@@ -94,12 +94,12 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 7. Verification And Packaging
 
-- [ ] Add or update unit tests in `modules/core` for core rules and simulation.
-- [ ] Add launcher or integration-adjacent tests only where desktop-specific behavior changes.
-- [ ] Run `./gradlew checkAll`.
-- [ ] Run `./gradlew :modules:lwjgl3:run` for a manual desktop smoke test.
-- [ ] Run `./gradlew nativeImage` to verify desktop packaging.
-- [ ] Record any packaging limitations or environment requirements in the README if discovered.
+- [x] Add or update unit tests in `modules/core` for core rules and simulation.
+- [x] Add launcher or integration-adjacent tests only where desktop-specific behavior changes.
+- [x] Run `./gradlew checkAll`.
+- [x] Run `./gradlew :modules:lwjgl3:run` for a manual desktop smoke test.
+- [x] Run `./gradlew nativeImage` to verify desktop packaging.
+- [x] Record any packaging limitations or environment requirements in the README if discovered.
 
 ## Later Backlog Parking Lot
 
