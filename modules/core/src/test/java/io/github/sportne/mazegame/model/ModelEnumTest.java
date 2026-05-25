@@ -18,4 +18,17 @@ final class ModelEnumTest {
         },
         GamePhase.values());
   }
+
+  @Test
+  void wallPlacementStatusesCoverAcceptedAndRejectedOutcomes() {
+    assertArrayEquals(
+        new WallPlacementStatus[] {
+          WallPlacementStatus.PLACED,
+          WallPlacementStatus.ALREADY_PRESENT,
+          WallPlacementStatus.REJECTED_OUTSIDE_GRID,
+          WallPlacementStatus.REJECTED_PROTECTED_CELL,
+          WallPlacementStatus.REJECTED_BLOCKS_PATH
+        },
+        WallPlacementStatus.values());
+  }
 }

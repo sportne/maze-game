@@ -37,19 +37,19 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 1. Game State Model
 
-- [ ] Add core domain types for grid coordinates, cells, walls, start, and cheese.
-- [ ] Add a level definition model with grid size, start cell, cheese cell, build timer, target time, maximum solve time, mouse cadence, and random seed.
-- [ ] Add milestone 1's authored 5x5 level definition.
-- [ ] Add a game phase model for build, mouse running, result, and replay.
-- [ ] Add unit tests for level definition values and protected start/cheese cells.
+- [x] Add core domain types for grid coordinates, cells, walls, start, and cheese.
+- [x] Add a level definition model with grid size, start cell, cheese cell, build timer, target time, maximum solve time, mouse cadence, and random seed.
+- [x] Add milestone 1's authored 5x5 level definition.
+- [x] Add a game phase model for build, mouse running, result, and replay.
+- [x] Add unit tests for level definition values and protected start/cheese cells.
 
 ### 2. Maze Validity
 
-- [ ] Implement path validation from mouse start to cheese over non-wall cells.
-- [ ] Reject wall placement on start and cheese cells.
-- [ ] Reject wall placement when it would remove all valid paths.
-- [ ] Keep rejected placement attempts from mutating the maze.
-- [ ] Add unit tests for valid placement, invalid placement, protected cells, and edge-case paths.
+- [x] Implement path validation from mouse start to cheese over non-wall cells.
+- [x] Reject wall placement on start and cheese cells.
+- [x] Reject wall placement when it would remove all valid paths.
+- [x] Keep rejected placement attempts from mutating the maze.
+- [x] Add unit tests for valid placement, invalid placement, protected cells, and edge-case paths.
 
 ### 3. Build Phase Interaction
 
@@ -110,4 +110,3 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 - [ ] Add additional mouse types.
 - [ ] Add multiple mice and multiple start positions.
 - [ ] Replace simple functional visuals with a retro/pixel visual direction.
-
