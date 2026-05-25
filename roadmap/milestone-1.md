@@ -75,14 +75,14 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 5. Run And Result Flow
 
-- [ ] Automatically start the mouse when the build timer expires.
-- [ ] Lock maze editing during the mouse run.
-- [ ] Determine pass/fail by comparing elapsed solve time against the 5 second target.
-- [ ] Treat timeout as pass when timeout exceeds the target time.
-- [ ] Show result state with pass/fail, exact solve time, and move count.
-- [ ] Add retry support that resets the level and build timer.
-- [ ] Add replay support that re-runs the same seeded mouse path from the start.
-- [ ] Hide next level controls when no next level exists.
+- [x] Automatically start the mouse when the build timer expires.
+- [x] Lock maze editing during the mouse run.
+- [x] Determine pass/fail by comparing elapsed solve time against the 5 second target.
+- [x] Treat timeout as pass when timeout exceeds the target time.
+- [x] Show result state with pass/fail, exact solve time, and move count.
+- [x] Add retry support that resets the level and build timer.
+- [x] Add replay support that re-runs the same seeded mouse path from the start.
+- [x] Hide next level controls when no next level exists.
 
 ### 6. Desktop App Polish
 

@@ -9,8 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
+import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.Levels;
+import io.github.sportne.mazegame.model.MouseRunResult;
+import io.github.sportne.mazegame.model.MouseRunStatus;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +33,7 @@ final class MazeGameTest {
     MazeGame game = new MazeGame();
 
     assertFalse(game.runRequested());
+    assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
     assertEquals(Levels.milestoneOne(), game.mazeState().levelDefinition());
   }
@@ -98,6 +102,28 @@ final class MazeGameTest {
   }
 
   @Test
+  void buildTimerAutomaticallyStartsMouseRunAtZero() {
+    MazeGame game = new MazeGame();
+
+    game.updateGame(30.0F);
+
+    assertTrue(game.runRequested());
+    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertEquals(Levels.milestoneOne().mouseStart(), game.mouseRunResult().position());
+  }
+
+  @Test
+  void autoStartFrameDoesNotAlsoAdvanceMouseRun() {
+    MazeGame game = new MazeGame();
+
+    game.updateGame(31.0F);
+
+    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertEquals(0, game.mouseRunResult().moveCount());
+    assertEquals(0L, game.mouseRunResult().elapsedTime().toMillis());
+  }
+
+  @Test
   void startRunLocksOutBuildTimerUpdatesAndWallPlacement() {
     MazeGame game = new MazeGame();
     GridPosition wall = new GridPosition(2, 2);
@@ -132,6 +158,81 @@ final class MazeGameTest {
 
     game.handleGridClick(wall, Input.Buttons.RIGHT);
     assertFalse(game.mazeState().hasWallAt(wall));
+  }
+
+  @Test
+  void mouseRunMovesToResultPhaseWhenTerminal() {
+    MazeGame game = new MazeGame();
+
+    game.startRun();
+    game.updateMouseRun(10.0F);
+
+    assertEquals(GamePhase.RESULT, game.gamePhase());
+    assertEquals(MouseRunStatus.TIMED_OUT, game.mouseRunResult().status());
+    assertTrue(game.resultPassed());
+  }
+
+  @Test
+  void reachingCheeseBeforeTargetFailsTheLevel() {
+    MazeGame game = new MazeGame();
+    addVerticalCorridorWalls(game);
+
+    game.startRun();
+    game.updateMouseRun(1.0F);
+
+    assertEquals(GamePhase.RESULT, game.gamePhase());
+    assertEquals(MouseRunStatus.REACHED_CHEESE, game.mouseRunResult().status());
+    assertFalse(game.resultPassed());
+  }
+
+  @Test
+  void retryResetsLevelToBuildPhase() {
+    MazeGame game = new MazeGame();
+    GridPosition wall = new GridPosition(2, 2);
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+    game.startRun();
+    game.updateMouseRun(10.0F);
+
+    game.retryLevel();
+
+    assertEquals(GamePhase.BUILDING, game.gamePhase());
+    assertFalse(game.runRequested());
+    assertTrue(game.mazeState().walls().isEmpty());
+    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+  }
+
+  @Test
+  void replayRunsSameMazeAndSeedAgain() {
+    MazeGame game = new MazeGame();
+    game.startRun();
+    game.updateMouseRun(10.0F);
+    MouseRunResult firstResult = game.mouseRunResult();
+
+    game.replayRun();
+    assertEquals(GamePhase.REPLAY, game.gamePhase());
+    game.updateMouseRun(10.0F);
+
+    assertEquals(firstResult, game.mouseRunResult());
+  }
+
+  @Test
+  void replayIsIgnoredBeforeResultPhase() {
+    MazeGame game = new MazeGame();
+
+    game.replayRun();
+
+    assertEquals(GamePhase.BUILDING, game.gamePhase());
+    assertNull(game.mouseRunResult());
+  }
+
+  @Test
+  void resultPassedIsFalseBeforeResultPhase() {
+    assertFalse(new MazeGame().resultPassed());
+  }
+
+  @Test
+  void milestoneOneHasNoNextLevel() {
+    assertFalse(new MazeGame().hasNextLevel());
   }
 
   @Test
@@ -255,5 +356,18 @@ final class MazeGameTest {
 
     @Override
     public void setOnCompletionListener(OnCompletionListener listener) {}
+  }
+
+  private static void addVerticalCorridorWalls(MazeGame game) {
+    game.handleGridClick(new GridPosition(4, 1), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(4, 3), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(3, 1), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(3, 3), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(2, 1), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(2, 3), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(1, 1), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(1, 3), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(0, 1), Input.Buttons.LEFT);
+    game.handleGridClick(new GridPosition(0, 3), Input.Buttons.LEFT);
   }
 }

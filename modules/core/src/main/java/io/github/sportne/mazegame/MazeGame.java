@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 import io.github.sportne.mazegame.model.CellContent;
+import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.LevelDefinition;
 import io.github.sportne.mazegame.model.Levels;
@@ -39,6 +40,9 @@ public final class MazeGame extends ApplicationAdapter {
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
   private static final Color MOUSE = new Color(0.78F, 0.58F, 0.42F, 1.0F);
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
+  private static final float RESULT_BUTTON_GAP = 16.0F;
+  private static final float RESULT_BUTTON_HEIGHT = 44.0F;
+  private static final float RESULT_BUTTON_WIDTH = 140.0F;
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
   private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
   private static final String PROJECT_BACKGROUND_MUSIC_PATH = "assets/" + BACKGROUND_MUSIC_PATH;
@@ -57,6 +61,7 @@ public final class MazeGame extends ApplicationAdapter {
   private boolean runRequested;
   private RandomMouseSimulation mouseSimulation;
   private MouseRunResult mouseRunResult;
+  private GamePhase gamePhase;
 
   public MazeGame() {
     this(null);
@@ -108,6 +113,7 @@ public final class MazeGame extends ApplicationAdapter {
     runRequested = false;
     mouseSimulation = null;
     mouseRunResult = null;
+    gamePhase = GamePhase.BUILDING;
   }
 
   @Override
@@ -125,15 +131,14 @@ public final class MazeGame extends ApplicationAdapter {
 
   @Override
   public void render() {
-    updateBuildTimer(Gdx.graphics.getDeltaTime());
-    updateMouseRun(Gdx.graphics.getDeltaTime());
+    updateGame(Gdx.graphics.getDeltaTime());
     ScreenUtils.clear(background());
     BuildPhaseLayout layout =
         BuildPhaseLayout.centered(
             Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
     drawGrid(layout.gridBounds());
     drawMouse(layout.gridBounds());
-    drawStartButton(layout.startButtonBounds());
+    drawControls(layout);
     drawText(layout);
   }
 
@@ -175,6 +180,10 @@ public final class MazeGame extends ApplicationAdapter {
     return runRequested;
   }
 
+  GamePhase gamePhase() {
+    return gamePhase;
+  }
+
   MazeState mazeState() {
     return mazeState;
   }
@@ -187,12 +196,20 @@ public final class MazeGame extends ApplicationAdapter {
     return buildTimeRemainingSeconds;
   }
 
+  void updateGame(float deltaSeconds) {
+    if (gamePhase == GamePhase.BUILDING) {
+      updateBuildTimer(deltaSeconds);
+    } else {
+      updateMouseRun(deltaSeconds);
+    }
+  }
+
   GridPosition rejectedPosition() {
     return rejectedPosition;
   }
 
   void updateBuildTimer(float deltaSeconds) {
-    if (runRequested) {
+    if (gamePhase != GamePhase.BUILDING) {
       return;
     }
     buildTimeRemainingSeconds = Math.max(0.0F, buildTimeRemainingSeconds - deltaSeconds);
@@ -202,10 +219,17 @@ public final class MazeGame extends ApplicationAdapter {
         rejectedPosition = null;
       }
     }
+    if (buildTimeRemainingSeconds == 0.0F) {
+      startRun();
+    }
   }
 
   void startRun() {
+    if (gamePhase != GamePhase.BUILDING) {
+      return;
+    }
     runRequested = true;
+    gamePhase = GamePhase.MOUSE_RUNNING;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
     mouseSimulation = new RandomMouseSimulation(mazeState);
@@ -213,7 +237,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   void handleGridClick(GridPosition position, int button) {
-    if (runRequested) {
+    if (gamePhase != GamePhase.BUILDING) {
       return;
     }
     if (button == Input.Buttons.LEFT) {
@@ -227,6 +251,31 @@ public final class MazeGame extends ApplicationAdapter {
     } else if (button == Input.Buttons.RIGHT) {
       mazeState = mazeState.withoutWall(position);
     }
+  }
+
+  void retryLevel() {
+    initializeBuildPhase();
+  }
+
+  void replayRun() {
+    if (gamePhase != GamePhase.RESULT) {
+      return;
+    }
+    gamePhase = GamePhase.REPLAY;
+    runRequested = true;
+    mouseSimulation = new RandomMouseSimulation(mazeState);
+    mouseRunResult = mouseSimulation.result();
+  }
+
+  boolean resultPassed() {
+    if (gamePhase != GamePhase.RESULT || mouseRunResult == null) {
+      return false;
+    }
+    return mouseRunResult.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0;
+  }
+
+  boolean hasNextLevel() {
+    return false;
   }
 
   private void drawGrid(GridBounds gridBounds) {
@@ -292,7 +341,16 @@ public final class MazeGame extends ApplicationAdapter {
     };
   }
 
-  private void drawStartButton(ButtonBounds bounds) {
+  private void drawControls(BuildPhaseLayout layout) {
+    if (gamePhase == GamePhase.BUILDING) {
+      drawButton(layout.startButtonBounds());
+    } else if (gamePhase == GamePhase.RESULT) {
+      drawButton(retryButtonBounds(layout));
+      drawButton(replayButtonBounds(layout));
+    }
+  }
+
+  private void drawButton(ButtonBounds bounds) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     shapeRenderer.setColor(BUTTON);
     shapeRenderer.rect(bounds.x(), bounds.y(), bounds.width(), bounds.height());
@@ -316,27 +374,75 @@ public final class MazeGame extends ApplicationAdapter {
 
   private void drawText(BuildPhaseLayout layout) {
     spriteBatch.begin();
-    font.draw(
-        spriteBatch,
-        "Build: " + String.format(Locale.ROOT, "%.1fs", buildTimeRemainingSeconds),
-        layout.gridBounds().x(),
-        layout.gridBounds().y() + layout.gridBounds().height() + 32.0F);
-    font.draw(
-        spriteBatch,
-        "Start Mouse",
-        layout.startButtonBounds().x() + 44.0F,
-        layout.startButtonBounds().y() + 28.0F);
+    if (gamePhase == GamePhase.BUILDING) {
+      font.draw(
+          spriteBatch,
+          "Build: " + String.format(Locale.ROOT, "%.1fs", buildTimeRemainingSeconds),
+          layout.gridBounds().x(),
+          layout.gridBounds().y() + layout.gridBounds().height() + 32.0F);
+      font.draw(
+          spriteBatch,
+          "Start Mouse",
+          layout.startButtonBounds().x() + 44.0F,
+          layout.startButtonBounds().y() + 28.0F);
+    } else if (gamePhase == GamePhase.RESULT) {
+      font.draw(
+          spriteBatch,
+          resultPassed() ? "Pass" : "Fail",
+          layout.gridBounds().x(),
+          layout.gridBounds().y() + layout.gridBounds().height() + 48.0F);
+      font.draw(
+          spriteBatch,
+          "Time: "
+              + String.format(
+                  Locale.ROOT, "%.2fs", mouseRunResult.elapsedTime().toMillis() / 1000.0F)
+              + "  Moves: "
+              + mouseRunResult.moveCount(),
+          layout.gridBounds().x(),
+          layout.gridBounds().y() + layout.gridBounds().height() + 24.0F);
+      font.draw(
+          spriteBatch,
+          "Retry",
+          retryButtonBounds(layout).x() + 46.0F,
+          retryButtonBounds(layout).y() + 28.0F);
+      font.draw(
+          spriteBatch,
+          "Replay",
+          replayButtonBounds(layout).x() + 42.0F,
+          replayButtonBounds(layout).y() + 28.0F);
+    }
     spriteBatch.end();
   }
 
-  private void updateMouseRun(float deltaSeconds) {
-    if (mouseSimulation == null
+  private static ButtonBounds retryButtonBounds(BuildPhaseLayout layout) {
+    float left =
+        layout.gridBounds().x()
+            + layout.gridBounds().width() / 2.0F
+            - RESULT_BUTTON_WIDTH
+            - RESULT_BUTTON_GAP / 2.0F;
+    return new ButtonBounds(
+        left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
+  }
+
+  private static ButtonBounds replayButtonBounds(BuildPhaseLayout layout) {
+    float left =
+        layout.gridBounds().x() + layout.gridBounds().width() / 2.0F + RESULT_BUTTON_GAP / 2.0F;
+    return new ButtonBounds(
+        left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
+  }
+
+  void updateMouseRun(float deltaSeconds) {
+    if ((gamePhase != GamePhase.MOUSE_RUNNING && gamePhase != GamePhase.REPLAY)
+        || mouseSimulation == null
         || mouseRunResult == null
         || mouseRunResult.status() != MouseRunStatus.RUNNING) {
       return;
     }
     long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
     mouseRunResult = mouseSimulation.update(Duration.ofMillis(deltaMillis));
+    if (mouseRunResult.status() != MouseRunStatus.RUNNING) {
+      gamePhase = GamePhase.RESULT;
+    }
   }
 
   private static FileHandle backgroundMusicFile() {
@@ -355,10 +461,22 @@ public final class MazeGame extends ApplicationAdapter {
       BuildPhaseLayout layout =
           BuildPhaseLayout.centered(
               Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
-      if (button == Input.Buttons.LEFT
+      if (gamePhase == GamePhase.BUILDING
+          && button == Input.Buttons.LEFT
           && layout.startButtonContains(screenX, screenY, Gdx.graphics.getHeight())) {
         startRun();
         return true;
+      }
+      if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
+        float screenHeight = Gdx.graphics.getHeight();
+        if (retryButtonBounds(layout).contains(screenX, screenHeight - screenY)) {
+          retryLevel();
+          return true;
+        }
+        if (replayButtonBounds(layout).contains(screenX, screenHeight - screenY)) {
+          replayRun();
+          return true;
+        }
       }
       Optional<GridPosition> position =
           layout.gridPositionAt(screenX, screenY, Gdx.graphics.getHeight());
