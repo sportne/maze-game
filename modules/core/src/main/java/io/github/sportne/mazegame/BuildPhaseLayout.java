@@ -9,7 +9,7 @@ record BuildPhaseLayout(GridBounds gridBounds, ButtonBounds startButtonBounds) {
   private static final float GRID_SCREEN_RATIO = 0.62F;
   private static final float BUTTON_WIDTH = 180.0F;
   private static final float BUTTON_HEIGHT = 44.0F;
-  private static final float BUTTON_GAP = 24.0F;
+  private static final float BUTTON_GAP = 52.0F;
 
   static BuildPhaseLayout centered(int screenWidth, int screenHeight, GridSize gridSize) {
     int longestGridSide = Math.max(gridSize.rows(), gridSize.columns());

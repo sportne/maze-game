@@ -78,6 +78,32 @@ final class MazeGameTest {
   }
 
   @Test
+  void spriteSheetPathPointsAtTheBundledSheet() {
+    assertEquals("mouse-sprites.png", MazeGame.spriteSheetPath());
+  }
+
+  @Test
+  void spriteSheetPathUsesConfiguredAssetsDirectory() {
+    assertEquals(
+        temporaryDirectory.resolve("mouse-sprites.png").toString(),
+        MazeGame.spriteSheetPath(temporaryDirectory.toString(), temporaryDirectory.toString()));
+  }
+
+  @Test
+  void spriteSheetPathUsesAssetRelativePathFromAssetsWorkingDirectory() throws IOException {
+    Files.createFile(temporaryDirectory.resolve("mouse-sprites.png"));
+
+    assertEquals(
+        "mouse-sprites.png", MazeGame.spriteSheetPath(null, temporaryDirectory.toString()));
+  }
+
+  @Test
+  void spriteSheetPathFallsBackToProjectRelativeAssetsDirectory() {
+    assertEquals(
+        "assets/mouse-sprites.png", MazeGame.spriteSheetPath(null, temporaryDirectory.toString()));
+  }
+
+  @Test
   void backgroundMusicVolumeIsComfortableForStartup() {
     assertEquals(0.1F, MazeGame.backgroundMusicVolume());
   }
@@ -285,8 +311,7 @@ final class MazeGameTest {
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
     assertEquals(
         new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.milestoneOne().mouseStart()));
-    assertEquals(
-        new Color(0.95F, 0.77F, 0.18F, 1.0F), game.cellColor(Levels.milestoneOne().cheese()));
+    assertEquals(Color.BLACK, game.cellColor(Levels.milestoneOne().cheese()));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertEquals(Color.WHITE, game.cellColor(wall));

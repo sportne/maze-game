@@ -39,7 +39,7 @@ final class BuildPhaseLayoutTest {
   void startButtonContainsUsesTopLeftInputCoordinates() {
     BuildPhaseLayout layout = BuildPhaseLayout.centered(1280, 720, GridSize.square(5));
 
-    assertTrue(layout.startButtonContains(640.0F, 628.5F, 720.0F));
-    assertFalse(layout.startButtonContains(640.0F, 580.0F, 720.0F));
+    assertTrue(layout.startButtonContains(640.0F, 656.5F, 720.0F));
+    assertFalse(layout.startButtonContains(640.0F, 608.0F, 720.0F));
   }
 }

@@ -7,9 +7,15 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import io.github.sportne.mazegame.model.CellContent;
 import io.github.sportne.mazegame.model.GamePhase;
@@ -21,6 +27,7 @@ import io.github.sportne.mazegame.model.MouseRunResult;
 import io.github.sportne.mazegame.model.MouseRunStatus;
 import io.github.sportne.mazegame.model.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.WallPlacementResult;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -32,13 +39,11 @@ public final class MazeGame extends ApplicationAdapter {
   private static final Color BACKGROUND = new Color(0.07F, 0.08F, 0.10F, 1.0F);
   private static final Color BUTTON = new Color(0.18F, 0.20F, 0.24F, 1.0F);
   private static final Color BUTTON_BORDER = new Color(0.70F, 0.76F, 0.84F, 1.0F);
-  private static final Color CELL_CHEESE = new Color(0.95F, 0.77F, 0.18F, 1.0F);
   private static final Color CELL_OPEN = Color.BLACK;
   private static final Color CELL_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
   private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
   private static final Color CELL_WALL = Color.WHITE;
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
-  private static final Color MOUSE = new Color(0.78F, 0.58F, 0.42F, 1.0F);
   private static final Color PANEL_TEXT = new Color(0.62F, 0.70F, 0.78F, 1.0F);
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
   private static final float RESULT_BUTTON_GAP = 16.0F;
@@ -48,13 +53,20 @@ public final class MazeGame extends ApplicationAdapter {
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
   private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
   private static final String PROJECT_BACKGROUND_MUSIC_PATH = "assets/" + BACKGROUND_MUSIC_PATH;
+  private static final String SPRITE_SHEET_PATH = "mouse-sprites.png";
+  private static final String PROJECT_SPRITE_SHEET_PATH = "assets/" + SPRITE_SHEET_PATH;
+  private static final float CELL_SPRITE_SCALE = 0.90F;
   private static final float BACKGROUND_MUSIC_VOLUME = 0.1F;
   private static final float REJECTED_FLASH_SECONDS = 0.5F;
   private static final String TITLE = "Maze Game";
+  private final ScreenshotCapture screenshotCapture;
   private Music backgroundMusic;
   private SpriteBatch spriteBatch;
   private ShapeRenderer shapeRenderer;
   private BitmapFont font;
+  private Texture spriteSheet;
+  private TextureRegion cheeseSprite;
+  private TextureRegion mouseSprite;
   private LevelDefinition levelDefinition;
   private MazeState mazeState;
   private float buildTimeRemainingSeconds;
@@ -64,13 +76,24 @@ public final class MazeGame extends ApplicationAdapter {
   private RandomMouseSimulation mouseSimulation;
   private MouseRunResult mouseRunResult;
   private GamePhase gamePhase;
+  private boolean screenshotCaptured;
+  private float screenshotElapsedSeconds;
 
   public MazeGame() {
-    this(null);
+    this(null, null);
+  }
+
+  public MazeGame(ScreenshotCapture screenshotCapture) {
+    this(null, screenshotCapture);
   }
 
   MazeGame(Music backgroundMusic) {
+    this(backgroundMusic, null);
+  }
+
+  private MazeGame(Music backgroundMusic, ScreenshotCapture screenshotCapture) {
     this.backgroundMusic = backgroundMusic;
+    this.screenshotCapture = screenshotCapture;
     initializeBuildPhase();
   }
 
@@ -88,13 +111,27 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   static String backgroundMusicPath(String assetsDirectory, String userDirectory) {
+    return assetPath(
+        assetsDirectory, userDirectory, BACKGROUND_MUSIC_PATH, PROJECT_BACKGROUND_MUSIC_PATH);
+  }
+
+  static String spriteSheetPath() {
+    return SPRITE_SHEET_PATH;
+  }
+
+  static String spriteSheetPath(String assetsDirectory, String userDirectory) {
+    return assetPath(assetsDirectory, userDirectory, SPRITE_SHEET_PATH, PROJECT_SPRITE_SHEET_PATH);
+  }
+
+  private static String assetPath(
+      String assetsDirectory, String userDirectory, String assetPath, String projectAssetPath) {
     if (assetsDirectory != null && !assetsDirectory.isBlank()) {
-      return Path.of(assetsDirectory, BACKGROUND_MUSIC_PATH).toString();
+      return Path.of(assetsDirectory, assetPath).toString();
     }
-    if (Files.exists(Path.of(userDirectory, BACKGROUND_MUSIC_PATH))) {
-      return BACKGROUND_MUSIC_PATH;
+    if (Files.exists(Path.of(userDirectory, assetPath))) {
+      return assetPath;
     }
-    return PROJECT_BACKGROUND_MUSIC_PATH;
+    return projectAssetPath;
   }
 
   static float backgroundMusicVolume() {
@@ -116,6 +153,7 @@ public final class MazeGame extends ApplicationAdapter {
     mouseSimulation = null;
     mouseRunResult = null;
     gamePhase = GamePhase.BUILDING;
+    screenshotElapsedSeconds = 0.0F;
   }
 
   @Override
@@ -125,6 +163,10 @@ public final class MazeGame extends ApplicationAdapter {
     shapeRenderer = new ShapeRenderer();
     font = new BitmapFont();
     font.setColor(TEXT);
+    spriteSheet = new Texture(spriteSheetFile());
+    spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+    cheeseSprite = new TextureRegion(spriteSheet, 1168, 819, 186, 145);
+    mouseSprite = new TextureRegion(spriteSheet, 718, 671, 325, 416);
     backgroundMusic = Gdx.audio.newMusic(backgroundMusicFile());
     configureBackgroundMusic(backgroundMusic);
     backgroundMusic.play();
@@ -139,9 +181,11 @@ public final class MazeGame extends ApplicationAdapter {
         BuildPhaseLayout.centered(
             Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
     drawGrid(layout.gridBounds());
+    drawCellSprites(layout.gridBounds());
     drawMouse(layout.gridBounds());
     drawControls(layout);
     drawText(layout);
+    captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
   }
 
   @Override
@@ -167,6 +211,12 @@ public final class MazeGame extends ApplicationAdapter {
     if (font != null) {
       font.dispose();
       font = null;
+    }
+    if (spriteSheet != null) {
+      spriteSheet.dispose();
+      spriteSheet = null;
+      cheeseSprite = null;
+      mouseSprite = null;
     }
     if (shapeRenderer != null) {
       shapeRenderer.dispose();
@@ -255,6 +305,35 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
+  boolean handleScreenClick(
+      int screenX, int screenY, int button, int screenWidth, int screenHeight) {
+    BuildPhaseLayout layout =
+        BuildPhaseLayout.centered(screenWidth, screenHeight, levelDefinition.gridSize());
+    if (gamePhase == GamePhase.BUILDING
+        && button == Input.Buttons.LEFT
+        && layout.startButtonContains(screenX, screenY, screenHeight)) {
+      startRun();
+      return true;
+    }
+    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
+      float screenYFromBottom = screenHeight - screenY;
+      if (retryButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+        retryLevel();
+        return true;
+      }
+      if (replayButtonBounds(layout).contains(screenX, screenYFromBottom)) {
+        replayRun();
+        return true;
+      }
+    }
+    Optional<GridPosition> position = layout.gridPositionAt(screenX, screenY, screenHeight);
+    if (position.isPresent()) {
+      handleGridClick(position.get(), button);
+      return true;
+    }
+    return false;
+  }
+
   void retryLevel() {
     initializeBuildPhase();
   }
@@ -317,17 +396,39 @@ public final class MazeGame extends ApplicationAdapter {
     if (mouseRunResult == null) {
       return;
     }
-    GridPosition position = mouseRunResult.position();
-    float centerX =
-        gridBounds.x() + position.column() * gridBounds.cellSize() + gridBounds.cellSize() / 2.0F;
-    float centerY =
+    drawSpriteInCell(gridBounds, mouseRunResult.position(), mouseSprite);
+  }
+
+  private void drawCellSprites(GridBounds gridBounds) {
+    drawSpriteInCell(gridBounds, levelDefinition.cheese(), cheeseSprite);
+  }
+
+  private void drawSpriteInCell(
+      GridBounds gridBounds, GridPosition position, TextureRegion spriteRegion) {
+    if (spriteRegion == null) {
+      return;
+    }
+    float maxSize = gridBounds.cellSize() * CELL_SPRITE_SCALE;
+    float aspectRatio = spriteRegion.getRegionWidth() / (float) spriteRegion.getRegionHeight();
+    float width = maxSize;
+    float height = maxSize;
+    if (aspectRatio > 1.0F) {
+      height = maxSize / aspectRatio;
+    } else {
+      width = maxSize * aspectRatio;
+    }
+    float cellLeft = gridBounds.x() + position.column() * gridBounds.cellSize();
+    float cellBottom =
         gridBounds.y()
-            + (levelDefinition.gridSize().rows() - 1 - position.row()) * gridBounds.cellSize()
-            + gridBounds.cellSize() / 2.0F;
-    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-    shapeRenderer.setColor(MOUSE);
-    shapeRenderer.circle(centerX, centerY, gridBounds.cellSize() * 0.22F);
-    shapeRenderer.end();
+            + (levelDefinition.gridSize().rows() - 1 - position.row()) * gridBounds.cellSize();
+    spriteBatch.begin();
+    spriteBatch.draw(
+        spriteRegion,
+        cellLeft + (gridBounds.cellSize() - width) / 2.0F,
+        cellBottom + (gridBounds.cellSize() - height) / 2.0F,
+        width,
+        height);
+    spriteBatch.end();
   }
 
   Color cellColor(GridPosition position) {
@@ -339,7 +440,7 @@ public final class MazeGame extends ApplicationAdapter {
       case EMPTY -> CELL_OPEN;
       case NORMAL_WALL -> CELL_WALL;
       case MOUSE_START -> CELL_START;
-      case CHEESE -> CELL_CHEESE;
+      case CHEESE -> CELL_OPEN;
     };
   }
 
@@ -435,7 +536,7 @@ public final class MazeGame extends ApplicationAdapter {
     spriteBatch.end();
   }
 
-  private static ButtonBounds retryButtonBounds(BuildPhaseLayout layout) {
+  static ButtonBounds retryButtonBounds(BuildPhaseLayout layout) {
     float left =
         layout.gridBounds().x()
             + layout.gridBounds().width() / 2.0F
@@ -445,7 +546,7 @@ public final class MazeGame extends ApplicationAdapter {
         left, layout.startButtonBounds().y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
   }
 
-  private static ButtonBounds replayButtonBounds(BuildPhaseLayout layout) {
+  static ButtonBounds replayButtonBounds(BuildPhaseLayout layout) {
     float left =
         layout.gridBounds().x() + layout.gridBounds().width() / 2.0F + RESULT_BUTTON_GAP / 2.0F;
     return new ButtonBounds(
@@ -470,42 +571,59 @@ public final class MazeGame extends ApplicationAdapter {
     String path =
         backgroundMusicPath(
             System.getenv(ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE), System.getProperty("user.dir"));
+    return fileHandle(path);
+  }
+
+  private static FileHandle spriteSheetFile() {
+    String path =
+        spriteSheetPath(
+            System.getenv(ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE), System.getProperty("user.dir"));
+    return fileHandle(path);
+  }
+
+  private static FileHandle fileHandle(String path) {
     if (Path.of(path).isAbsolute()) {
       return Gdx.files.absolute(path);
     }
     return Gdx.files.internal(path);
   }
 
+  private void captureScreenshotIfRequested(float deltaSeconds) {
+    if (screenshotCapture == null || screenshotCaptured) {
+      return;
+    }
+    screenshotElapsedSeconds += Math.max(0.0F, deltaSeconds);
+    float captureDelaySeconds = screenshotCapture.delay().toMillis() / 1000.0F;
+    if (screenshotElapsedSeconds < captureDelaySeconds) {
+      return;
+    }
+    screenshotCaptured = true;
+    Path outputPath = screenshotCapture.outputPath().toAbsolutePath();
+    try {
+      Path parent = outputPath.getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
+      }
+      int width = Gdx.graphics.getWidth();
+      int height = Gdx.graphics.getHeight();
+      byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
+      Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+      BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
+      try {
+        PixmapIO.writePNG(Gdx.files.absolute(outputPath.toString()), pixmap);
+      } finally {
+        pixmap.dispose();
+      }
+    } catch (IOException exception) {
+      throw new GdxRuntimeException("Failed to capture screenshot to " + outputPath, exception);
+    }
+  }
+
   private final class BuildInputProcessor extends InputAdapter {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-      BuildPhaseLayout layout =
-          BuildPhaseLayout.centered(
-              Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
-      if (gamePhase == GamePhase.BUILDING
-          && button == Input.Buttons.LEFT
-          && layout.startButtonContains(screenX, screenY, Gdx.graphics.getHeight())) {
-        startRun();
-        return true;
-      }
-      if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
-        float screenHeight = Gdx.graphics.getHeight();
-        if (retryButtonBounds(layout).contains(screenX, screenHeight - screenY)) {
-          retryLevel();
-          return true;
-        }
-        if (replayButtonBounds(layout).contains(screenX, screenHeight - screenY)) {
-          replayRun();
-          return true;
-        }
-      }
-      Optional<GridPosition> position =
-          layout.gridPositionAt(screenX, screenY, Gdx.graphics.getHeight());
-      if (position.isPresent()) {
-        handleGridClick(position.get(), button);
-        return true;
-      }
-      return false;
+      return handleScreenClick(
+          screenX, screenY, button, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
   }
 }

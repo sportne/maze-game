@@ -6,12 +6,18 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
 import io.github.sportne.mazegame.MazeGame;
+import io.github.sportne.mazegame.ScreenshotCapture;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.Optional;
 
 /** Desktop launcher for Maze Game. */
 public final class Lwjgl3Launcher {
   private static final String AUDIO_PROPERTY = "mazeGame.audio";
   private static final String AUDIO_ENVIRONMENT_VARIABLE = "MAZE_GAME_AUDIO";
+  private static final String SCREENSHOT_DELAY_ARGUMENT = "--screenshot-delay";
+  private static final String SCREENSHOT_ARGUMENT = "--screenshot";
 
   private Lwjgl3Launcher() {}
 
@@ -20,7 +26,8 @@ public final class Lwjgl3Launcher {
   }
 
   private static Lwjgl3Application createApplication(String[] args) {
-    return new Lwjgl3Application(new MazeGame(), defaultConfiguration(args));
+    return new Lwjgl3Application(
+        new MazeGame(screenshotCapture(args).orElse(null)), defaultConfiguration(args));
   }
 
   static Lwjgl3ApplicationConfiguration defaultConfiguration(String... args) {
@@ -50,6 +57,40 @@ public final class Lwjgl3Launcher {
       return Boolean.parseBoolean(audioEnvironment);
     }
     return true;
+  }
+
+  static Optional<ScreenshotCapture> screenshotCapture(String... args) {
+    Optional<Duration> delay = screenshotDelay(args);
+    for (int index = 0; index < args.length; index++) {
+      String argument = args[index];
+      if (argument.startsWith(SCREENSHOT_ARGUMENT + "=")) {
+        String path = argument.substring((SCREENSHOT_ARGUMENT + "=").length());
+        return Optional.of(new ScreenshotCapture(Path.of(path), delay.orElse(Duration.ZERO)));
+      }
+      if (SCREENSHOT_ARGUMENT.equals(argument) && index + 1 < args.length) {
+        return Optional.of(
+            new ScreenshotCapture(Path.of(args[index + 1]), delay.orElse(Duration.ZERO)));
+      }
+    }
+    return Optional.empty();
+  }
+
+  static Optional<Duration> screenshotDelay(String... args) {
+    for (int index = 0; index < args.length; index++) {
+      String argument = args[index];
+      if (argument.startsWith(SCREENSHOT_DELAY_ARGUMENT + "=")) {
+        return Optional.of(
+            secondsToDuration(argument.substring((SCREENSHOT_DELAY_ARGUMENT + "=").length())));
+      }
+      if (SCREENSHOT_DELAY_ARGUMENT.equals(argument) && index + 1 < args.length) {
+        return Optional.of(secondsToDuration(args[index + 1]));
+      }
+    }
+    return Optional.empty();
+  }
+
+  private static Duration secondsToDuration(String value) {
+    return Duration.ofMillis(Math.round(Double.parseDouble(value) * 1000.0D));
   }
 
   static Lwjgl3WindowListener closeThroughApplicationExit() {

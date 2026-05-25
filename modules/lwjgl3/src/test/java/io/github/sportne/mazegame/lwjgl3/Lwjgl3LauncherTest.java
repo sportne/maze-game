@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.lwjgl3;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,8 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 final class Lwjgl3LauncherTest {
@@ -29,6 +32,49 @@ final class Lwjgl3LauncherTest {
   @Test
   void audioCanBeDisabledWithLaunchArgument() {
     assertFalse(Lwjgl3Launcher.audioEnabled("--no-audio"));
+  }
+
+  @Test
+  void screenshotCaptureCanBeRequestedWithEqualsArgument() {
+    assertTrue(
+        Lwjgl3Launcher.screenshotCapture("--screenshot=build/screenshots/game.png").isPresent());
+    assertEquals(
+        Path.of("build/screenshots/game.png"),
+        Lwjgl3Launcher.screenshotCapture("--screenshot=build/screenshots/game.png")
+            .orElseThrow()
+            .outputPath());
+  }
+
+  @Test
+  void screenshotCaptureCanBeRequestedWithSeparatePathArgument() {
+    assertTrue(
+        Lwjgl3Launcher.screenshotCapture("--screenshot", "build/screenshots/game.png").isPresent());
+    assertEquals(
+        Path.of("build/screenshots/game.png"),
+        Lwjgl3Launcher.screenshotCapture("--screenshot", "build/screenshots/game.png")
+            .orElseThrow()
+            .outputPath());
+  }
+
+  @Test
+  void screenshotCaptureIsEmptyWhenNoPathIsProvided() {
+    assertTrue(Lwjgl3Launcher.screenshotCapture("--screenshot").isEmpty());
+  }
+
+  @Test
+  void screenshotCaptureUsesRequestedDelay() {
+    assertEquals(
+        Duration.ofMillis(30250),
+        Lwjgl3Launcher.screenshotCapture("--screenshot=game.png", "--screenshot-delay=30.25")
+            .orElseThrow()
+            .delay());
+  }
+
+  @Test
+  void screenshotDelayCanBeRequestedWithSeparateValueArgument() {
+    assertEquals(
+        Duration.ofSeconds(2),
+        Lwjgl3Launcher.screenshotDelay("--screenshot-delay", "2").orElseThrow());
   }
 
   @Test
