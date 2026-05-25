@@ -1,4 +1,5 @@
 .gradle/
+.lwjgl/
 .idea/
 .vscode/
 .kotlin/

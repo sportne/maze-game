@@ -32,7 +32,7 @@ graalvmNative {
             fallback = false
             buildArgs.add('-H:+ReportExceptionStackTraces')
             buildArgs.add('-H:+UnlockExperimentalVMOptions')
-            buildArgs.add('-H:IncludeResources=(.*\\.(so|dll|dylib)|sfd\\.ser)$')
+            buildArgs.add('-H:IncludeResources=(.*\\.(so|dll|dylib)|sfd\\.ser|com/badlogic/gdx/utils/lsans-15\\.(fnt|png))$')
             buildArgs.add('--initialize-at-build-time=javazoom.jl.decoder.SynthesisFilter')
         }
     }
