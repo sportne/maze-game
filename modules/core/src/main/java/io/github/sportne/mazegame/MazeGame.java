@@ -39,10 +39,12 @@ public final class MazeGame extends ApplicationAdapter {
   private static final Color CELL_WALL = Color.WHITE;
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
   private static final Color MOUSE = new Color(0.78F, 0.58F, 0.42F, 1.0F);
+  private static final Color PANEL_TEXT = new Color(0.62F, 0.70F, 0.78F, 1.0F);
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
   private static final float RESULT_BUTTON_GAP = 16.0F;
   private static final float RESULT_BUTTON_HEIGHT = 44.0F;
   private static final float RESULT_BUTTON_WIDTH = 140.0F;
+  private static final float TITLE_TEXT_Y = 682.0F;
   private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
   private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
   private static final String PROJECT_BACKGROUND_MUSIC_PATH = "assets/" + BACKGROUND_MUSIC_PATH;
@@ -375,17 +377,27 @@ public final class MazeGame extends ApplicationAdapter {
   private void drawText(BuildPhaseLayout layout) {
     spriteBatch.begin();
     if (gamePhase == GamePhase.BUILDING) {
+      font.setColor(TEXT);
+      font.draw(spriteBatch, "Maze Game", layout.gridBounds().x(), TITLE_TEXT_Y);
       font.draw(
           spriteBatch,
           "Build: " + String.format(Locale.ROOT, "%.1fs", buildTimeRemainingSeconds),
           layout.gridBounds().x(),
           layout.gridBounds().y() + layout.gridBounds().height() + 32.0F);
+      font.setColor(PANEL_TEXT);
+      font.draw(
+          spriteBatch,
+          "Left click: wall   Right click: clear",
+          layout.gridBounds().x(),
+          layout.gridBounds().y() - 16.0F);
+      font.setColor(TEXT);
       font.draw(
           spriteBatch,
           "Start Mouse",
           layout.startButtonBounds().x() + 44.0F,
           layout.startButtonBounds().y() + 28.0F);
     } else if (gamePhase == GamePhase.RESULT) {
+      font.setColor(TEXT);
       font.draw(
           spriteBatch,
           resultPassed() ? "Pass" : "Fail",
@@ -410,7 +422,16 @@ public final class MazeGame extends ApplicationAdapter {
           "Replay",
           replayButtonBounds(layout).x() + 42.0F,
           replayButtonBounds(layout).y() + 28.0F);
+      if (!hasNextLevel()) {
+        font.setColor(PANEL_TEXT);
+        font.draw(
+            spriteBatch,
+            "No next level in this milestone",
+            layout.gridBounds().x(),
+            layout.gridBounds().y() - 16.0F);
+      }
     }
+    font.setColor(TEXT);
     spriteBatch.end();
   }
 

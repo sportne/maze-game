@@ -86,11 +86,11 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ### 6. Desktop App Polish
 
-- [ ] Keep milestone 1 visuals simple and functional.
-- [ ] Use clear, readable layout for grid, timer, controls, and result state.
-- [ ] Ensure the game works at the current desktop window size configured by `modules/lwjgl3`.
-- [ ] Preserve existing background music behavior and audio disable options.
-- [ ] Confirm mouse-only interaction covers all milestone 1 actions.
+- [x] Keep milestone 1 visuals simple and functional.
+- [x] Use clear, readable layout for grid, timer, controls, and result state.
+- [x] Ensure the game works at the current desktop window size configured by `modules/lwjgl3`.
+- [x] Preserve existing background music behavior and audio disable options.
+- [x] Confirm mouse-only interaction covers all milestone 1 actions.
 
 ### 7. Verification And Packaging
 

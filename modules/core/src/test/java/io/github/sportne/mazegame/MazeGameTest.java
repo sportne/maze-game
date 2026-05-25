@@ -173,6 +173,27 @@ final class MazeGameTest {
   }
 
   @Test
+  void updateGameAdvancesMouseRunAfterRunStarts() {
+    MazeGame game = new MazeGame();
+
+    game.startRun();
+    game.updateGame(0.25F);
+
+    assertEquals(1, game.mouseRunResult().moveCount());
+  }
+
+  @Test
+  void startRunIsIgnoredAfterBuildPhase() {
+    MazeGame game = new MazeGame();
+
+    game.startRun();
+    MouseRunResult initialRun = game.mouseRunResult();
+    game.startRun();
+
+    assertEquals(initialRun, game.mouseRunResult());
+  }
+
+  @Test
   void reachingCheeseBeforeTargetFailsTheLevel() {
     MazeGame game = new MazeGame();
     addVerticalCorridorWalls(game);
