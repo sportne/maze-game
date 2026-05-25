@@ -3,6 +3,7 @@ package io.github.sportne.mazegame.lwjgl3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
@@ -22,6 +23,23 @@ final class Lwjgl3LauncherTest {
   @Test
   void desktopLauncherCanDisableAudioWhenRequested() throws ReflectiveOperationException {
     assertTrue(disableAudio(Lwjgl3Launcher.defaultConfiguration("--no-audio")));
+  }
+
+  @Test
+  void desktopLauncherUsesDefaultWindowSize() throws ReflectiveOperationException {
+    Lwjgl3ApplicationConfiguration configuration = Lwjgl3Launcher.defaultConfiguration();
+
+    assertEquals(1280, windowInt(configuration, "windowWidth"));
+    assertEquals(720, windowInt(configuration, "windowHeight"));
+  }
+
+  @Test
+  void desktopLauncherCanOverrideWindowSize() throws ReflectiveOperationException {
+    Lwjgl3ApplicationConfiguration configuration =
+        Lwjgl3Launcher.defaultConfiguration("--window-size=900x900");
+
+    assertEquals(900, windowInt(configuration, "windowWidth"));
+    assertEquals(900, windowInt(configuration, "windowHeight"));
   }
 
   @Test
@@ -78,6 +96,21 @@ final class Lwjgl3LauncherTest {
   }
 
   @Test
+  void windowSizeCanBeRequestedWithSeparateValueArgument() {
+    assertEquals(
+        new Lwjgl3Launcher.WindowSize(800, 600),
+        Lwjgl3Launcher.windowSize("--window-size", "800x600").orElseThrow());
+  }
+
+  @Test
+  void windowSizeRejectsInvalidValues() {
+    assertThrows(
+        IllegalArgumentException.class, () -> Lwjgl3Launcher.windowSize("--window-size=0x1"));
+    assertThrows(
+        IllegalArgumentException.class, () -> Lwjgl3Launcher.windowSize("--window-size=800"));
+  }
+
+  @Test
   void audioCanBeDisabledWithSystemProperty() {
     String originalValue = System.getProperty("mazeGame.audio");
     try {
@@ -108,6 +141,13 @@ final class Lwjgl3LauncherTest {
     Field disableAudio = configuration.getClass().getDeclaredField("disableAudio");
     disableAudio.setAccessible(true);
     return disableAudio.getBoolean(configuration);
+  }
+
+  private static int windowInt(Lwjgl3ApplicationConfiguration configuration, String fieldName)
+      throws ReflectiveOperationException {
+    Field field = Lwjgl3WindowConfiguration.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return field.getInt(configuration);
   }
 
   private static Lwjgl3WindowListener windowListener(Lwjgl3ApplicationConfiguration configuration)

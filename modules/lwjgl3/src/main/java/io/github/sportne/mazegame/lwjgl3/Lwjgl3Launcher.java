@@ -10,6 +10,7 @@ import io.github.sportne.mazegame.ScreenshotCapture;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -23,6 +24,12 @@ public final class Lwjgl3Launcher {
   /** Java system property used to enable or disable audio. */
   private static final String AUDIO_PROPERTY = "mazeGame.audio";
 
+  /** Default desktop window width in pixels. */
+  private static final int DEFAULT_WINDOW_WIDTH = 1280;
+
+  /** Default desktop window height in pixels. */
+  private static final int DEFAULT_WINDOW_HEIGHT = 720;
+
   /** Environment variable used to enable or disable audio. */
   private static final String AUDIO_ENVIRONMENT_VARIABLE = "MAZE_GAME_AUDIO";
 
@@ -31,6 +38,9 @@ public final class Lwjgl3Launcher {
 
   /** Command-line flag for writing a one-frame screenshot PNG. */
   private static final String SCREENSHOT_ARGUMENT = "--screenshot";
+
+  /** Command-line flag for overriding the desktop window size as WIDTHxHEIGHT. */
+  private static final String WINDOW_SIZE_ARGUMENT = "--window-size";
 
   /** Prevents instantiation of this static launcher. */
   private Lwjgl3Launcher() {}
@@ -63,13 +73,51 @@ public final class Lwjgl3Launcher {
    */
   static Lwjgl3ApplicationConfiguration defaultConfiguration(String... args) {
     Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
+    WindowSize windowSize =
+        windowSize(args).orElse(new WindowSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
     configuration.setTitle(MazeGame.title());
-    configuration.setWindowedMode(1280, 720);
+    configuration.setWindowedMode(windowSize.width(), windowSize.height());
     configuration.useVsync(true);
     configuration.setForegroundFPS(60);
     configuration.disableAudio(!audioEnabled(args));
     configuration.setWindowListener(closeThroughApplicationExit());
     return configuration;
+  }
+
+  /**
+   * Parses an optional window size override.
+   *
+   * @param args command-line arguments
+   * @return requested window size when provided
+   */
+  static Optional<WindowSize> windowSize(String... args) {
+    for (int index = 0; index < args.length; index++) {
+      String argument = args[index];
+      if (argument.startsWith(WINDOW_SIZE_ARGUMENT + "=")) {
+        return Optional.of(
+            parseWindowSize(argument.substring((WINDOW_SIZE_ARGUMENT + "=").length())));
+      }
+      if (WINDOW_SIZE_ARGUMENT.equals(argument) && index + 1 < args.length) {
+        return Optional.of(parseWindowSize(args[index + 1]));
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Parses a WIDTHxHEIGHT window-size value.
+   *
+   * @param value command-line value to parse
+   * @return validated window size
+   */
+  private static WindowSize parseWindowSize(String value) {
+    String[] dimensions = value.toLowerCase(Locale.ROOT).split("x", -1);
+    if (dimensions.length != 2) {
+      throw new IllegalArgumentException("window size must use WIDTHxHEIGHT");
+    }
+    int width = Integer.parseInt(dimensions[0]);
+    int height = Integer.parseInt(dimensions[1]);
+    return new WindowSize(width, height);
   }
 
   /**
@@ -187,5 +235,24 @@ public final class Lwjgl3Launcher {
       @Override
       public void refreshRequested() {}
     };
+  }
+
+  /**
+   * Desktop window dimensions requested at launch.
+   *
+   * @param width window width in pixels
+   * @param height window height in pixels
+   */
+  record WindowSize(int width, int height) {
+    /**
+     * Creates validated window dimensions.
+     *
+     * @throws IllegalArgumentException when width or height is not positive
+     */
+    WindowSize {
+      if (width <= 0 || height <= 0) {
+        throw new IllegalArgumentException("window dimensions must be positive");
+      }
+    }
   }
 }

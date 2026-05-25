@@ -14,9 +14,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.model.CellContent;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
@@ -112,6 +115,12 @@ public final class MazeGame extends ApplicationAdapter {
   /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
 
+  /** Width of the stable virtual coordinate system used for rendering and input. */
+  private static final int VIRTUAL_WIDTH = 1280;
+
+  /** Height of the stable virtual coordinate system used for rendering and input. */
+  private static final int VIRTUAL_HEIGHT = 720;
+
   /** Optional one-frame screenshot request supplied by the launcher. */
   private final ScreenshotCapture screenshotCapture;
 
@@ -126,6 +135,9 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Default libGDX bitmap font used by the simple UI. */
   private BitmapFont font;
+
+  /** Viewport that preserves the virtual 1280x720 game canvas during window resizes. */
+  private Viewport viewport;
 
   /** Texture loaded from the mouse/cheese sprite sheet asset. */
   private Texture spriteSheet;
@@ -327,6 +339,8 @@ public final class MazeGame extends ApplicationAdapter {
     initializeBuildPhase();
     spriteBatch = new SpriteBatch();
     shapeRenderer = new ShapeRenderer();
+    viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     font = new BitmapFont();
     font.setColor(TEXT);
     spriteSheet = new Texture(spriteSheetFile());
@@ -344,9 +358,10 @@ public final class MazeGame extends ApplicationAdapter {
   public void render() {
     updateGame(Gdx.graphics.getDeltaTime());
     ScreenUtils.clear(background());
+    viewport.apply();
+    updateProjectionMatrices();
     BuildPhaseLayout layout =
-        BuildPhaseLayout.centered(
-            Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), levelDefinition.gridSize());
+        BuildPhaseLayout.centered(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, levelDefinition.gridSize());
     drawGrid(layout.gridBounds());
     drawCellSprites(layout.gridBounds());
     drawMouse(layout.gridBounds());
@@ -363,11 +378,9 @@ public final class MazeGame extends ApplicationAdapter {
    */
   @Override
   public void resize(int width, int height) {
-    if (spriteBatch != null) {
-      spriteBatch.getProjectionMatrix().setToOrtho2D(0.0F, 0.0F, (float) width, (float) height);
-    }
-    if (shapeRenderer != null) {
-      shapeRenderer.getProjectionMatrix().setToOrtho2D(0.0F, 0.0F, (float) width, (float) height);
+    if (viewport != null) {
+      viewport.update(width, height, true);
+      updateProjectionMatrices();
     }
   }
 
@@ -386,6 +399,7 @@ public final class MazeGame extends ApplicationAdapter {
       font.dispose();
       font = null;
     }
+    viewport = null;
     if (spriteSheet != null) {
       spriteSheet.dispose();
       spriteSheet = null;
@@ -907,6 +921,19 @@ public final class MazeGame extends ApplicationAdapter {
     return Gdx.files.internal(path);
   }
 
+  /** Updates renderers to use the viewport camera projection. */
+  private void updateProjectionMatrices() {
+    if (viewport == null) {
+      return;
+    }
+    if (spriteBatch != null) {
+      spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
+    }
+    if (shapeRenderer != null) {
+      shapeRenderer.setProjectionMatrix(viewport.getCamera().combined);
+    }
+  }
+
   /**
    * Captures one PNG screenshot after the requested delay has elapsed.
    *
@@ -956,8 +983,16 @@ public final class MazeGame extends ApplicationAdapter {
      */
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+      if (viewport == null) {
+        return false;
+      }
+      Vector2 worldPosition = viewport.unproject(new Vector2(screenX, screenY));
       return handleScreenClick(
-          screenX, screenY, button, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+          Math.round(worldPosition.x),
+          Math.round(VIRTUAL_HEIGHT - worldPosition.y),
+          button,
+          VIRTUAL_WIDTH,
+          VIRTUAL_HEIGHT);
     }
   }
 }
