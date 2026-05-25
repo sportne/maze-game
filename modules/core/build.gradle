@@ -1,0 +1,11 @@
+plugins {
+    id 'mazegame.java-conventions'
+    id 'mazegame.quality-conventions'
+    id 'mazegame.coverage-conventions'
+}
+
+description = 'Shared libGDX game code for Maze Game.'
+
+dependencies {
+    api libs.gdx.core
+}

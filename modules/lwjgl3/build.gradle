@@ -1,0 +1,20 @@
+plugins {
+    id 'mazegame.application-conventions'
+    id 'mazegame.quality-conventions'
+}
+
+description = 'LWJGL3 desktop launcher for Maze Game.'
+
+application {
+    mainClass = 'io.github.sportne.mazegame.lwjgl3.Lwjgl3Launcher'
+}
+
+tasks.named('run') {
+    workingDir = rootProject.file('assets')
+}
+
+dependencies {
+    implementation project(':modules:core')
+    implementation libs.gdx.backend.lwjgl3
+    runtimeOnly "com.badlogicgames.gdx:gdx-platform:${libs.versions.gdx.get()}:natives-desktop"
+}

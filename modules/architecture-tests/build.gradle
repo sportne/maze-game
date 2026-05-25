@@ -1,0 +1,11 @@
+plugins {
+    id 'mazegame.java-conventions'
+    id 'mazegame.quality-conventions'
+}
+
+description = 'Repository-wide architecture tests for Maze Game.'
+
+dependencies {
+    testImplementation project(':modules:core')
+    testImplementation project(':modules:lwjgl3')
+}

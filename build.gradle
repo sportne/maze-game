@@ -1,0 +1,28 @@
+plugins {
+    id 'base'
+    id 'mazegame.pmd-conventions'
+}
+
+group = 'io.github.sportne'
+version = providers.gradleProperty('mazeGame.version').getOrElse('0.1.0-SNAPSHOT')
+
+def checkedProjects = [
+    ':modules:core',
+    ':modules:lwjgl3',
+    ':modules:architecture-tests',
+]
+
+tasks.register('checkAll') {
+    group = 'verification'
+    description = 'Runs check tasks across all Maze Game modules.'
+    dependsOn checkedProjects.collect { "${it}:check" }
+}
+
+tasks.register('qualityGate') {
+    group = 'verification'
+    description = 'Runs the default local quality gate.'
+    dependsOn tasks.named('checkAll')
+    dependsOn checkedProjects.collect { "${it}:spotlessCheck" }
+    dependsOn tasks.named('pmdCheck')
+    dependsOn tasks.named('cpdCheck')
+}

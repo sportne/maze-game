@@ -1,0 +1,64 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
+
+plugins {
+    id 'jacoco'
+}
+
+def libs = extensions.getByType(VersionCatalogsExtension).named('libs')
+def mainClasses = sourceSets.main.output.classesDirs
+
+def lineCoverageThreshold = new BigDecimal('0.60')
+def branchCoverageThreshold = new BigDecimal('0.40')
+def sourceLineCoverageThreshold = new BigDecimal('0.40')
+
+jacoco {
+    toolVersion = libs.findVersion('jacoco').get().requiredVersion
+}
+
+tasks.withType(Test).configureEach {
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    onlyIf { mainClasses.files.any { it.exists() && it.listFiles() } }
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('test')
+    onlyIf { mainClasses.files.any { it.exists() && it.listFiles() } }
+    violationRules {
+        rule {
+            enabled = true
+            element = 'BUNDLE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = lineCoverageThreshold
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = branchCoverageThreshold
+            }
+        }
+        rule {
+            enabled = true
+            element = 'SOURCEFILE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = sourceLineCoverageThreshold
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}

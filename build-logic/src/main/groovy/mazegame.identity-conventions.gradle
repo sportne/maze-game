@@ -1,0 +1,11 @@
+plugins {
+    id 'base'
+}
+
+group = 'io.github.sportne'
+version = rootProject.version
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}

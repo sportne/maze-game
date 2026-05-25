@@ -1,0 +1,115 @@
+def pmdVersion = providers.gradleProperty('mazeGame.pmdVersion').getOrElse('7.24.0')
+def pmdDirectory = layout.projectDirectory.dir('tools/pmd')
+def pmdArchive = layout.buildDirectory.file("tools/pmd/pmd-dist-${pmdVersion}-bin.zip")
+def pmdToolsDirectory = layout.buildDirectory.dir('tools/pmd')
+def pmdDistributionDirectory = pmdToolsDirectory.map { it.dir("pmd-bin-${pmdVersion}") }
+def pmdExecutableName = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+    ? 'pmd.bat'
+    : 'pmd'
+def pmdExecutable = pmdDistributionDirectory.map { it.file("bin/${pmdExecutableName}") }
+def pmdReportDirectory = layout.buildDirectory.dir('reports/pmd')
+def pmdRuleset = layout.projectDirectory.file('config/pmd/ruleset.xml')
+def pmdTagProvider = providers.exec {
+    commandLine 'git', '-C', pmdDirectory.asFile.absolutePath, 'describe', '--tags', '--exact-match'
+}.standardOutput.asText.map { it.trim() }
+
+def javaSourceDirectories = subprojects.collectMany { project ->
+    ['src/main/java', 'src/test/java'].collect { project.file(it) }.findAll { it.directory }
+}
+
+tasks.register('verifyPmdSubmodulePin') {
+    group = 'verification'
+    description = 'Verifies that the PMD submodule is checked out at the pinned release tag.'
+    doFirst {
+        if (!pmdDirectory.file('.git').asFile.exists()) {
+            throw new GradleException('PMD submodule is missing. Run: git submodule update --init --recursive')
+        }
+    }
+    doLast {
+        def expectedTag = "pmd_releases/${pmdVersion}"
+        def actualTag = pmdTagProvider.get()
+        if (actualTag != expectedTag) {
+            throw new GradleException("PMD submodule must be checked out at ${expectedTag}, but was ${actualTag}")
+        }
+    }
+}
+
+tasks.register('downloadPmdDistribution') {
+    group = 'verification'
+    description = 'Downloads the official PMD binary distribution matching the pinned submodule tag.'
+    inputs.property 'pmdVersion', pmdVersion
+    outputs.file pmdArchive
+    doLast {
+        def archive = pmdArchive.get().asFile
+        archive.parentFile.mkdirs()
+        def releaseUrl =
+            "https://github.com/pmd/pmd/releases/download/pmd_releases%2F${pmdVersion}/pmd-dist-${pmdVersion}-bin.zip"
+        new URI(releaseUrl).toURL().withInputStream { input ->
+            archive.withOutputStream { output ->
+                output << input
+            }
+        }
+    }
+}
+
+tasks.register('buildPmdDistribution', Copy) {
+    group = 'verification'
+    description = 'Installs the official PMD binary distribution matching the pinned submodule tag.'
+    dependsOn tasks.named('verifyPmdSubmodulePin')
+    dependsOn tasks.named('downloadPmdDistribution')
+    from { zipTree(pmdArchive) }
+    into pmdToolsDirectory
+    doLast {
+        if (pmdExecutableName == 'pmd') {
+            pmdExecutable.get().asFile.setExecutable(true)
+        }
+    }
+}
+
+tasks.register('pmdCheck', Exec) {
+    group = 'verification'
+    description = 'Runs PMD static analysis using the pinned tools/pmd submodule.'
+    dependsOn tasks.named('buildPmdDistribution')
+    doFirst {
+        if (javaSourceDirectories.isEmpty()) {
+            throw new GradleException('No Java source directories found for PMD analysis.')
+        }
+        pmdReportDirectory.get().asFile.mkdirs()
+        commandLine([
+            pmdExecutable.get().asFile.absolutePath,
+            'check',
+            '--rulesets',
+            pmdRuleset.asFile.absolutePath,
+            '--format',
+            'text',
+            '--no-cache',
+            '--no-progress',
+            '--report-file',
+            pmdReportDirectory.get().file('pmd.txt').asFile.absolutePath,
+        ] + javaSourceDirectories.collectMany { ['--dir', it.absolutePath] })
+    }
+}
+
+tasks.register('cpdCheck', Exec) {
+    group = 'verification'
+    description = 'Runs PMD CPD duplication analysis using the pinned tools/pmd submodule.'
+    dependsOn tasks.named('buildPmdDistribution')
+    doFirst {
+        if (javaSourceDirectories.isEmpty()) {
+            throw new GradleException('No Java source directories found for CPD analysis.')
+        }
+        pmdReportDirectory.get().asFile.mkdirs()
+        commandLine([
+            pmdExecutable.get().asFile.absolutePath,
+            'cpd',
+            '--minimum-tokens',
+            '100',
+            '--language',
+            'java',
+            '--format',
+            'text',
+            '--report-file',
+            pmdReportDirectory.get().file('cpd.txt').asFile.absolutePath,
+        ] + javaSourceDirectories.collectMany { ['--dir', it.absolutePath] })
+    }
+}

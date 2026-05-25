@@ -1,0 +1,4 @@
+plugins {
+    id 'mazegame.java-conventions'
+    id 'application'
+}

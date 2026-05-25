@@ -1,0 +1,3 @@
+[submodule "tools/pmd"]
+	path = tools/pmd
+	url = https://github.com/pmd/pmd.git
