@@ -23,7 +23,6 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
-import io.github.sportne.mazegame.model.CellContent;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.LevelDefinition;
@@ -33,11 +32,12 @@ import io.github.sportne.mazegame.model.MouseRunResult;
 import io.github.sportne.mazegame.model.MouseRunStatus;
 import io.github.sportne.mazegame.model.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.WallPlacementResult;
+import io.github.sportne.mazegame.render.GameRenderSnapshot;
+import io.github.sportne.mazegame.render.MazeGameRenderer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -52,30 +52,6 @@ import java.util.Optional;
 public final class MazeGame extends ApplicationAdapter {
   /** Background clear color for every frame. */
   private static final Color BACKGROUND = new Color(0.07F, 0.08F, 0.10F, 1.0F);
-
-  /** Fill color for simple rectangle buttons. */
-  private static final Color BUTTON = new Color(0.18F, 0.20F, 0.24F, 1.0F);
-
-  /** Border color for simple rectangle buttons. */
-  private static final Color BUTTON_BORDER = new Color(0.70F, 0.76F, 0.84F, 1.0F);
-
-  /** Fill color for empty walkable cells. */
-  private static final Color CELL_OPEN = Color.BLACK;
-
-  /** Temporary fill color for rejected wall placements. */
-  private static final Color CELL_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
-
-  /** Fill color for the mouse start cell before the mouse sprite is active. */
-  private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
-
-  /** Fill color for player-placed wall cells. */
-  private static final Color CELL_WALL = Color.WHITE;
-
-  /** Grid line color drawn over cell fills. */
-  private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
-
-  /** Secondary text color for instructions and non-primary result messages. */
-  private static final Color PANEL_TEXT = new Color(0.62F, 0.70F, 0.78F, 1.0F);
 
   /** Primary text color. */
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
@@ -94,9 +70,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Project-relative fallback for the sprite sheet when the working directory is not assets/. */
   private static final String PROJECT_SPRITE_SHEET_PATH = "assets/" + SPRITE_SHEET_PATH;
-
-  /** Fraction of a cell occupied by centered sprites. */
-  private static final float CELL_SPRITE_SCALE = 0.90F;
 
   /** Quiet default music volume. */
   private static final float BACKGROUND_MUSIC_VOLUME = 0.1F;
@@ -145,6 +118,9 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Cropped mouse sprite drawn at the current mouse position. */
   private TextureRegion mouseSprite;
+
+  /** Renderer that draws the current frame. */
+  private MazeGameRenderer renderer;
 
   /** Current level definition. */
   private LevelDefinition levelDefinition;
@@ -407,6 +383,7 @@ public final class MazeGame extends ApplicationAdapter {
     spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
     cheeseSprite = new TextureRegion(spriteSheet, 1168, 819, 186, 145);
     mouseSprite = new TextureRegion(spriteSheet, 718, 671, 325, 416);
+    renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite);
     if (audioEnabled) {
       startBackgroundMusic();
     }
@@ -421,27 +398,7 @@ public final class MazeGame extends ApplicationAdapter {
     viewport.apply();
     updateProjectionMatrices();
     ScreenLayout layout = screenLayout(gamePhase, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-    if (gamePhase == GamePhase.MAIN_MENU) {
-      drawMainMenu(layout);
-      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
-      return;
-    }
-    if (gamePhase == GamePhase.LEVEL_SELECT) {
-      drawLevelSelect(layout);
-      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
-      return;
-    }
-    if (gamePhase == GamePhase.SETTINGS) {
-      drawSettings(layout);
-      captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
-      return;
-    }
-    GridBounds gridBounds = gridBounds(layout);
-    drawGrid(gridBounds);
-    drawCellSprites(gridBounds);
-    drawMouse(gridBounds);
-    drawControls(layout);
-    drawText(layout);
+    renderer.render(layout, renderSnapshot());
     captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
   }
 
@@ -481,6 +438,7 @@ public final class MazeGame extends ApplicationAdapter {
       cheeseSprite = null;
       mouseSprite = null;
     }
+    renderer = null;
     if (shapeRenderer != null) {
       shapeRenderer.dispose();
       shapeRenderer = null;
@@ -779,157 +737,6 @@ public final class MazeGame extends ApplicationAdapter {
     return false;
   }
 
-  /** Draws the startup menu. */
-  private void drawMainMenu(ScreenLayout layout) {
-    ScreenRectangle startButton = layout.bounds(MazeGameLayout.MAIN_MENU_START);
-    ScreenRectangle settingsButton = layout.bounds(MazeGameLayout.MAIN_MENU_SETTINGS);
-    ScreenRectangle quitButton = layout.bounds(MazeGameLayout.MAIN_MENU_QUIT);
-    drawButton(startButton);
-    drawButton(settingsButton);
-    drawButton(quitButton);
-
-    spriteBatch.begin();
-    font.setColor(TEXT);
-    drawTextInRegion(TITLE, layout.bounds(MazeGameLayout.MAIN_MENU_TITLE), 94.0F);
-    drawTextInRegion("Start", startButton, 90.0F);
-    drawTextInRegion("Settings", settingsButton, 78.0F);
-    drawTextInRegion("Quit", quitButton, 94.0F);
-    spriteBatch.end();
-  }
-
-  /** Draws the level-select menu. */
-  private void drawLevelSelect(ScreenLayout layout) {
-    for (int index = 0; index < 6; index++) {
-      drawButton(layout.bounds(MazeGameLayout.levelCardId(index + 1)));
-    }
-    ScreenRectangle backButton = layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK);
-    drawButton(backButton);
-
-    spriteBatch.begin();
-    font.setColor(TEXT);
-    drawTextInRegion("Select Level", layout.bounds(MazeGameLayout.LEVEL_SELECT_TITLE), 72.0F);
-    for (int index = 0; index < 6; index++) {
-      ScreenRectangle levelButton = layout.bounds(MazeGameLayout.levelCardId(index + 1));
-      font.setColor(index == 0 ? TEXT : PANEL_TEXT);
-      String title = index == 0 ? "Milestone 1" : "Level " + (index + 1);
-      String subtitle = index == 0 ? "5x5" : "Locked";
-      font.draw(spriteBatch, title, levelButton.x() + 24.0F, levelButton.y() + 56.0F);
-      font.draw(spriteBatch, subtitle, levelButton.x() + 24.0F, levelButton.y() + 32.0F);
-    }
-    font.setColor(TEXT);
-    drawTextInRegion("Back", backButton, 52.0F);
-    spriteBatch.end();
-  }
-
-  /** Draws the session settings menu. */
-  private void drawSettings(ScreenLayout layout) {
-    ScreenRectangle audioButton = layout.bounds(MazeGameLayout.SETTINGS_AUDIO);
-    ScreenRectangle backButton = layout.bounds(MazeGameLayout.SETTINGS_BACK);
-    drawButton(audioButton);
-    drawButton(backButton);
-
-    spriteBatch.begin();
-    font.setColor(TEXT);
-    drawTextInRegion("Settings", layout.bounds(MazeGameLayout.SETTINGS_TITLE), 90.0F);
-    drawTextInRegion("Audio: " + (audioEnabled ? "On" : "Off"), audioButton, 62.0F);
-    drawTextInRegion("Back", backButton, 52.0F);
-    spriteBatch.end();
-  }
-
-  /**
-   * Draws cell fills and grid lines.
-   *
-   * @param gridBounds rendered grid bounds
-   */
-  private void drawGrid(GridBounds gridBounds) {
-    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-    for (int row = 0; row < levelDefinition.gridSize().rows(); row++) {
-      for (int column = 0; column < levelDefinition.gridSize().columns(); column++) {
-        GridPosition position = new GridPosition(row, column);
-        shapeRenderer.setColor(cellColor(position));
-        shapeRenderer.rect(
-            gridBounds.x() + column * gridBounds.cellSize(),
-            gridBounds.y() + (levelDefinition.gridSize().rows() - 1 - row) * gridBounds.cellSize(),
-            gridBounds.cellSize(),
-            gridBounds.cellSize());
-      }
-    }
-    shapeRenderer.setColor(GRID_LINE);
-    for (int row = 0; row <= levelDefinition.gridSize().rows(); row++) {
-      shapeRenderer.rectLine(
-          gridBounds.x(),
-          gridBounds.y() + row * gridBounds.cellSize(),
-          gridBounds.x() + gridBounds.width(),
-          gridBounds.y() + row * gridBounds.cellSize(),
-          1.0F);
-    }
-    for (int column = 0; column <= levelDefinition.gridSize().columns(); column++) {
-      shapeRenderer.rectLine(
-          gridBounds.x() + column * gridBounds.cellSize(),
-          gridBounds.y(),
-          gridBounds.x() + column * gridBounds.cellSize(),
-          gridBounds.y() + gridBounds.height(),
-          1.0F);
-    }
-    shapeRenderer.end();
-  }
-
-  /**
-   * Draws the mouse sprite at the current simulation position.
-   *
-   * @param gridBounds rendered grid bounds
-   */
-  private void drawMouse(GridBounds gridBounds) {
-    if (mouseRunResult == null) {
-      return;
-    }
-    drawSpriteInCell(gridBounds, mouseRunResult.position(), mouseSprite);
-  }
-
-  /**
-   * Draws non-wall sprites that are attached to fixed cells.
-   *
-   * @param gridBounds rendered grid bounds
-   */
-  private void drawCellSprites(GridBounds gridBounds) {
-    drawSpriteInCell(gridBounds, levelDefinition.cheese(), cheeseSprite);
-  }
-
-  /**
-   * Draws a sprite centered inside one grid cell while preserving aspect ratio.
-   *
-   * @param gridBounds rendered grid bounds
-   * @param position cell where the sprite should be drawn
-   * @param spriteRegion cropped sprite sheet region to draw
-   */
-  private void drawSpriteInCell(
-      GridBounds gridBounds, GridPosition position, TextureRegion spriteRegion) {
-    if (spriteRegion == null) {
-      return;
-    }
-    float maxSize = gridBounds.cellSize() * CELL_SPRITE_SCALE;
-    float aspectRatio = spriteRegion.getRegionWidth() / (float) spriteRegion.getRegionHeight();
-    float width = maxSize;
-    float height = maxSize;
-    if (aspectRatio > 1.0F) {
-      height = maxSize / aspectRatio;
-    } else {
-      width = maxSize * aspectRatio;
-    }
-    float cellLeft = gridBounds.x() + position.column() * gridBounds.cellSize();
-    float cellBottom =
-        gridBounds.y()
-            + (levelDefinition.gridSize().rows() - 1 - position.row()) * gridBounds.cellSize();
-    spriteBatch.begin();
-    spriteBatch.draw(
-        spriteRegion,
-        cellLeft + (gridBounds.cellSize() - width) / 2.0F,
-        cellBottom + (gridBounds.cellSize() - height) / 2.0F,
-        width,
-        height);
-    spriteBatch.end();
-  }
-
   /**
    * Returns the background/fill color for a grid cell.
    *
@@ -937,134 +744,27 @@ public final class MazeGame extends ApplicationAdapter {
    * @return color used before any sprite overlay is drawn
    */
   Color cellColor(GridPosition position) {
-    if (position.equals(rejectedPosition) && rejectedFlashRemainingSeconds > 0.0F) {
-      return CELL_REJECTED;
-    }
-    CellContent content = mazeState.cellContentAt(position);
-    return switch (content) {
-      case EMPTY -> CELL_OPEN;
-      case NORMAL_WALL -> CELL_WALL;
-      case MOUSE_START -> CELL_START;
-      case CHEESE -> CELL_OPEN;
-    };
+    return MazeGameRenderer.cellColor(
+        mazeState, rejectedPosition, rejectedFlashRemainingSeconds, position);
   }
 
   /**
-   * Draws phase-appropriate button rectangles.
+   * Creates the immutable data needed to render one frame.
    *
-   * @param layout current screen layout
+   * @return render snapshot for the current game state
    */
-  private void drawControls(ScreenLayout layout) {
-    if (gamePhase == GamePhase.BUILDING) {
-      drawButton(layout.bounds(MazeGameLayout.BUILD_START));
-    } else if (gamePhase == GamePhase.RESULT) {
-      drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
-      drawButton(layout.bounds(MazeGameLayout.RESULT_REPLAY));
-      drawButton(layout.bounds(MazeGameLayout.RESULT_MAIN_MENU));
-    }
-  }
-
-  /**
-   * Draws one simple rectangle button.
-   *
-   * @param bounds button bounds in bottom-left coordinates
-   */
-  private void drawButton(ScreenRectangle bounds) {
-    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-    shapeRenderer.setColor(BUTTON);
-    shapeRenderer.rect(bounds.x(), bounds.y(), bounds.width(), bounds.height());
-    shapeRenderer.setColor(BUTTON_BORDER);
-    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.x() + bounds.width(), bounds.y(), 2.0F);
-    shapeRenderer.rectLine(
-        bounds.x(),
-        bounds.y() + bounds.height(),
-        bounds.x() + bounds.width(),
-        bounds.y() + bounds.height(),
-        2.0F);
-    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.x(), bounds.y() + bounds.height(), 2.0F);
-    shapeRenderer.rectLine(
-        bounds.x() + bounds.width(),
-        bounds.y(),
-        bounds.x() + bounds.width(),
-        bounds.y() + bounds.height(),
-        2.0F);
-    shapeRenderer.end();
-  }
-
-  /**
-   * Draws all text for the current phase.
-   *
-   * @param layout current screen layout
-   */
-  private void drawText(ScreenLayout layout) {
-    spriteBatch.begin();
-    if (gamePhase == GamePhase.BUILDING) {
-      font.setColor(TEXT);
-      drawTextInRegion("Maze Game", layout.bounds(MazeGameLayout.BUILD_TITLE), 0.0F);
-      font.draw(
-          spriteBatch,
-          "Build: " + String.format(Locale.ROOT, "%.1fs", buildTimeRemainingSeconds),
-          layout.bounds(MazeGameLayout.BUILD_STATUS).x(),
-          textBaseline(layout.bounds(MazeGameLayout.BUILD_STATUS)));
-      font.setColor(PANEL_TEXT);
-      font.draw(
-          spriteBatch,
-          "Left click: wall   Right click: clear",
-          layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
-          textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
-      font.setColor(TEXT);
-      drawTextInRegion("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START), 44.0F);
-    } else if (gamePhase == GamePhase.RESULT) {
-      font.setColor(TEXT);
-      font.draw(
-          spriteBatch,
-          resultPassed() ? "Pass" : "Fail",
-          layout.bounds(MazeGameLayout.RESULT_STATUS).x(),
-          textBaseline(layout.bounds(MazeGameLayout.RESULT_STATUS)));
-      font.draw(
-          spriteBatch,
-          "Time: "
-              + String.format(
-                  Locale.ROOT, "%.2fs", mouseRunResult.elapsedTime().toMillis() / 1000.0F)
-              + "  Moves: "
-              + mouseRunResult.moveCount(),
-          layout.bounds(MazeGameLayout.RESULT_STATS).x(),
-          textBaseline(layout.bounds(MazeGameLayout.RESULT_STATS)));
-      drawTextInRegion("Retry", layout.bounds(MazeGameLayout.RESULT_RETRY), 46.0F);
-      drawTextInRegion("Replay", layout.bounds(MazeGameLayout.RESULT_REPLAY), 42.0F);
-      drawTextInRegion("Main Menu", layout.bounds(MazeGameLayout.RESULT_MAIN_MENU), 38.0F);
-      if (!hasNextLevel()) {
-        font.setColor(PANEL_TEXT);
-        font.draw(
-            spriteBatch,
-            "No next level in this milestone",
-            layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL).x(),
-            textBaseline(layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL)));
-      }
-    }
-    font.setColor(TEXT);
-    spriteBatch.end();
-  }
-
-  /**
-   * Draws a text label inside a declared region.
-   *
-   * @param text label to draw
-   * @param region reserved text region
-   * @param xOffset label offset from the region's left edge
-   */
-  private void drawTextInRegion(String text, ScreenRectangle region, float xOffset) {
-    font.draw(spriteBatch, text, region.x() + xOffset, textBaseline(region));
-  }
-
-  /**
-   * Returns the baseline used for simple bitmap-font labels inside a declared region.
-   *
-   * @param region text region
-   * @return font baseline y coordinate
-   */
-  private static float textBaseline(ScreenRectangle region) {
-    return region.y() + Math.min(22.0F, region.height());
+  private GameRenderSnapshot renderSnapshot() {
+    return new GameRenderSnapshot(
+        gamePhase,
+        levelDefinition,
+        mazeState,
+        buildTimeRemainingSeconds,
+        rejectedPosition,
+        rejectedFlashRemainingSeconds,
+        mouseRunResult,
+        audioEnabled,
+        resultPassed(),
+        hasNextLevel());
   }
 
   /**
@@ -1077,21 +777,6 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private ScreenLayout screenLayout(GamePhase phase, int screenWidth, int screenHeight) {
     return MazeGameLayout.forPhase(phase, screenWidth, screenHeight, levelDefinition.gridSize());
-  }
-
-  /**
-   * Converts the declared grid rectangle into the grid adapter used by rendering and hit testing.
-   *
-   * @param layout current screen layout
-   * @return grid bounds with cell-size metadata
-   */
-  private GridBounds gridBounds(ScreenLayout layout) {
-    ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
-    return new GridBounds(
-        grid.x(),
-        grid.y(),
-        grid.width() / levelDefinition.gridSize().columns(),
-        levelDefinition.gridSize());
   }
 
   /**
