@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame;
+package io.github.sportne.mazegame.debug;
 
 import java.nio.file.Path;
 import java.time.Duration;

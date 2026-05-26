@@ -1,6 +1,7 @@
-package io.github.sportne.mazegame;
+package io.github.sportne.mazegame.debug;
 
 import com.badlogic.gdx.Input;
+import io.github.sportne.mazegame.MazeGame;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
@@ -67,11 +68,12 @@ public final class MazeGameDebugHarness {
       throw new IllegalArgumentException("screen dimensions must be positive");
     }
     this.game = new MazeGame();
-    if (startInLevel) {
-      game.startMilestoneOneLevel();
-    }
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
+    if (startInLevel) {
+      clickMainMenuStart();
+      clickMilestoneOneLevel();
+    }
   }
 
   /**
@@ -273,11 +275,13 @@ public final class MazeGameDebugHarness {
    * @param button libGDX mouse button code
    */
   private void clickCell(GridPosition position, int button) {
-    GridBounds gridBounds = currentLayout().gridBounds();
-    float x = gridBounds.x() + (position.column() + 0.5F) * gridBounds.cellSize();
+    ScreenRectangle grid = currentScreenLayout(GamePhase.BUILDING).bounds(MazeGameLayout.GAME_GRID);
+    float cellSize = grid.width() / game.mazeState().levelDefinition().gridSize().columns();
+    float x = grid.x() + (position.column() + 0.5F) * cellSize;
     float yFromBottom =
-        gridBounds.y()
-            + (gridBounds.gridSize().rows() - 1 - position.row() + 0.5F) * gridBounds.cellSize();
+        grid.y()
+            + (game.mazeState().levelDefinition().gridSize().rows() - 1 - position.row() + 0.5F)
+                * cellSize;
     clickAtBottomLeftCoordinates(x, yFromBottom, button);
   }
 
@@ -305,23 +309,12 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Returns the current layout for the harness screen size.
-   *
-   * @return layout matching the game's current level grid
-   */
-  private BuildPhaseLayout currentLayout() {
-    return BuildPhaseLayout.centered(
-        screenWidth, screenHeight, game.mazeState().levelDefinition().gridSize());
-  }
-
-  /**
    * Returns the declared screen layout for the harness screen size.
    *
    * @param phase game phase to describe
    * @return declared screen layout
    */
   private ScreenLayout currentScreenLayout(GamePhase phase) {
-    return MazeGameLayout.forPhase(
-        phase, screenWidth, screenHeight, game.mazeState().levelDefinition().gridSize());
+    return game.debugScreenLayout(phase, screenWidth, screenHeight);
   }
 }

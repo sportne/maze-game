@@ -23,6 +23,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.assets.AssetPaths;
 import io.github.sportne.mazegame.assets.BackgroundMusicController;
 import io.github.sportne.mazegame.assets.MouseSpriteSheet;
+import io.github.sportne.mazegame.debug.ScreenshotCapture;
 import io.github.sportne.mazegame.input.GameInputAction;
 import io.github.sportne.mazegame.input.GameInputRouter;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
@@ -354,7 +355,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return active phase
    */
-  GamePhase gamePhase() {
+  public GamePhase gamePhase() {
     return session.gamePhase();
   }
 
@@ -363,7 +364,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return current maze
    */
-  MazeState mazeState() {
+  public MazeState mazeState() {
     return session.mazeState();
   }
 
@@ -372,7 +373,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return latest run result, or null before the mouse starts
    */
-  MouseRunResult mouseRunResult() {
+  public MouseRunResult mouseRunResult() {
     return session.mouseRunResult();
   }
 
@@ -381,7 +382,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return seconds left before automatic run start
    */
-  float buildTimeRemainingSeconds() {
+  public float buildTimeRemainingSeconds() {
     return session.buildTimeRemainingSeconds();
   }
 
@@ -420,7 +421,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param deltaSeconds elapsed frame time in seconds
    */
-  void updateGame(float deltaSeconds) {
+  public void updateGame(float deltaSeconds) {
     session.updateGame(deltaSeconds);
   }
 
@@ -429,7 +430,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return rejected cell, or null when no rejection flash is active
    */
-  GridPosition rejectedPosition() {
+  public GridPosition rejectedPosition() {
     return session.rejectedPosition();
   }
 
@@ -471,7 +472,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param screenHeight current window height in pixels
    * @return true when the click was consumed by a cell or control
    */
-  boolean handleScreenClick(
+  public boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
     ScreenLayout layout = screenLayout(gamePhase(), screenWidth, screenHeight);
     GameInputAction action =
@@ -479,6 +480,18 @@ public final class MazeGame extends ApplicationAdapter {
             layout, gamePhase(), screenX, screenY, button, session.levelDefinition().gridSize());
     applyInputAction(action);
     return action.consumed();
+  }
+
+  /**
+   * Returns the declared screen layout for an external debug harness.
+   *
+   * @param phase phase to describe
+   * @param screenWidth virtual screen width
+   * @param screenHeight virtual screen height
+   * @return declared screen layout
+   */
+  public ScreenLayout debugScreenLayout(GamePhase phase, int screenWidth, int screenHeight) {
+    return screenLayout(phase, screenWidth, screenHeight);
   }
 
   /**
@@ -522,7 +535,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return true when result phase is active and elapsed solve time exceeded the target
    */
-  boolean resultPassed() {
+  public boolean resultPassed() {
     return session.resultPassed();
   }
 
@@ -531,7 +544,7 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return false for milestone 1 because only one level exists
    */
-  boolean hasNextLevel() {
+  public boolean hasNextLevel() {
     return session.hasNextLevel();
   }
 

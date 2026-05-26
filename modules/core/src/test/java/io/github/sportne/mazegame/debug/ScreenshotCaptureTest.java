@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame;
+package io.github.sportne.mazegame.debug;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

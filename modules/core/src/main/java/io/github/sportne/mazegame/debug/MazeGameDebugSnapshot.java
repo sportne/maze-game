@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame;
+package io.github.sportne.mazegame.debug;
 
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
