@@ -20,9 +20,10 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.sportne.mazegame.input.GameInputAction;
+import io.github.sportne.mazegame.input.GameInputRouter;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
-import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
 import io.github.sportne.mazegame.model.LevelDefinition;
@@ -39,7 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Main libGDX application for Maze Game.
@@ -627,77 +627,37 @@ public final class MazeGame extends ApplicationAdapter {
    */
   boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
-    float screenYFromBottom = screenHeight - screenY;
     ScreenLayout layout = screenLayout(gamePhase, screenWidth, screenHeight);
-    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.MAIN_MENU) {
-      if (layout.bounds(MazeGameLayout.MAIN_MENU_START).contains(screenX, screenYFromBottom)) {
-        gamePhase = GamePhase.LEVEL_SELECT;
-        return true;
+    GameInputAction action =
+        GameInputRouter.route(
+            layout, gamePhase, screenX, screenY, button, levelDefinition.gridSize());
+    applyInputAction(action);
+    return action.consumed();
+  }
+
+  /**
+   * Applies a routed input action to the current mutable game state.
+   *
+   * @param action routed input action
+   */
+  private void applyInputAction(GameInputAction action) {
+    switch (action.type()) {
+      case OPEN_LEVEL_SELECT -> gamePhase = GamePhase.LEVEL_SELECT;
+      case OPEN_SETTINGS -> gamePhase = GamePhase.SETTINGS;
+      case QUIT -> exitAction.run();
+      case BACK_TO_MAIN_MENU -> gamePhase = GamePhase.MAIN_MENU;
+      case START_MILESTONE_ONE -> startMilestoneOneLevel();
+      case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {
+        // Recognized but intentionally state-neutral actions.
       }
-      if (layout.bounds(MazeGameLayout.MAIN_MENU_SETTINGS).contains(screenX, screenYFromBottom)) {
-        gamePhase = GamePhase.SETTINGS;
-        return true;
-      }
-      if (layout.bounds(MazeGameLayout.MAIN_MENU_QUIT).contains(screenX, screenYFromBottom)) {
-        exitAction.run();
-        return true;
-      }
+      case TOGGLE_AUDIO -> toggleAudio();
+      case START_RUN -> startRun();
+      case PLACE_WALL -> handleGridClick(action.position(), Input.Buttons.LEFT);
+      case CLEAR_WALL -> handleGridClick(action.position(), Input.Buttons.RIGHT);
+      case RETRY -> retryLevel();
+      case REPLAY -> replayRun();
+      case RESULT_MAIN_MENU -> returnToMainMenu();
     }
-    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.LEVEL_SELECT) {
-      if (layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK).contains(screenX, screenYFromBottom)) {
-        gamePhase = GamePhase.MAIN_MENU;
-        return true;
-      }
-      for (int index = 0; index < 6; index++) {
-        if (layout
-            .bounds(MazeGameLayout.levelCardId(index + 1))
-            .contains(screenX, screenYFromBottom)) {
-          if (index == 0) {
-            startMilestoneOneLevel();
-          }
-          return true;
-        }
-      }
-    }
-    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.SETTINGS) {
-      if (layout.bounds(MazeGameLayout.SETTINGS_BACK).contains(screenX, screenYFromBottom)) {
-        gamePhase = GamePhase.MAIN_MENU;
-        return true;
-      }
-      if (layout.bounds(MazeGameLayout.SETTINGS_AUDIO).contains(screenX, screenYFromBottom)) {
-        toggleAudio();
-        return true;
-      }
-    }
-    if (gamePhase == GamePhase.BUILDING
-        && button == Input.Buttons.LEFT
-        && layout.bounds(MazeGameLayout.BUILD_START).contains(screenX, screenYFromBottom)) {
-      startRun();
-      return true;
-    }
-    if (button == Input.Buttons.LEFT && gamePhase == GamePhase.RESULT) {
-      if (layout.bounds(MazeGameLayout.RESULT_RETRY).contains(screenX, screenYFromBottom)) {
-        retryLevel();
-        return true;
-      }
-      if (layout.bounds(MazeGameLayout.RESULT_REPLAY).contains(screenX, screenYFromBottom)) {
-        replayRun();
-        return true;
-      }
-      if (layout.bounds(MazeGameLayout.RESULT_MAIN_MENU).contains(screenX, screenYFromBottom)) {
-        returnToMainMenu();
-        return true;
-      }
-    }
-    Optional<GridPosition> position =
-        gamePhase == GamePhase.BUILDING
-            ? gridPositionAt(layout.bounds(MazeGameLayout.GAME_GRID), screenX, screenYFromBottom)
-            : Optional.empty();
-    if (position.isPresent()) {
-      handleGridClick(position.get(), button);
-      return true;
-    }
-    return false;
   }
 
   /** Resets the current level to a fresh build phase attempt. */
@@ -777,24 +737,6 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private ScreenLayout screenLayout(GamePhase phase, int screenWidth, int screenHeight) {
     return MazeGameLayout.forPhase(phase, screenWidth, screenHeight, levelDefinition.gridSize());
-  }
-
-  /**
-   * Converts a bottom-left screen point into a grid row and column.
-   *
-   * @param grid declared grid rectangle
-   * @param pointX x coordinate from the left edge
-   * @param pointY y coordinate from the bottom edge
-   * @return grid position, or empty when outside the grid
-   */
-  private Optional<GridPosition> gridPositionAt(ScreenRectangle grid, float pointX, float pointY) {
-    GridBounds gridBounds =
-        new GridBounds(
-            grid.x(),
-            grid.y(),
-            grid.width() / levelDefinition.gridSize().columns(),
-            levelDefinition.gridSize());
-    return gridBounds.gridPositionAt(pointX, pointY);
   }
 
   /**
