@@ -20,6 +20,9 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.sportne.mazegame.assets.AssetPaths;
+import io.github.sportne.mazegame.assets.BackgroundMusicController;
+import io.github.sportne.mazegame.assets.MouseSpriteSheet;
 import io.github.sportne.mazegame.input.GameInputAction;
 import io.github.sportne.mazegame.input.GameInputRouter;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
@@ -51,24 +54,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Primary text color. */
   private static final Color TEXT = new Color(0.88F, 0.92F, 0.96F, 1.0F);
 
-  /** Environment variable that can point the app at an external asset directory. */
-  private static final String ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE = "MAZE_GAME_ASSETS_DIR";
-
-  /** Asset-relative path for background music. */
-  private static final String BACKGROUND_MUSIC_PATH = "audio/exploreMaze_T1.mp3";
-
-  /** Project-relative fallback for background music when the working directory is not assets/. */
-  private static final String PROJECT_BACKGROUND_MUSIC_PATH = "assets/" + BACKGROUND_MUSIC_PATH;
-
-  /** Asset-relative path for the mouse and cheese sprite sheet. */
-  private static final String SPRITE_SHEET_PATH = "mouse-sprites.png";
-
-  /** Project-relative fallback for the sprite sheet when the working directory is not assets/. */
-  private static final String PROJECT_SPRITE_SHEET_PATH = "assets/" + SPRITE_SHEET_PATH;
-
-  /** Quiet default music volume. */
-  private static final float BACKGROUND_MUSIC_VOLUME = 0.1F;
-
   /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
 
@@ -81,17 +66,14 @@ public final class MazeGame extends ApplicationAdapter {
   /** Optional one-frame screenshot request supplied by the launcher. */
   private final ScreenshotCapture screenshotCapture;
 
-  /** Whether the backend audio system is available for this run. */
-  private final boolean audioAvailable;
-
   /** Hook used by the quit menu action. */
   private final Runnable exitAction;
 
   /** Current mutable gameplay session. */
   private final GameSession session;
 
-  /** Currently playing background music instance. */
-  private Music backgroundMusic;
+  /** Controller for optional background music. */
+  private final BackgroundMusicController backgroundMusicController;
 
   /** Sprite batch used for fonts and sprite sheet regions. */
   private SpriteBatch spriteBatch;
@@ -116,9 +98,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
-
-  /** Whether session audio is currently enabled. */
-  private boolean audioEnabled;
 
   /** Whether the optional screenshot request has already been fulfilled. */
   private boolean screenshotCaptured;
@@ -172,12 +151,13 @@ public final class MazeGame extends ApplicationAdapter {
       ScreenshotCapture screenshotCapture,
       boolean audioAvailable,
       Runnable exitAction) {
-    this.backgroundMusic = backgroundMusic;
     this.screenshotCapture = screenshotCapture;
-    this.audioAvailable = audioAvailable;
-    this.audioEnabled = audioAvailable;
     this.exitAction = Objects.requireNonNull(exitAction, "exitAction");
     this.session = new GameSession();
+    this.backgroundMusicController = new BackgroundMusicController(audioAvailable);
+    if (backgroundMusic != null) {
+      this.backgroundMusicController.adopt(backgroundMusic);
+    }
   }
 
   /** Requests a libGDX application exit when the backend is available. */
@@ -211,7 +191,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return default music asset path
    */
   static String backgroundMusicPath() {
-    return BACKGROUND_MUSIC_PATH;
+    return AssetPaths.backgroundMusicPath();
   }
 
   /**
@@ -222,8 +202,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return absolute, asset-relative, or project-relative path to the music file
    */
   static String backgroundMusicPath(String assetsDirectory, String userDirectory) {
-    return assetPath(
-        assetsDirectory, userDirectory, BACKGROUND_MUSIC_PATH, PROJECT_BACKGROUND_MUSIC_PATH);
+    return AssetPaths.backgroundMusicPath(assetsDirectory, userDirectory);
   }
 
   /**
@@ -232,7 +211,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return default sprite sheet asset path
    */
   static String spriteSheetPath() {
-    return SPRITE_SHEET_PATH;
+    return AssetPaths.spriteSheetPath();
   }
 
   /**
@@ -243,27 +222,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return absolute, asset-relative, or project-relative path to the sprite sheet
    */
   static String spriteSheetPath(String assetsDirectory, String userDirectory) {
-    return assetPath(assetsDirectory, userDirectory, SPRITE_SHEET_PATH, PROJECT_SPRITE_SHEET_PATH);
-  }
-
-  /**
-   * Resolves an asset using the app's environment/working-directory fallback order.
-   *
-   * @param assetsDirectory optional explicit assets directory
-   * @param userDirectory process working directory
-   * @param assetPath path relative to an assets directory
-   * @param projectAssetPath project-relative fallback path
-   * @return path suitable for libGDX file lookup
-   */
-  private static String assetPath(
-      String assetsDirectory, String userDirectory, String assetPath, String projectAssetPath) {
-    if (assetsDirectory != null && !assetsDirectory.isBlank()) {
-      return Path.of(assetsDirectory, assetPath).toString();
-    }
-    if (Files.exists(Path.of(userDirectory, assetPath))) {
-      return assetPath;
-    }
-    return projectAssetPath;
+    return AssetPaths.spriteSheetPath(assetsDirectory, userDirectory);
   }
 
   /**
@@ -272,7 +231,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return volume from 0.0 to 1.0
    */
   static float backgroundMusicVolume() {
-    return BACKGROUND_MUSIC_VOLUME;
+    return BackgroundMusicController.backgroundMusicVolume();
   }
 
   /**
@@ -281,22 +240,13 @@ public final class MazeGame extends ApplicationAdapter {
    * @param music music instance created by libGDX
    */
   static void configureBackgroundMusic(Music music) {
-    music.setLooping(true);
-    music.setVolume(BACKGROUND_MUSIC_VOLUME);
+    BackgroundMusicController.configureBackgroundMusic(music);
   }
 
   /** Creates, configures, and starts background music when audio is available. */
   private void startBackgroundMusic() {
-    if (!audioAvailable) {
-      return;
-    }
-    if (backgroundMusic == null && Gdx.audio != null) {
-      backgroundMusic = Gdx.audio.newMusic(backgroundMusicFile());
-    }
-    if (backgroundMusic != null) {
-      configureBackgroundMusic(backgroundMusic);
-      backgroundMusic.play();
-    }
+    backgroundMusicController.start(
+        () -> Gdx.audio == null ? null : Gdx.audio.newMusic(backgroundMusicFile()));
   }
 
   /** Resets all session state and enters the startup menu. */
@@ -328,12 +278,10 @@ public final class MazeGame extends ApplicationAdapter {
     font.setColor(TEXT);
     spriteSheet = new Texture(spriteSheetFile());
     spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-    cheeseSprite = new TextureRegion(spriteSheet, 1168, 819, 186, 145);
-    mouseSprite = new TextureRegion(spriteSheet, 718, 671, 325, 416);
+    cheeseSprite = MouseSpriteSheet.cheese(spriteSheet);
+    mouseSprite = MouseSpriteSheet.mouse(spriteSheet);
     renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite);
-    if (audioEnabled) {
-      startBackgroundMusic();
-    }
+    startBackgroundMusic();
     Gdx.input.setInputProcessor(new BuildInputProcessor());
   }
 
@@ -369,11 +317,7 @@ public final class MazeGame extends ApplicationAdapter {
     if (Gdx.input != null) {
       Gdx.input.setInputProcessor(null);
     }
-    if (backgroundMusic != null) {
-      backgroundMusic.stop();
-      backgroundMusic.dispose();
-      backgroundMusic = null;
-    }
+    backgroundMusicController.dispose();
     if (font != null) {
       font.dispose();
       font = null;
@@ -447,7 +391,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return true when settings allow music playback
    */
   boolean audioEnabled() {
-    return audioEnabled;
+    return backgroundMusicController.audioEnabled();
   }
 
   /** Opens the level-select menu from the startup menu. */
@@ -467,16 +411,8 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Toggles session audio when the backend audio system is available. */
   void toggleAudio() {
-    if (!audioAvailable) {
-      audioEnabled = false;
-      return;
-    }
-    audioEnabled = !audioEnabled;
-    if (audioEnabled) {
-      startBackgroundMusic();
-    } else if (backgroundMusic != null) {
-      backgroundMusic.stop();
-    }
+    backgroundMusicController.toggle(
+        () -> Gdx.audio == null ? null : Gdx.audio.newMusic(backgroundMusicFile()));
   }
 
   /**
@@ -627,7 +563,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.rejectedPosition(),
         session.rejectedFlashRemainingSeconds(),
         session.mouseRunResult(),
-        audioEnabled,
+        audioEnabled(),
         resultPassed(),
         hasNextLevel());
   }
@@ -662,7 +598,8 @@ public final class MazeGame extends ApplicationAdapter {
   private static FileHandle backgroundMusicFile() {
     String path =
         backgroundMusicPath(
-            System.getenv(ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE), System.getProperty("user.dir"));
+            System.getenv(AssetPaths.ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE),
+            System.getProperty("user.dir"));
     return fileHandle(path);
   }
 
@@ -674,7 +611,8 @@ public final class MazeGame extends ApplicationAdapter {
   private static FileHandle spriteSheetFile() {
     String path =
         spriteSheetPath(
-            System.getenv(ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE), System.getProperty("user.dir"));
+            System.getenv(AssetPaths.ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE),
+            System.getProperty("user.dir"));
     return fileHandle(path);
   }
 

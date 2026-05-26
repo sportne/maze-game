@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
@@ -75,13 +74,13 @@ final class MazeGameTest {
 
   @Test
   void settingsAudioToggleUpdatesSessionStateAndBackReturnsToMenu() {
-    FakeMusic music = new FakeMusic();
+    RecordingMusic music = new RecordingMusic();
     MazeGame game = new MazeGame(music, null, true, () -> {});
 
     game.openSettings();
     game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
     assertFalse(game.audioEnabled());
-    assertTrue(music.stopped);
+    assertTrue(music.stopped());
 
     game.handleScreenClick(110, 720 - 62, Input.Buttons.LEFT, 1280, 720);
     assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
@@ -95,6 +94,25 @@ final class MazeGameTest {
     game.toggleAudio();
 
     assertFalse(game.audioEnabled());
+  }
+
+  @Test
+  void injectedMusicIsNotStartedFromConstructor() {
+    RecordingMusic music = new RecordingMusic();
+
+    new MazeGame(music, null, true, () -> {});
+
+    assertFalse(music.playing());
+  }
+
+  @Test
+  void unavailableAudioStillDisposesInjectedMusic() {
+    RecordingMusic music = new RecordingMusic();
+
+    new MazeGame(music, null, false, () -> {}).dispose();
+
+    assertTrue(music.stopped());
+    assertTrue(music.disposed());
   }
 
   @Test
@@ -179,12 +197,12 @@ final class MazeGameTest {
 
   @Test
   void backgroundMusicUsesQuietLoopingPlayback() {
-    FakeMusic music = new FakeMusic();
+    RecordingMusic music = new RecordingMusic();
 
     MazeGame.configureBackgroundMusic(music);
 
-    assertTrue(music.looping);
-    assertEquals(0.1F, music.volume);
+    assertTrue(music.looping());
+    assertEquals(0.1F, music.volume());
   }
 
   @Test
@@ -432,12 +450,12 @@ final class MazeGameTest {
 
   @Test
   void disposeReleasesBackgroundMusic() {
-    FakeMusic music = new FakeMusic();
+    RecordingMusic music = new RecordingMusic();
 
     new MazeGame(music).dispose();
 
-    assertTrue(music.stopped);
-    assertTrue(music.disposed);
+    assertTrue(music.stopped());
+    assertTrue(music.disposed());
   }
 
   @Test
@@ -453,70 +471,6 @@ final class MazeGameTest {
     MazeGame game = new MazeGame();
     game.startMilestoneOneLevel();
     return game;
-  }
-
-  private static final class FakeMusic implements Music {
-    private boolean disposed;
-    private boolean looping;
-    private boolean stopped;
-    private float volume;
-
-    @Override
-    public void play() {}
-
-    @Override
-    public void pause() {}
-
-    @Override
-    public void stop() {
-      stopped = true;
-    }
-
-    @Override
-    public boolean isPlaying() {
-      return false;
-    }
-
-    @Override
-    public void setLooping(boolean isLooping) {
-      looping = isLooping;
-    }
-
-    @Override
-    public boolean isLooping() {
-      return looping;
-    }
-
-    @Override
-    public void setVolume(float volume) {
-      this.volume = volume;
-    }
-
-    @Override
-    public float getVolume() {
-      return volume;
-    }
-
-    @Override
-    public void setPan(float pan, float volume) {
-      this.volume = volume;
-    }
-
-    @Override
-    public void setPosition(float position) {}
-
-    @Override
-    public float getPosition() {
-      return 0.0F;
-    }
-
-    @Override
-    public void dispose() {
-      disposed = true;
-    }
-
-    @Override
-    public void setOnCompletionListener(OnCompletionListener listener) {}
   }
 
   private static void addVerticalCorridorWalls(MazeGame game) {
