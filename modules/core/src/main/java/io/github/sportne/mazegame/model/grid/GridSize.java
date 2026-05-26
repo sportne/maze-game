@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.grid;
 
 /**
  * Dimensions for a rectangular maze grid.

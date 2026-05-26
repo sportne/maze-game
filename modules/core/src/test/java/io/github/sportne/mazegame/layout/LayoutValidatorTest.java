@@ -3,7 +3,7 @@ package io.github.sportne.mazegame.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.sportne.mazegame.model.GamePhase;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

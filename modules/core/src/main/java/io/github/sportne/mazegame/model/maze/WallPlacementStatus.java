@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.maze;
 
 /**
  * Status for a wall placement attempt.

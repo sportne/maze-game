@@ -4,11 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.LevelDefinition;
-import io.github.sportne.mazegame.model.Levels;
-import io.github.sportne.mazegame.model.MouseRunResult;
-import io.github.sportne.mazegame.model.MouseRunStatus;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 

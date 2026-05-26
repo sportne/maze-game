@@ -1,28 +1,14 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.maze;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import org.junit.jupiter.api.Test;
 
 final class ModelEnumTest {
   @Test
   void wallTypesIncludeNormalWallsOnlyForMilestoneOne() {
     assertArrayEquals(new WallType[] {WallType.NORMAL}, WallType.values());
-  }
-
-  @Test
-  void gamePhasesCoverTheMilestoneOneLoop() {
-    assertArrayEquals(
-        new GamePhase[] {
-          GamePhase.MAIN_MENU,
-          GamePhase.LEVEL_SELECT,
-          GamePhase.SETTINGS,
-          GamePhase.BUILDING,
-          GamePhase.MOUSE_RUNNING,
-          GamePhase.RESULT,
-          GamePhase.REPLAY
-        },
-        GamePhase.values());
   }
 
   @Test

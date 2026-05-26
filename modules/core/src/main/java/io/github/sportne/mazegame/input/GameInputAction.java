@@ -1,6 +1,6 @@
 package io.github.sportne.mazegame.input;
 
-import io.github.sportne.mazegame.model.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridPosition;
 import java.util.Objects;
 
 /**

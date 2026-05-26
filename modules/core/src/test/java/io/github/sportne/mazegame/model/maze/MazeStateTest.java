@@ -1,10 +1,13 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.maze;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;

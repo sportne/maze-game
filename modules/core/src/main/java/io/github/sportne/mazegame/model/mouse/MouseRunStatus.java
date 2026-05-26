@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.mouse;
 
 /**
  * Terminal status for a mouse run.

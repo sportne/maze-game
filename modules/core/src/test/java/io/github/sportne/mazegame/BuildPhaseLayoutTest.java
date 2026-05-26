@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.GridSize;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import org.junit.jupiter.api.Test;
 
 final class BuildPhaseLayoutTest {

@@ -1,5 +1,7 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.level;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 
 /**

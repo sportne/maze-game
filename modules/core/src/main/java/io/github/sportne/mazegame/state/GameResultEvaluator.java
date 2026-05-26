@@ -1,8 +1,7 @@
 package io.github.sportne.mazegame.state;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.LevelDefinition;
-import io.github.sportne.mazegame.model.MouseRunResult;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import java.util.Objects;
 
 /** Evaluates whether a completed mouse run satisfies the level target. */

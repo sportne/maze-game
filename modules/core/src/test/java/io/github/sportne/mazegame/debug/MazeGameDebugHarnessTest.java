@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.Levels;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 

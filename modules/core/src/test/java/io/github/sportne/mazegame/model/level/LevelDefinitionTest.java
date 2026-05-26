@@ -1,8 +1,10 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.level;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 

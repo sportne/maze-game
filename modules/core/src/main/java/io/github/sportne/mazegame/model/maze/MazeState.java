@@ -1,5 +1,7 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.maze;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Objects;

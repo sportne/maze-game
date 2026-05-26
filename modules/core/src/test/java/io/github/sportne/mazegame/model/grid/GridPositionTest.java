@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.grid;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

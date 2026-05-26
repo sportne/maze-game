@@ -1,9 +1,14 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.mouse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.Test;

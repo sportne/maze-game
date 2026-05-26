@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.state;
 
 /**
  * High-level phase for the playable game loop.

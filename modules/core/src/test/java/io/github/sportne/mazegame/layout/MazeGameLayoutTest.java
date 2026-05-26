@@ -3,8 +3,8 @@ package io.github.sportne.mazegame.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridSize;
+import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;

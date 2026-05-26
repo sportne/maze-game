@@ -8,11 +8,11 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
-import io.github.sportne.mazegame.model.CellContent;
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.LevelDefinition;
-import io.github.sportne.mazegame.model.MazeState;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.maze.CellContent;
+import io.github.sportne.mazegame.model.maze.MazeState;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Locale;
 import java.util.Objects;
 

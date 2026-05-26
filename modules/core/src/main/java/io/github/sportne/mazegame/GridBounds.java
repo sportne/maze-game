@@ -1,7 +1,7 @@
 package io.github.sportne.mazegame;
 
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.GridSize;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import java.util.Optional;
 
 /**

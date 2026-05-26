@@ -1,5 +1,7 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.mouse;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;

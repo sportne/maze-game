@@ -3,9 +3,9 @@ package io.github.sportne.mazegame;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.GridSize;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Optional;
 
 /**

@@ -26,6 +26,66 @@ final class ArchitectureRulesTest {
       noClasses().should().resideInAnyPackage("org.example..");
 
   @ArchTest
+  static final ArchRule domainModelDoesNotDependOnAdaptersOrSessionState =
+      noClasses()
+          .that()
+          .resideInAPackage("..model..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.badlogic.gdx..",
+              "..assets..",
+              "..debug..",
+              "..input..",
+              "..layout..",
+              "..lwjgl3..",
+              "..render..",
+              "..state..");
+
+  @ArchTest
+  static final ArchRule gridPrimitivesDoNotDependOnHigherLevelDomainPackages =
+      noClasses()
+          .that()
+          .resideInAPackage("..model.grid..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..model.level..", "..model.maze..", "..model.mouse..");
+
+  @ArchTest
+  static final ArchRule levelDefinitionsDoNotDependOnRuntimeDomainPackages =
+      noClasses()
+          .that()
+          .resideInAPackage("..model.level..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..model.maze..", "..model.mouse..");
+
+  @ArchTest
+  static final ArchRule mazeStateDoesNotDependOnMouseSimulation =
+      noClasses()
+          .that()
+          .resideInAPackage("..model.maze..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..model.mouse..");
+
+  @ArchTest
+  static final ArchRule sessionStateDoesNotDependOnAdapters =
+      noClasses()
+          .that()
+          .resideInAPackage("..state..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.badlogic.gdx..",
+              "..assets..",
+              "..debug..",
+              "..input..",
+              "..layout..",
+              "..lwjgl3..",
+              "..render..");
+
+  @ArchTest
   static final ArchRule publicStaticFieldsAreConstants =
       fields().that().arePublic().and().areStatic().should().beFinal().allowEmptyShould(true);
 

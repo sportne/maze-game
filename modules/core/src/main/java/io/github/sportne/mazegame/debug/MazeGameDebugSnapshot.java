@@ -1,9 +1,9 @@
 package io.github.sportne.mazegame.debug;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.MazeState;
-import io.github.sportne.mazegame.model.MouseRunResult;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.maze.MazeState;
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.state.GamePhase;
 
 /**
  * Immutable view of the game state exposed by the debug harness.

@@ -1,6 +1,6 @@
 package io.github.sportne.mazegame.layout;
 
-import io.github.sportne.mazegame.model.GamePhase;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;

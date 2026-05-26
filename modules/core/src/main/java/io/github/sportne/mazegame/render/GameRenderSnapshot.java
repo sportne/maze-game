@@ -1,10 +1,10 @@
 package io.github.sportne.mazegame.render;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.LevelDefinition;
-import io.github.sportne.mazegame.model.MazeState;
-import io.github.sportne.mazegame.model.MouseRunResult;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.maze.MazeState;
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Objects;
 
 /**

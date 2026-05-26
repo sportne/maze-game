@@ -1,7 +1,7 @@
 package io.github.sportne.mazegame.layout;
 
-import io.github.sportne.mazegame.model.GamePhase;
-import io.github.sportne.mazegame.model.GridSize;
+import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.util.ArrayList;
 import java.util.List;
 

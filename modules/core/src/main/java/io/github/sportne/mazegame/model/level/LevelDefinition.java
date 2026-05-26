@@ -1,5 +1,7 @@
-package io.github.sportne.mazegame.model;
+package io.github.sportne.mazegame.model.level;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -7,7 +9,8 @@ import java.util.Objects;
  * Immutable authoring data for one playable level.
  *
  * <p>A level definition contains the static data shared by maze editing, mouse simulation, and
- * result evaluation. It does not contain player-placed walls; those live in {@link MazeState}.
+ * result evaluation. It does not contain player-placed walls; those live in {@link
+ * io.github.sportne.mazegame.model.maze.MazeState}.
  *
  * @param id stable machine-readable level identifier
  * @param name display name for the level
