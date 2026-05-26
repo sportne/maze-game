@@ -26,19 +26,14 @@ import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.model.GamePhase;
 import io.github.sportne.mazegame.model.GridPosition;
-import io.github.sportne.mazegame.model.LevelDefinition;
-import io.github.sportne.mazegame.model.Levels;
 import io.github.sportne.mazegame.model.MazeState;
 import io.github.sportne.mazegame.model.MouseRunResult;
-import io.github.sportne.mazegame.model.MouseRunStatus;
-import io.github.sportne.mazegame.model.RandomMouseSimulation;
-import io.github.sportne.mazegame.model.WallPlacementResult;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
+import io.github.sportne.mazegame.state.GameSession;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -74,9 +69,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Quiet default music volume. */
   private static final float BACKGROUND_MUSIC_VOLUME = 0.1F;
 
-  /** Duration of rejected-placement visual feedback. */
-  private static final float REJECTED_FLASH_SECONDS = 0.5F;
-
   /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
 
@@ -94,6 +86,9 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Hook used by the quit menu action. */
   private final Runnable exitAction;
+
+  /** Current mutable gameplay session. */
+  private final GameSession session;
 
   /** Currently playing background music instance. */
   private Music backgroundMusic;
@@ -121,33 +116,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
-
-  /** Current level definition. */
-  private LevelDefinition levelDefinition;
-
-  /** Current immutable maze layout. */
-  private MazeState mazeState;
-
-  /** Seconds remaining before the mouse starts automatically. */
-  private float buildTimeRemainingSeconds;
-
-  /** Cell currently flashing as a rejected placement, or null when no flash is active. */
-  private GridPosition rejectedPosition;
-
-  /** Seconds remaining in the rejected-placement flash. */
-  private float rejectedFlashRemainingSeconds;
-
-  /** Whether a run has been requested or auto-started for the current level attempt. */
-  private boolean runRequested;
-
-  /** Active deterministic mouse simulation, or null before a run starts. */
-  private RandomMouseSimulation mouseSimulation;
-
-  /** Latest mouse simulation snapshot, or null before a run starts. */
-  private MouseRunResult mouseRunResult;
-
-  /** Current high-level game phase. */
-  private GamePhase gamePhase;
 
   /** Whether session audio is currently enabled. */
   private boolean audioEnabled;
@@ -209,7 +177,7 @@ public final class MazeGame extends ApplicationAdapter {
     this.audioAvailable = audioAvailable;
     this.audioEnabled = audioAvailable;
     this.exitAction = Objects.requireNonNull(exitAction, "exitAction");
-    initializeMainMenu();
+    this.session = new GameSession();
   }
 
   /** Requests a libGDX application exit when the backend is available. */
@@ -331,36 +299,15 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
-  /**
-   * Resets all model state and enters the startup menu.
-   *
-   * <p>The level model is still initialized so menu rendering, debug snapshots, and tests can read
-   * stable milestone-one defaults before the player starts a level.
-   */
+  /** Resets all session state and enters the startup menu. */
   private void initializeMainMenu() {
-    initializeLevelState(GamePhase.MAIN_MENU);
+    session.initializeMainMenu();
+    screenshotElapsedSeconds = 0.0F;
   }
 
-  /** Resets all model and phase state for a fresh attempt of the first level. */
+  /** Resets all session state for a fresh attempt of the first level. */
   void startMilestoneOneLevel() {
-    initializeLevelState(GamePhase.BUILDING);
-  }
-
-  /**
-   * Resets all model state and moves to the requested phase.
-   *
-   * @param initialPhase phase to enter after resetting level state
-   */
-  private void initializeLevelState(GamePhase initialPhase) {
-    levelDefinition = Levels.milestoneOne();
-    mazeState = MazeState.empty(levelDefinition);
-    buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
-    rejectedPosition = null;
-    rejectedFlashRemainingSeconds = 0.0F;
-    runRequested = false;
-    mouseSimulation = null;
-    mouseRunResult = null;
-    gamePhase = initialPhase;
+    session.startMilestoneOneLevel();
     screenshotElapsedSeconds = 0.0F;
   }
 
@@ -397,7 +344,7 @@ public final class MazeGame extends ApplicationAdapter {
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
-    ScreenLayout layout = screenLayout(gamePhase, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    ScreenLayout layout = screenLayout(gamePhase(), VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     renderer.render(layout, renderSnapshot());
     captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
   }
@@ -455,7 +402,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return true after manual or automatic run start
    */
   boolean runRequested() {
-    return runRequested;
+    return session.runRequested();
   }
 
   /**
@@ -464,7 +411,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return active phase
    */
   GamePhase gamePhase() {
-    return gamePhase;
+    return session.gamePhase();
   }
 
   /**
@@ -473,7 +420,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return current maze
    */
   MazeState mazeState() {
-    return mazeState;
+    return session.mazeState();
   }
 
   /**
@@ -482,7 +429,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return latest run result, or null before the mouse starts
    */
   MouseRunResult mouseRunResult() {
-    return mouseRunResult;
+    return session.mouseRunResult();
   }
 
   /**
@@ -491,7 +438,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return seconds left before automatic run start
    */
   float buildTimeRemainingSeconds() {
-    return buildTimeRemainingSeconds;
+    return session.buildTimeRemainingSeconds();
   }
 
   /**
@@ -505,16 +452,12 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Opens the level-select menu from the startup menu. */
   void openLevelSelect() {
-    if (gamePhase == GamePhase.MAIN_MENU) {
-      gamePhase = GamePhase.LEVEL_SELECT;
-    }
+    session.openLevelSelect();
   }
 
   /** Opens the settings menu from the startup menu. */
   void openSettings() {
-    if (gamePhase == GamePhase.MAIN_MENU) {
-      gamePhase = GamePhase.SETTINGS;
-    }
+    session.openSettings();
   }
 
   /** Returns to the startup menu and clears any in-progress level attempt. */
@@ -542,11 +485,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   void updateGame(float deltaSeconds) {
-    if (gamePhase == GamePhase.BUILDING) {
-      updateBuildTimer(deltaSeconds);
-    } else if (gamePhase == GamePhase.MOUSE_RUNNING || gamePhase == GamePhase.REPLAY) {
-      updateMouseRun(deltaSeconds);
-    }
+    session.updateGame(deltaSeconds);
   }
 
   /**
@@ -555,7 +494,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return rejected cell, or null when no rejection flash is active
    */
   GridPosition rejectedPosition() {
-    return rejectedPosition;
+    return session.rejectedPosition();
   }
 
   /**
@@ -564,32 +503,12 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   void updateBuildTimer(float deltaSeconds) {
-    if (gamePhase != GamePhase.BUILDING) {
-      return;
-    }
-    buildTimeRemainingSeconds = Math.max(0.0F, buildTimeRemainingSeconds - deltaSeconds);
-    if (rejectedFlashRemainingSeconds > 0.0F) {
-      rejectedFlashRemainingSeconds = Math.max(0.0F, rejectedFlashRemainingSeconds - deltaSeconds);
-      if (rejectedFlashRemainingSeconds == 0.0F) {
-        rejectedPosition = null;
-      }
-    }
-    if (buildTimeRemainingSeconds == 0.0F) {
-      startRun();
-    }
+    session.updateBuildTimer(deltaSeconds);
   }
 
   /** Starts the mouse run from the current maze if the player is still building. */
   void startRun() {
-    if (gamePhase != GamePhase.BUILDING) {
-      return;
-    }
-    runRequested = true;
-    gamePhase = GamePhase.MOUSE_RUNNING;
-    rejectedPosition = null;
-    rejectedFlashRemainingSeconds = 0.0F;
-    mouseSimulation = new RandomMouseSimulation(mazeState);
-    mouseRunResult = mouseSimulation.result();
+    session.startRun();
   }
 
   /**
@@ -599,19 +518,10 @@ public final class MazeGame extends ApplicationAdapter {
    * @param button libGDX mouse button code
    */
   void handleGridClick(GridPosition position, int button) {
-    if (gamePhase != GamePhase.BUILDING) {
-      return;
-    }
     if (button == Input.Buttons.LEFT) {
-      WallPlacementResult result = mazeState.placeWall(position);
-      if (result.accepted()) {
-        mazeState = result.mazeState();
-      } else {
-        rejectedPosition = position;
-        rejectedFlashRemainingSeconds = REJECTED_FLASH_SECONDS;
-      }
+      session.placeWall(position);
     } else if (button == Input.Buttons.RIGHT) {
-      mazeState = mazeState.withoutWall(position);
+      session.clearWall(position);
     }
   }
 
@@ -627,10 +537,10 @@ public final class MazeGame extends ApplicationAdapter {
    */
   boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
-    ScreenLayout layout = screenLayout(gamePhase, screenWidth, screenHeight);
+    ScreenLayout layout = screenLayout(gamePhase(), screenWidth, screenHeight);
     GameInputAction action =
         GameInputRouter.route(
-            layout, gamePhase, screenX, screenY, button, levelDefinition.gridSize());
+            layout, gamePhase(), screenX, screenY, button, session.levelDefinition().gridSize());
     applyInputAction(action);
     return action.consumed();
   }
@@ -642,15 +552,15 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private void applyInputAction(GameInputAction action) {
     switch (action.type()) {
-      case OPEN_LEVEL_SELECT -> gamePhase = GamePhase.LEVEL_SELECT;
-      case OPEN_SETTINGS -> gamePhase = GamePhase.SETTINGS;
+      case OPEN_LEVEL_SELECT -> openLevelSelect();
+      case OPEN_SETTINGS -> openSettings();
       case QUIT -> exitAction.run();
-      case BACK_TO_MAIN_MENU -> gamePhase = GamePhase.MAIN_MENU;
+      case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
+      case TOGGLE_AUDIO -> toggleAudio();
       case START_MILESTONE_ONE -> startMilestoneOneLevel();
       case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {
         // Recognized but intentionally state-neutral actions.
       }
-      case TOGGLE_AUDIO -> toggleAudio();
       case START_RUN -> startRun();
       case PLACE_WALL -> handleGridClick(action.position(), Input.Buttons.LEFT);
       case CLEAR_WALL -> handleGridClick(action.position(), Input.Buttons.RIGHT);
@@ -662,18 +572,13 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
-    startMilestoneOneLevel();
+    session.retryLevel();
+    screenshotElapsedSeconds = 0.0F;
   }
 
   /** Replays the completed maze from the same deterministic seed. */
   void replayRun() {
-    if (gamePhase != GamePhase.RESULT) {
-      return;
-    }
-    gamePhase = GamePhase.REPLAY;
-    runRequested = true;
-    mouseSimulation = new RandomMouseSimulation(mazeState);
-    mouseRunResult = mouseSimulation.result();
+    session.replayRun();
   }
 
   /**
@@ -682,10 +587,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return true when result phase is active and elapsed solve time exceeded the target
    */
   boolean resultPassed() {
-    if (gamePhase != GamePhase.RESULT || mouseRunResult == null) {
-      return false;
-    }
-    return mouseRunResult.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0;
+    return session.resultPassed();
   }
 
   /**
@@ -694,7 +596,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @return false for milestone 1 because only one level exists
    */
   boolean hasNextLevel() {
-    return false;
+    return session.hasNextLevel();
   }
 
   /**
@@ -705,7 +607,10 @@ public final class MazeGame extends ApplicationAdapter {
    */
   Color cellColor(GridPosition position) {
     return MazeGameRenderer.cellColor(
-        mazeState, rejectedPosition, rejectedFlashRemainingSeconds, position);
+        session.mazeState(),
+        session.rejectedPosition(),
+        session.rejectedFlashRemainingSeconds(),
+        position);
   }
 
   /**
@@ -715,13 +620,13 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private GameRenderSnapshot renderSnapshot() {
     return new GameRenderSnapshot(
-        gamePhase,
-        levelDefinition,
-        mazeState,
-        buildTimeRemainingSeconds,
-        rejectedPosition,
-        rejectedFlashRemainingSeconds,
-        mouseRunResult,
+        gamePhase(),
+        session.levelDefinition(),
+        session.mazeState(),
+        session.buildTimeRemainingSeconds(),
+        session.rejectedPosition(),
+        session.rejectedFlashRemainingSeconds(),
+        session.mouseRunResult(),
         audioEnabled,
         resultPassed(),
         hasNextLevel());
@@ -736,7 +641,8 @@ public final class MazeGame extends ApplicationAdapter {
    * @return declared screen layout
    */
   private ScreenLayout screenLayout(GamePhase phase, int screenWidth, int screenHeight) {
-    return MazeGameLayout.forPhase(phase, screenWidth, screenHeight, levelDefinition.gridSize());
+    return MazeGameLayout.forPhase(
+        phase, screenWidth, screenHeight, session.levelDefinition().gridSize());
   }
 
   /**
@@ -745,17 +651,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   void updateMouseRun(float deltaSeconds) {
-    if ((gamePhase != GamePhase.MOUSE_RUNNING && gamePhase != GamePhase.REPLAY)
-        || mouseSimulation == null
-        || mouseRunResult == null
-        || mouseRunResult.status() != MouseRunStatus.RUNNING) {
-      return;
-    }
-    long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
-    mouseRunResult = mouseSimulation.update(Duration.ofMillis(deltaMillis));
-    if (mouseRunResult.status() != MouseRunStatus.RUNNING) {
-      gamePhase = GamePhase.RESULT;
-    }
+    session.updateMouseRun(deltaSeconds);
   }
 
   /**
