@@ -52,6 +52,9 @@ public final class MazeGameLayout {
   /** Build start button id. */
   public static final String BUILD_START = "build.start";
 
+  /** Running-phase countdown region id. */
+  public static final String RUN_STATUS = "run.status";
+
   /** Result status region id. */
   public static final String RESULT_STATUS = "result.status";
 
@@ -208,8 +211,13 @@ public final class MazeGameLayout {
 
   private static ScreenLayout running(
       GamePhase phase, int screenWidth, int screenHeight, GridSize gridSize) {
-    return screen(
-        phase, screenWidth, screenHeight, gameplayBase(screenWidth, screenHeight, gridSize));
+    List<LayoutElement> elements = gameplayBase(screenWidth, screenHeight, gridSize);
+    ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
+    elements.add(
+        text(
+            RUN_STATUS,
+            new ScreenRectangle(grid.x(), grid.top() + 10.0F, 260.0F, TEXT_REGION_HEIGHT)));
+    return screen(phase, screenWidth, screenHeight, elements);
   }
 
   private static ScreenLayout result(int screenWidth, int screenHeight, GridSize gridSize) {

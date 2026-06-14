@@ -14,6 +14,7 @@ import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -318,6 +319,9 @@ public final class MazeGameRenderer {
     spriteBatch.begin();
     if (snapshot.phase() == GamePhase.BUILDING) {
       drawBuildText(layout, snapshot);
+    } else if (snapshot.phase() == GamePhase.MOUSE_RUNNING
+        || snapshot.phase() == GamePhase.REPLAY) {
+      drawRunningText(layout, snapshot);
     } else if (snapshot.phase() == GamePhase.RESULT) {
       drawResultText(layout, snapshot);
     }
@@ -341,6 +345,15 @@ public final class MazeGameRenderer {
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
     drawTextInRegion("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START), 44.0F);
+  }
+
+  private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    font.setColor(TEXT);
+    font.draw(
+        spriteBatch,
+        "Run: " + formatSeconds(runTimeRemaining(snapshot)),
+        layout.bounds(MazeGameLayout.RUN_STATUS).x(),
+        textBaseline(layout.bounds(MazeGameLayout.RUN_STATUS)));
   }
 
   private void drawResultText(ScreenLayout layout, GameRenderSnapshot snapshot) {
@@ -396,6 +409,18 @@ public final class MazeGameRenderer {
         "%.2fs  Moves: %d",
         bestResult.elapsedTime().toMillis() / 1000.0F,
         bestResult.moveCount());
+  }
+
+  private static float runTimeRemaining(GameRenderSnapshot snapshot) {
+    Duration elapsed =
+        snapshot.mouseRunResult() == null ? Duration.ZERO : snapshot.mouseRunResult().elapsedTime();
+    long remainingMillis =
+        Math.max(0L, snapshot.levelDefinition().maximumSolveTime().minus(elapsed).toMillis());
+    return remainingMillis / 1000.0F;
+  }
+
+  private static String formatSeconds(float seconds) {
+    return String.format(Locale.ROOT, "%.1fs", seconds);
   }
 
   private static float textBaseline(ScreenRectangle region) {

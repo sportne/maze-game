@@ -165,16 +165,20 @@ final class MazeGameRendererTest {
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, null, null);
+    MouseRunResult running =
+        new MouseRunResult(LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
     MouseRunResult result =
         new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, MouseRunStatus.TIMED_OUT);
 
     renderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
+    renderer.render(layout(GamePhase.MOUSE_RUNNING), snapshot(GamePhase.MOUSE_RUNNING, running));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, result));
 
     assertTrue(font.capturedText().contains("Maze Game"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
     assertTrue(font.capturedText().contains("Left click: wall   Right click: clear"));
     assertTrue(font.capturedText().contains("Start Mouse"));
+    assertTrue(font.capturedText().contains("Run: 7.5s"));
     assertTrue(font.capturedText().contains("Pass"));
     assertTrue(font.capturedText().contains("Time: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));

@@ -92,7 +92,8 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.BUILD_STATUS,
                 MazeGameLayout.BUILD_INSTRUCTIONS,
                 MazeGameLayout.BUILD_START)),
-        Arguments.of(GamePhase.MOUSE_RUNNING, List.of(MazeGameLayout.GAME_GRID)),
+        Arguments.of(
+            GamePhase.MOUSE_RUNNING, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)),
         Arguments.of(
             GamePhase.RESULT,
             List.of(
@@ -104,6 +105,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.RESULT_RETRY,
                 MazeGameLayout.RESULT_REPLAY,
                 MazeGameLayout.RESULT_MAIN_MENU)),
-        Arguments.of(GamePhase.REPLAY, List.of(MazeGameLayout.GAME_GRID)));
+        Arguments.of(
+            GamePhase.REPLAY, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)));
   }
 }
