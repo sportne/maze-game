@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,7 @@ final class MazeGameDebugHarnessTest {
 
     harness.clickStartRun().advance(Duration.ofSeconds(10));
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertEquals(new BestResult(Duration.ofSeconds(10), 40), harness.snapshot().bestResult());
 
     harness.clickReplay();
     assertEquals(GamePhase.REPLAY, harness.snapshot().gamePhase());

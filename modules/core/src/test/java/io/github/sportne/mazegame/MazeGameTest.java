@@ -15,10 +15,14 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -286,6 +290,19 @@ final class MazeGameTest {
   }
 
   @Test
+  void appBoundaryPersistsPassingBestResultThroughInjectedStore() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    MazeGame game = new MazeGame(null, null, true, () -> {}, store);
+
+    game.startMilestoneOneLevel();
+    game.startRun();
+    game.updateMouseRun(10.0F);
+
+    assertEquals(new BestResult(Duration.ofSeconds(10), 40), game.bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
+  }
+
+  @Test
   void updateGameAdvancesMouseRunAfterRunStarts() {
     MazeGame game = startedGame();
 
@@ -484,5 +501,19 @@ final class MazeGameTest {
     game.handleGridClick(new GridPosition(1, 3), Input.Buttons.LEFT);
     game.handleGridClick(new GridPosition(0, 1), Input.Buttons.LEFT);
     game.handleGridClick(new GridPosition(0, 3), Input.Buttons.LEFT);
+  }
+
+  private static final class RecordingBestResultStore implements BestResultStore {
+    private BestResult savedBestResult;
+
+    @Override
+    public Optional<BestResult> load(String levelId) {
+      return Optional.ofNullable(savedBestResult);
+    }
+
+    @Override
+    public void save(String levelId, BestResult bestResult) {
+      savedBestResult = bestResult;
+    }
   }
 }

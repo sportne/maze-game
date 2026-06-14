@@ -48,6 +48,9 @@ Deliver a fully playable desktop level with:
 
 See [Milestone 1 Backlog](milestone-1.md).
 
+Status: complete. The desktop app also includes a startup menu, settings screen, and a level-select
+screen with Milestone 1 enabled and future level slots locked.
+
 ## Deferred Ideas
 
 These are intentionally out of scope for milestone 1, but should remain visible for later planning:
@@ -57,7 +60,7 @@ These are intentionally out of scope for milestone 1, but should remain visible 
 - Additional block types.
 - Additional mouse types.
 - Multiple mice and multiple start locations.
-- Persistent best results between app launches.
+- Persistent best results between app launches for the current authored level.
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and mouse behaviors.
 
@@ -74,4 +77,3 @@ These are intentionally out of scope for milestone 1, but should remain visible 
 - Replay re-runs the same seeded AI from the beginning, producing the same path.
 - A level is passed when the mouse exceeds the target time, whether it eventually reaches the cheese or times out.
 - The next level option only appears when a next level exists.
-

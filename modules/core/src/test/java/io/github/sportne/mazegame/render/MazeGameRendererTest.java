@@ -22,6 +22,7 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -93,6 +94,7 @@ final class MazeGameRendererTest {
     GridPosition rejected = new GridPosition(2, 2);
     MouseRunResult runResult =
         new MouseRunResult(LEVEL.mouseStart(), Duration.ofMillis(250L), 1, MouseRunStatus.RUNNING);
+    BestResult bestResult = new BestResult(Duration.ofSeconds(10L), 40);
 
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
@@ -103,6 +105,7 @@ final class MazeGameRendererTest {
             rejected,
             0.4F,
             runResult,
+            bestResult,
             true,
             false,
             true);
@@ -114,6 +117,7 @@ final class MazeGameRendererTest {
     assertEquals(rejected, snapshot.rejectedPosition());
     assertEquals(0.4F, snapshot.rejectedFlashRemainingSeconds());
     assertEquals(runResult, snapshot.mouseRunResult());
+    assertEquals(bestResult, snapshot.bestResult());
     assertTrue(snapshot.audioEnabled());
     assertTrue(snapshot.hasNextLevel());
   }
@@ -125,7 +129,8 @@ final class MazeGameRendererTest {
     assertThrows(
         NullPointerException.class,
         () ->
-            new GameRenderSnapshot(null, LEVEL, maze, 12.0F, null, 0.0F, null, true, false, false));
+            new GameRenderSnapshot(
+                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, true, false, false));
   }
 
   @Test
@@ -145,6 +150,7 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Quit"));
     assertTrue(font.capturedText().contains("Select Level"));
     assertTrue(font.capturedText().contains("Milestone 1"));
+    assertTrue(font.capturedText().contains("Best: --"));
     assertTrue(font.capturedText().contains("Locked"));
     assertTrue(font.capturedText().contains("Audio: On"));
     assertTrue(shapeRenderer.rects >= 12);
@@ -171,6 +177,7 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Start Mouse"));
     assertTrue(font.capturedText().contains("Pass"));
     assertTrue(font.capturedText().contains("Time: 10.00s  Moves: 40"));
+    assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Retry"));
     assertTrue(font.capturedText().contains("Replay"));
     assertTrue(font.capturedText().contains("Main Menu"));
@@ -198,7 +205,17 @@ final class MazeGameRendererTest {
 
   private static GameRenderSnapshot snapshot(GamePhase phase, MouseRunResult mouseRunResult) {
     return new GameRenderSnapshot(
-        phase, LEVEL, MazeState.empty(LEVEL), 30.0F, null, 0.0F, mouseRunResult, true, true, false);
+        phase,
+        LEVEL,
+        MazeState.empty(LEVEL),
+        30.0F,
+        null,
+        0.0F,
+        mouseRunResult,
+        mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
+        true,
+        true,
+        false);
   }
 
   private static <T> T allocate(Class<T> type) {

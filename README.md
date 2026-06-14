@@ -2,6 +2,9 @@
 
 Small Java/libGDX maze game.
 
+Milestone 1 is complete: the desktop app includes the first playable 5x5 level, menu navigation,
+level selection scaffold, retry/replay, and persistent best results for completed passing runs.
+
 ## Local Commands
 
 - `./gradlew checkAll`

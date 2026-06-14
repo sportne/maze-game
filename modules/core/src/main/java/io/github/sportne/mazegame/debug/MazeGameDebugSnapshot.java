@@ -3,6 +3,7 @@ package io.github.sportne.mazegame.debug;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
 
 /**
@@ -13,6 +14,7 @@ import io.github.sportne.mazegame.state.GamePhase;
  * @param buildTimeRemainingSeconds seconds left in the build phase
  * @param rejectedPosition most recent rejected placement cell, or null when no flash is active
  * @param mouseRunResult current mouse simulation result, or null before a run starts
+ * @param bestResult best saved result for the current level, or null when none exists
  * @param resultPassed true when the last completed run passed the level target
  * @param hasNextLevel true when the result screen can offer another level
  */
@@ -22,5 +24,6 @@ public record MazeGameDebugSnapshot(
     float buildTimeRemainingSeconds,
     GridPosition rejectedPosition,
     MouseRunResult mouseRunResult,
+    BestResult bestResult,
     boolean resultPassed,
     boolean hasNextLevel) {}

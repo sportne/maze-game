@@ -8,6 +8,7 @@ import io.github.sportne.mazegame.model.maze.WallPlacementResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
+import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -18,6 +19,12 @@ public final class GameSession {
 
   /** Current level definition. */
   private LevelDefinition levelDefinition;
+
+  /** Persistence boundary for level best results. */
+  private final BestResultStore bestResultStore;
+
+  /** Best saved result for the current level, or null when none has been saved. */
+  private BestResult bestResult;
 
   /** Current immutable maze layout. */
   private MazeState mazeState;
@@ -45,6 +52,16 @@ public final class GameSession {
 
   /** Creates a session initialized to the startup menu. */
   public GameSession() {
+    this(BestResultStore.none());
+  }
+
+  /**
+   * Creates a session initialized to the startup menu.
+   *
+   * @param bestResultStore persistence boundary for best results
+   */
+  public GameSession(BestResultStore bestResultStore) {
+    this.bestResultStore = Objects.requireNonNull(bestResultStore, "bestResultStore");
     initializeMainMenu();
   }
 
@@ -64,6 +81,15 @@ public final class GameSession {
    */
   public MazeState mazeState() {
     return mazeState;
+  }
+
+  /**
+   * Returns the best saved result for the current level.
+   *
+   * @return best result, or null when none has been saved
+   */
+  public BestResult bestResult() {
+    return bestResult;
   }
 
   /**
@@ -278,10 +304,21 @@ public final class GameSession {
         || mouseRunResult.status() != MouseRunStatus.RUNNING) {
       return;
     }
+    boolean shouldRecordBestResult = gamePhase == GamePhase.MOUSE_RUNNING;
     long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
     mouseRunResult = mouseSimulation.update(Duration.ofMillis(deltaMillis));
     if (mouseRunResult.status() != MouseRunStatus.RUNNING) {
       gamePhase = GamePhase.RESULT;
+      if (shouldRecordBestResult && resultPassed()) {
+        recordBestResult(BestResult.from(mouseRunResult));
+      }
+    }
+  }
+
+  private void recordBestResult(BestResult candidate) {
+    if (candidate.beats(bestResult)) {
+      bestResult = candidate;
+      bestResultStore.save(levelDefinition.id(), candidate);
     }
   }
 
@@ -292,6 +329,7 @@ public final class GameSession {
    */
   private void initializeLevelState(GamePhase initialPhase) {
     levelDefinition = Levels.milestoneOne();
+    bestResult = bestResultStore.load(levelDefinition.id()).orElse(null);
     mazeState = MazeState.empty(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
     rejectedPosition = null;

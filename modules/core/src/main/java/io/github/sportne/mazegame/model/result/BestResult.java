@@ -1,0 +1,59 @@
+package io.github.sportne.mazegame.model.result;
+
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import java.time.Duration;
+import java.util.Objects;
+
+/**
+ * Best saved player result for one level.
+ *
+ * <p>Maze Game rewards making the mouse take longer, so a larger elapsed time is better. Move count
+ * breaks ties in the same direction.
+ *
+ * @param elapsedTime completed mouse run time
+ * @param moveCount completed mouse move count
+ */
+public record BestResult(Duration elapsedTime, int moveCount) {
+  /**
+   * Creates a validated best result.
+   *
+   * @throws IllegalArgumentException when elapsed time or move count is negative
+   */
+  public BestResult {
+    Objects.requireNonNull(elapsedTime, "elapsedTime");
+    if (elapsedTime.isNegative()) {
+      throw new IllegalArgumentException("elapsedTime must not be negative");
+    }
+    if (moveCount < 0) {
+      throw new IllegalArgumentException("moveCount must not be negative");
+    }
+  }
+
+  /**
+   * Creates a best result candidate from a completed mouse run.
+   *
+   * @param mouseRunResult completed run result
+   * @return best result candidate with the same time and move count
+   */
+  public static BestResult from(MouseRunResult mouseRunResult) {
+    Objects.requireNonNull(mouseRunResult, "mouseRunResult");
+    return new BestResult(mouseRunResult.elapsedTime(), mouseRunResult.moveCount());
+  }
+
+  /**
+   * Returns whether this result should replace an existing best result.
+   *
+   * @param currentBest existing best result, or null when none has been saved
+   * @return true when this result is better than the existing result
+   */
+  public boolean beats(BestResult currentBest) {
+    if (currentBest == null) {
+      return true;
+    }
+    int timeComparison = elapsedTime.compareTo(currentBest.elapsedTime);
+    if (timeComparison != 0) {
+      return timeComparison > 0;
+    }
+    return moveCount > currentBest.moveCount;
+  }
+}

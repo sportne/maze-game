@@ -99,6 +99,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.GAME_GRID,
                 MazeGameLayout.RESULT_STATUS,
                 MazeGameLayout.RESULT_STATS,
+                MazeGameLayout.RESULT_BEST,
                 MazeGameLayout.RESULT_NO_NEXT_LEVEL,
                 MazeGameLayout.RESULT_RETRY,
                 MazeGameLayout.RESULT_REPLAY,

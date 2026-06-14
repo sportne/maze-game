@@ -264,6 +264,7 @@ public final class MazeGameDebugHarness {
         game.buildTimeRemainingSeconds(),
         game.rejectedPosition(),
         game.mouseRunResult(),
+        game.bestResult(),
         game.resultPassed(),
         game.hasNextLevel());
   }

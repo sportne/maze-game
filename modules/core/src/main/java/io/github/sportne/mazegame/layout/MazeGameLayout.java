@@ -58,6 +58,9 @@ public final class MazeGameLayout {
   /** Result time/move count region id. */
   public static final String RESULT_STATS = "result.stats";
 
+  /** Result best saved run region id. */
+  public static final String RESULT_BEST = "result.best";
+
   /** Result no-next-level region id. */
   public static final String RESULT_NO_NEXT_LEVEL = "result.no-next-level";
 
@@ -215,10 +218,14 @@ public final class MazeGameLayout {
     elements.add(
         text(
             RESULT_STATUS,
-            new ScreenRectangle(grid.x(), grid.top() + 26.0F, 260.0F, TEXT_REGION_HEIGHT)));
+            new ScreenRectangle(grid.x(), grid.top() + 50.0F, 260.0F, TEXT_REGION_HEIGHT)));
     elements.add(
         text(
             RESULT_STATS,
+            new ScreenRectangle(grid.x(), grid.top() + 26.0F, 360.0F, TEXT_REGION_HEIGHT)));
+    elements.add(
+        text(
+            RESULT_BEST,
             new ScreenRectangle(grid.x(), grid.top() + 2.0F, 360.0F, TEXT_REGION_HEIGHT)));
     elements.add(
         text(

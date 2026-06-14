@@ -33,6 +33,8 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 - `./gradlew :modules:lwjgl3:run` launches the desktop game.
 - `./gradlew nativeImage` can package the desktop executable.
 
+Status: complete.
+
 ## Tasks
 
 ### 1. Game State Model
@@ -103,8 +105,8 @@ Create one complete playable desktop level for the existing Java/libGDX game. Th
 
 ## Later Backlog Parking Lot
 
-- [ ] Add level selection.
-- [ ] Add persistent best results between app launches.
+- [x] Add level selection scaffold.
+- [x] Add persistent best results between app launches.
 - [ ] Add larger grids.
 - [ ] Add special block types.
 - [ ] Add additional mouse types.

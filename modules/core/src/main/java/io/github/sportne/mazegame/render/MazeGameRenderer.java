@@ -12,6 +12,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
+import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Locale;
 import java.util.Objects;
@@ -128,7 +129,7 @@ public final class MazeGameRenderer {
       return;
     }
     if (snapshot.phase() == GamePhase.LEVEL_SELECT) {
-      drawLevelSelect(layout);
+      drawLevelSelect(layout, snapshot.bestResult());
       return;
     }
     if (snapshot.phase() == GamePhase.SETTINGS) {
@@ -160,7 +161,7 @@ public final class MazeGameRenderer {
     spriteBatch.end();
   }
 
-  private void drawLevelSelect(ScreenLayout layout) {
+  private void drawLevelSelect(ScreenLayout layout, BestResult bestResult) {
     for (int index = 0; index < 6; index++) {
       drawButton(layout.bounds(MazeGameLayout.levelCardId(index + 1)));
     }
@@ -174,7 +175,7 @@ public final class MazeGameRenderer {
       ScreenRectangle levelButton = layout.bounds(MazeGameLayout.levelCardId(index + 1));
       font.setColor(index == 0 ? TEXT : PANEL_TEXT);
       String title = index == 0 ? "Milestone 1" : "Level " + (index + 1);
-      String subtitle = index == 0 ? "5x5" : "Locked";
+      String subtitle = index == 0 ? levelSelectBestText(bestResult) : "Locked";
       font.draw(spriteBatch, title, levelButton.x() + 24.0F, levelButton.y() + 56.0F);
       font.draw(spriteBatch, subtitle, levelButton.x() + 24.0F, levelButton.y() + 32.0F);
     }
@@ -358,6 +359,13 @@ public final class MazeGameRenderer {
             + snapshot.mouseRunResult().moveCount(),
         layout.bounds(MazeGameLayout.RESULT_STATS).x(),
         textBaseline(layout.bounds(MazeGameLayout.RESULT_STATS)));
+    font.setColor(PANEL_TEXT);
+    font.draw(
+        spriteBatch,
+        "Best: " + bestResultValueText(snapshot.bestResult()),
+        layout.bounds(MazeGameLayout.RESULT_BEST).x(),
+        textBaseline(layout.bounds(MazeGameLayout.RESULT_BEST)));
+    font.setColor(TEXT);
     drawTextInRegion("Retry", layout.bounds(MazeGameLayout.RESULT_RETRY), 46.0F);
     drawTextInRegion("Replay", layout.bounds(MazeGameLayout.RESULT_REPLAY), 42.0F);
     drawTextInRegion("Main Menu", layout.bounds(MazeGameLayout.RESULT_MAIN_MENU), 38.0F);
@@ -373,6 +381,21 @@ public final class MazeGameRenderer {
 
   private void drawTextInRegion(String text, ScreenRectangle region, float xOffset) {
     font.draw(spriteBatch, text, region.x() + xOffset, textBaseline(region));
+  }
+
+  private static String levelSelectBestText(BestResult bestResult) {
+    return "Best: " + bestResultValueText(bestResult);
+  }
+
+  private static String bestResultValueText(BestResult bestResult) {
+    if (bestResult == null) {
+      return "--";
+    }
+    return String.format(
+        Locale.ROOT,
+        "%.2fs  Moves: %d",
+        bestResult.elapsedTime().toMillis() / 1000.0F,
+        bestResult.moveCount());
   }
 
   private static float textBaseline(ScreenRectangle region) {

@@ -31,8 +31,11 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.persistence.LibGdxBestResultStore;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
+import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
 import java.io.IOException;
@@ -152,9 +155,32 @@ public final class MazeGame extends ApplicationAdapter {
       ScreenshotCapture screenshotCapture,
       boolean audioAvailable,
       Runnable exitAction) {
+    this(
+        backgroundMusic,
+        screenshotCapture,
+        audioAvailable,
+        exitAction,
+        new LibGdxBestResultStore());
+  }
+
+  /**
+   * Creates the game with test/runtime dependencies.
+   *
+   * @param backgroundMusic optional injected music
+   * @param screenshotCapture optional screenshot capture request
+   * @param audioAvailable true when audio can be toggled on
+   * @param exitAction action to invoke for the Quit menu command
+   * @param bestResultStore persistence boundary for level best results
+   */
+  MazeGame(
+      Music backgroundMusic,
+      ScreenshotCapture screenshotCapture,
+      boolean audioAvailable,
+      Runnable exitAction,
+      BestResultStore bestResultStore) {
     this.screenshotCapture = screenshotCapture;
     this.exitAction = Objects.requireNonNull(exitAction, "exitAction");
-    this.session = new GameSession();
+    this.session = new GameSession(bestResultStore);
     this.backgroundMusicController = new BackgroundMusicController(audioAvailable);
     if (backgroundMusic != null) {
       this.backgroundMusicController.adopt(backgroundMusic);
@@ -369,6 +395,15 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
+   * Returns the best saved result for the current level.
+   *
+   * @return best result, or null when none has been saved
+   */
+  public BestResult bestResult() {
+    return session.bestResult();
+  }
+
+  /**
    * Returns the current mouse run snapshot.
    *
    * @return latest run result, or null before the mouse starts
@@ -576,6 +611,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.rejectedPosition(),
         session.rejectedFlashRemainingSeconds(),
         session.mouseRunResult(),
+        session.bestResult(),
         audioEnabled(),
         resultPassed(),
         hasNextLevel());

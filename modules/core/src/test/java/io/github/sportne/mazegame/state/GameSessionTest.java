@@ -10,6 +10,9 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.result.BestResult;
+import java.time.Duration;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 final class GameSessionTest {
@@ -23,6 +26,19 @@ final class GameSessionTest {
     assertEquals(30.0F, session.buildTimeRemainingSeconds());
     assertFalse(session.runRequested());
     assertNull(session.mouseRunResult());
+    assertNull(session.bestResult());
+  }
+
+  @Test
+  void loadsBestResultForCurrentLevel() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    BestResult bestResult = new BestResult(Duration.ofSeconds(10), 40);
+    store.savedBestResult = bestResult;
+
+    GameSession session = new GameSession(store);
+
+    assertEquals(bestResult, session.bestResult());
+    assertEquals(Levels.milestoneOne().id(), store.loadedLevelId);
   }
 
   @Test
@@ -104,6 +120,62 @@ final class GameSessionTest {
   }
 
   @Test
+  void passingNormalRunSavesBestResult() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(store);
+    session.startMilestoneOneLevel();
+
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertEquals(new BestResult(Duration.ofSeconds(10), 40), session.bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
+    assertEquals(1, store.saveCount);
+  }
+
+  @Test
+  void worsePassingRunDoesNotReplaceSavedBestResult() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    store.savedBestResult = new BestResult(Duration.ofSeconds(11), 1);
+    GameSession session = new GameSession(store);
+    session.startMilestoneOneLevel();
+
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertEquals(new BestResult(Duration.ofSeconds(11), 1), session.bestResult());
+    assertEquals(0, store.saveCount);
+  }
+
+  @Test
+  void failedRunDoesNotSaveBestResult() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(store);
+    session.startMilestoneOneLevel();
+    addVerticalCorridorWalls(session);
+
+    session.startRun();
+    session.updateMouseRun(1.0F);
+
+    assertNull(session.bestResult());
+    assertEquals(0, store.saveCount);
+  }
+
+  @Test
+  void replayDoesNotSaveBestResultAgain() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(store);
+    session.startMilestoneOneLevel();
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    session.replayRun();
+    session.updateMouseRun(10.0F);
+
+    assertEquals(1, store.saveCount);
+  }
+
+  @Test
   void retryResetsTheLevel() {
     GameSession session = startedSession();
     GridPosition wall = new GridPosition(2, 2);
@@ -144,5 +216,36 @@ final class GameSessionTest {
     GameSession session = new GameSession();
     session.startMilestoneOneLevel();
     return session;
+  }
+
+  private static void addVerticalCorridorWalls(GameSession session) {
+    session.placeWall(new GridPosition(4, 1));
+    session.placeWall(new GridPosition(4, 3));
+    session.placeWall(new GridPosition(3, 1));
+    session.placeWall(new GridPosition(3, 3));
+    session.placeWall(new GridPosition(2, 1));
+    session.placeWall(new GridPosition(2, 3));
+    session.placeWall(new GridPosition(1, 1));
+    session.placeWall(new GridPosition(1, 3));
+    session.placeWall(new GridPosition(0, 1));
+    session.placeWall(new GridPosition(0, 3));
+  }
+
+  private static final class RecordingBestResultStore implements BestResultStore {
+    private String loadedLevelId;
+    private BestResult savedBestResult;
+    private int saveCount;
+
+    @Override
+    public Optional<BestResult> load(String levelId) {
+      loadedLevelId = levelId;
+      return Optional.ofNullable(savedBestResult);
+    }
+
+    @Override
+    public void save(String levelId, BestResult bestResult) {
+      savedBestResult = bestResult;
+      saveCount++;
+    }
   }
 }
