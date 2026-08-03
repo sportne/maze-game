@@ -115,6 +115,35 @@ final class MazeGameTest {
   }
 
   @Test
+  void gestureGatedAudioStartsOnTheFirstScreenClick() {
+    RecordingMusic music = new RecordingMusic();
+    MazeGameRuntimeConfiguration configuration =
+        new MazeGameRuntimeConfiguration(
+            FileHandle::new, ignoredDelta -> {}, () -> {}, false, true, true);
+    MazeGame game = new MazeGame(music, configuration, new RecordingBestResultStore());
+
+    game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
+
+    assertTrue(music.playing());
+    assertEquals(GamePhase.LEVEL_SELECT, game.gamePhase());
+  }
+
+  @Test
+  void lifecycleCallbacksPauseAndResumePlayingMusic() {
+    RecordingMusic music = new RecordingMusic();
+    MazeGame game =
+        new MazeGame(music, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
+    game.toggleAudio();
+    game.toggleAudio();
+
+    game.pause();
+    assertTrue(music.paused());
+
+    game.resume();
+    assertTrue(music.playing());
+  }
+
+  @Test
   void unavailableAudioStillDisposesInjectedMusic() {
     RecordingMusic music = new RecordingMusic();
 
@@ -137,6 +166,22 @@ final class MazeGameTest {
     game.handleScreenClick(640, 432, Input.Buttons.LEFT, 1280, 720);
 
     assertTrue(exitRequested.get());
+  }
+
+  @Test
+  void unavailableQuitIsAbsentAndCannotRunTheExitHook() {
+    AtomicBoolean exitRequested = new AtomicBoolean(false);
+    MazeGameRuntimeConfiguration configuration =
+        new MazeGameRuntimeConfiguration(
+            FileHandle::new, ignoredDelta -> {}, () -> exitRequested.set(true), false, true, false);
+    MazeGame game = new MazeGame(null, configuration, new RecordingBestResultStore());
+
+    assertFalse(
+        game.debugScreenLayout(GamePhase.MAIN_MENU, 1280, 720)
+            .element(MazeGameLayout.MAIN_MENU_QUIT)
+            .isPresent());
+    assertFalse(game.handleScreenClick(640, 432, Input.Buttons.LEFT, 1280, 720));
+    assertFalse(exitRequested.get());
   }
 
   @Test

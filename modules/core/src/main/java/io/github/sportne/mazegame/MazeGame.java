@@ -96,6 +96,12 @@ public final class MazeGame extends ApplicationAdapter {
   /** Whether primary-pointer grid clicks clear walls instead of placing them. */
   private boolean clearWallMode;
 
+  /** Whether the platform has delivered the gesture required to start browser audio. */
+  private boolean audioGestureReceived;
+
+  /** Whether lifecycle callbacks have paused gameplay updates. */
+  private boolean paused;
+
   /** Creates the game with default platform services. */
   public MazeGame() {
     this(null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
@@ -108,6 +114,17 @@ public final class MazeGame extends ApplicationAdapter {
    */
   public MazeGame(MazeGameRuntimeConfiguration runtimeConfiguration) {
     this(null, runtimeConfiguration, new LibGdxBestResultStore());
+  }
+
+  /**
+   * Creates the game with platform services and a platform-specific best-result store.
+   *
+   * @param runtimeConfiguration platform runtime configuration
+   * @param bestResultStore persistence boundary for level best results
+   */
+  public MazeGame(
+      MazeGameRuntimeConfiguration runtimeConfiguration, BestResultStore bestResultStore) {
+    this(null, runtimeConfiguration, bestResultStore);
   }
 
   /**
@@ -236,7 +253,9 @@ public final class MazeGame extends ApplicationAdapter {
     cheeseSprite = MouseSpriteSheet.cheese(spriteSheet);
     mouseSprite = MouseSpriteSheet.mouse(spriteSheet);
     renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite);
-    startBackgroundMusic();
+    if (!runtimeConfiguration.audioRequiresUserGesture()) {
+      startBackgroundMusic();
+    }
     Gdx.input.setInputProcessor(new BuildInputProcessor());
   }
 
@@ -244,7 +263,9 @@ public final class MazeGame extends ApplicationAdapter {
   @Override
   public void render() {
     float deltaSeconds = Gdx.graphics.getDeltaTime();
-    updateGame(deltaSeconds);
+    if (!paused) {
+      updateGame(deltaSeconds);
+    }
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
@@ -265,6 +286,20 @@ public final class MazeGame extends ApplicationAdapter {
       viewport.update(width, height, true);
       updateProjectionMatrices();
     }
+  }
+
+  /** Pauses gameplay updates and active music while the application is backgrounded. */
+  @Override
+  public void pause() {
+    paused = true;
+    backgroundMusicController.pause();
+  }
+
+  /** Resumes gameplay updates and music that was active before the application paused. */
+  @Override
+  public void resume() {
+    paused = false;
+    backgroundMusicController.resume();
   }
 
   /** Releases libGDX resources and clears the input processor. */
@@ -443,6 +478,7 @@ public final class MazeGame extends ApplicationAdapter {
    */
   public boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
+    activateAudioFromGesture();
     ScreenLayout layout = screenLayout(gamePhase(), screenWidth, screenHeight);
     GameInputAction action =
         GameInputRouter.route(
@@ -565,7 +601,18 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private ScreenLayout screenLayout(GamePhase phase, int screenWidth, int screenHeight) {
     return MazeGameLayout.forPhase(
-        phase, screenWidth, screenHeight, session.levelDefinition().gridSize());
+        phase,
+        screenWidth,
+        screenHeight,
+        session.levelDefinition().gridSize(),
+        runtimeConfiguration.quitAvailable());
+  }
+
+  private void activateAudioFromGesture() {
+    if (runtimeConfiguration.audioRequiresUserGesture() && !audioGestureReceived) {
+      audioGestureReceived = true;
+      startBackgroundMusic();
+    }
   }
 
   /**

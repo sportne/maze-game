@@ -98,6 +98,25 @@ final class BackgroundMusicControllerTest {
   }
 
   @Test
+  void lifecyclePauseResumesOnlyPreviouslyPlayingMusic() {
+    RecordingMusic music = new RecordingMusic();
+    BackgroundMusicController controller = new BackgroundMusicController(true);
+    controller.start(() -> music);
+
+    controller.pause();
+    assertTrue(music.paused());
+    assertFalse(music.playing());
+
+    controller.resume();
+    assertTrue(music.playing());
+
+    controller.toggle(() -> music);
+    controller.pause();
+    controller.resume();
+    assertFalse(music.playing());
+  }
+
+  @Test
   void disposeStopsAndDisposesMusic() {
     RecordingMusic music = new RecordingMusic();
     BackgroundMusicController controller = new BackgroundMusicController(true);

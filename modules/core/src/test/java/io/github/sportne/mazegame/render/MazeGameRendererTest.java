@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -158,6 +159,26 @@ final class MazeGameRendererTest {
     assertTrue(shapeRenderer.rectLines >= 48);
     assertEquals(spriteBatch.beginCount, spriteBatch.endCount);
     assertEquals(shapeRenderer.beginCount, shapeRenderer.endCount);
+  }
+
+  @Test
+  void rendersMainMenuWithoutQuitWhenUnavailable() {
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer =
+        new MazeGameRenderer(
+            allocate(RecordingSpriteBatch.class),
+            allocate(RecordingShapeRenderer.class),
+            font,
+            null,
+            null);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.MAIN_MENU, 1280, 720, LEVEL.gridSize(), false);
+
+    renderer.render(layout, snapshot(GamePhase.MAIN_MENU, null));
+
+    assertTrue(font.capturedText().contains("Start"));
+    assertTrue(font.capturedText().contains("Settings"));
+    assertFalse(font.capturedText().contains("Quit"));
   }
 
   @Test

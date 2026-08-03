@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.grid.GridSize;
@@ -8,6 +9,7 @@ import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -43,6 +45,14 @@ final class MazeGameLayoutTest {
     ScreenLayout layout = MazeGameLayout.forPhase(phase, 1280, 720, GRID_SIZE);
 
     assertEquals(expectedIds, layout.elements().stream().map(LayoutElement::id).toList());
+  }
+
+  @Test
+  void mainMenuOmitsQuitWhenThePlatformCannotExit() {
+    ScreenLayout layout = MazeGameLayout.forPhase(GamePhase.MAIN_MENU, 1280, 720, GRID_SIZE, false);
+
+    assertFalse(layout.element(MazeGameLayout.MAIN_MENU_QUIT).isPresent());
+    assertTrue(LayoutValidator.validate(layout).isEmpty());
   }
 
   private static Stream<Arguments> phaseAndViewportArguments() {

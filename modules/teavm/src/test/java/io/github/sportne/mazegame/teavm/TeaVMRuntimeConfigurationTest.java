@@ -18,7 +18,7 @@ final class TeaVMRuntimeConfigurationTest {
 
     assertSame(expectedAsset, configuration.assetResolver().resolve("mouse-sprites.png"));
     assertFalse(configuration.quitAvailable());
-    assertFalse(configuration.audioAvailable());
+    assertTrue(configuration.audioAvailable());
     assertTrue(configuration.audioRequiresUserGesture());
     assertDoesNotThrow(() -> configuration.afterRenderHook().afterRender(0.25F));
     assertDoesNotThrow(configuration.exitAction()::run);

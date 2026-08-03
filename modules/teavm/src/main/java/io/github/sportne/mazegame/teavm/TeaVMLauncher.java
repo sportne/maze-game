@@ -3,12 +3,16 @@ package io.github.sportne.mazegame.teavm;
 import com.badlogic.gdx.Gdx;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplication;
 import io.github.sportne.mazegame.MazeGame;
+import org.teavm.jso.JSBody;
 import org.teavm.jso.browser.Window;
+import org.teavm.jso.dom.events.Event;
 import org.teavm.jso.dom.html.HTMLDocument;
 import org.teavm.jso.dom.html.HTMLElement;
 
 /** Launches Maze Game in a gdx-teavm browser application. */
 public final class TeaVMLauncher {
+  private static boolean pageHiding;
+
   private TeaVMLauncher() {}
 
   /**
@@ -19,12 +23,15 @@ public final class TeaVMLauncher {
   public static void main(String[] args) {
     configurePage();
     new WebApplication(
-        new MazeGame(TeaVMRuntimeConfiguration.create(assetPath -> Gdx.files.internal(assetPath))),
+        new MazeGame(
+            TeaVMRuntimeConfiguration.create(assetPath -> Gdx.files.internal(assetPath)),
+            TeaVMBestResultStore.create()),
         TeaVMApplicationConfiguration.create());
   }
 
   private static void configurePage() {
     HTMLDocument document = HTMLDocument.current();
+    installPageHideGuard(document);
     HTMLElement viewport = document.createElement("meta");
     viewport.setAttribute("name", "viewport");
     viewport.setAttribute("content", "width=device-width, initial-scale=1");
@@ -50,6 +57,20 @@ public final class TeaVMLauncher {
     updateGuidance(guidance);
     Window.current().addEventListener("resize", event -> updateGuidance(guidance));
   }
+
+  private static void installPageHideGuard(HTMLDocument document) {
+    Window.current().addEventListener("pagehide", event -> pageHiding = true);
+    document.addEventListener(
+        "visibilitychange",
+        event -> {
+          if (pageHiding) {
+            stopImmediatePropagation(event);
+          }
+        });
+  }
+
+  @JSBody(params = "event", script = "event.stopImmediatePropagation();")
+  private static native void stopImmediatePropagation(Event event);
 
   private static void updateGuidance(HTMLElement guidance) {
     Window window = Window.current();

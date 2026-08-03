@@ -76,7 +76,8 @@ public final class GameInputRouter {
     if (contains(layout, MazeGameLayout.MAIN_MENU_SETTINGS, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.OPEN_SETTINGS);
     }
-    if (contains(layout, MazeGameLayout.MAIN_MENU_QUIT, screenX, screenYFromBottom)) {
+    if (layout.element(MazeGameLayout.MAIN_MENU_QUIT).isPresent()
+        && contains(layout, MazeGameLayout.MAIN_MENU_QUIT, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.QUIT);
     }
     return GameInputAction.NONE;

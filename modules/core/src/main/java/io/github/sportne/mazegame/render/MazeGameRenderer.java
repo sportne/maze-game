@@ -148,17 +148,21 @@ public final class MazeGameRenderer {
   private void drawMainMenu(ScreenLayout layout) {
     ScreenRectangle startButton = layout.bounds(MazeGameLayout.MAIN_MENU_START);
     ScreenRectangle settingsButton = layout.bounds(MazeGameLayout.MAIN_MENU_SETTINGS);
-    ScreenRectangle quitButton = layout.bounds(MazeGameLayout.MAIN_MENU_QUIT);
+    boolean quitAvailable = layout.element(MazeGameLayout.MAIN_MENU_QUIT).isPresent();
     drawButton(startButton);
     drawButton(settingsButton);
-    drawButton(quitButton);
+    if (quitAvailable) {
+      drawButton(layout.bounds(MazeGameLayout.MAIN_MENU_QUIT));
+    }
 
     spriteBatch.begin();
     font.setColor(TEXT);
     drawTextInRegion(TITLE, layout.bounds(MazeGameLayout.MAIN_MENU_TITLE), 94.0F);
     drawTextInRegion("Start", startButton, 90.0F);
     drawTextInRegion("Settings", settingsButton, 78.0F);
-    drawTextInRegion("Quit", quitButton, 94.0F);
+    if (quitAvailable) {
+      drawTextInRegion("Quit", layout.bounds(MazeGameLayout.MAIN_MENU_QUIT), 94.0F);
+    }
     spriteBatch.end();
   }
 

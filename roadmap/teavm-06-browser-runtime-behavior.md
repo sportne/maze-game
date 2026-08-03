@@ -1,6 +1,6 @@
 # WEB-06: Harden Browser Audio, Lifecycle, and Persistence
 
-Status: pending
+Status: complete
 
 Depends on: WEB-04
 
@@ -32,3 +32,22 @@ are unavailable.
 - `./gradlew qualityGate`
 - `./gradlew webBuild`
 - Manual normal, private-browsing, storage-disabled, and background-tab checks.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Deferred browser music startup until the first pointer gesture while retaining immediate desktop
+  startup, and paused both gameplay updates and active music across page visibility changes.
+- Removed the unavailable Quit control from browser layout, rendering, and input routing without
+  weakening required-control validation on desktop.
+- Added an atomic browser best-result store that writes one complete result under the stable
+  `maze-game.best-result.` namespace. Browser-side guards make blocked reads and writes harmless,
+  and a regression test verifies a failed improvement cannot erase the prior result.
+- Guarded the gdx-teavm page-hide/visibility event race so reloads dispose cleanly without a console
+  error.
+- Passed `spotlessApply`, the full `qualityGate`, and the optimized `webBuild`.
+- Verified gesture-gated audio, audio pause/resume, gameplay pause/resume, normal and incognito
+  reload persistence, namespace isolation, forced quota failure with prior-result retention, a
+  blocked local-storage getter, and active-audio reload in headless Chromium without page errors.
+- Received approval from both general and simplicity-focused reviewers with no remaining findings.

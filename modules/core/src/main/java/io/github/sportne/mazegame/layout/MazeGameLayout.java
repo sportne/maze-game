@@ -144,8 +144,27 @@ public final class MazeGameLayout {
    */
   public static ScreenLayout forPhase(
       GamePhase phase, int screenWidth, int screenHeight, GridSize gridSize) {
+    return forPhase(phase, screenWidth, screenHeight, gridSize, true);
+  }
+
+  /**
+   * Creates a layout with platform-specific optional controls.
+   *
+   * @param phase game phase to describe
+   * @param screenWidth viewport width in pixels
+   * @param screenHeight viewport height in pixels
+   * @param gridSize current level grid size
+   * @param quitAvailable whether the platform offers a Quit command
+   * @return declared screen layout
+   */
+  public static ScreenLayout forPhase(
+      GamePhase phase,
+      int screenWidth,
+      int screenHeight,
+      GridSize gridSize,
+      boolean quitAvailable) {
     return switch (phase) {
-      case MAIN_MENU -> mainMenu(screenWidth, screenHeight);
+      case MAIN_MENU -> mainMenu(screenWidth, screenHeight, quitAvailable);
       case LEVEL_SELECT -> levelSelect(screenWidth, screenHeight);
       case SETTINGS -> settings(screenWidth, screenHeight);
       case BUILDING -> building(screenWidth, screenHeight, gridSize);
@@ -164,13 +183,15 @@ public final class MazeGameLayout {
     return LEVEL_CARD_PREFIX + levelNumber;
   }
 
-  private static ScreenLayout mainMenu(int screenWidth, int screenHeight) {
+  private static ScreenLayout mainMenu(int screenWidth, int screenHeight, boolean quitAvailable) {
     List<LayoutElement> elements = new ArrayList<>();
     elements.add(
         text(MAIN_MENU_TITLE, centered(screenWidth, screenHeight / 2.0F + 140.0F, 260.0F, 32.0F)));
     elements.add(button(MAIN_MENU_START, menuButton(screenWidth, screenHeight, 0)));
     elements.add(button(MAIN_MENU_SETTINGS, menuButton(screenWidth, screenHeight, 1)));
-    elements.add(button(MAIN_MENU_QUIT, menuButton(screenWidth, screenHeight, 2)));
+    if (quitAvailable) {
+      elements.add(button(MAIN_MENU_QUIT, menuButton(screenWidth, screenHeight, 2)));
+    }
     return screen(GamePhase.MAIN_MENU, screenWidth, screenHeight, elements);
   }
 

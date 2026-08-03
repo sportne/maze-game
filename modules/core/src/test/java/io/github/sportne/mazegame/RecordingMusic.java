@@ -6,6 +6,7 @@ import com.badlogic.gdx.audio.Music;
 public final class RecordingMusic implements Music {
   private boolean disposed;
   private boolean looping;
+  private boolean paused;
   private boolean playing;
   private boolean stopped;
   private float volume;
@@ -25,6 +26,11 @@ public final class RecordingMusic implements Music {
     return playing;
   }
 
+  /** Returns whether pause was called. */
+  public boolean paused() {
+    return paused;
+  }
+
   /** Returns whether stop was called. */
   public boolean stopped() {
     return stopped;
@@ -37,11 +43,15 @@ public final class RecordingMusic implements Music {
 
   @Override
   public void play() {
+    paused = false;
     playing = true;
   }
 
   @Override
-  public void pause() {}
+  public void pause() {
+    paused = true;
+    playing = false;
+  }
 
   @Override
   public void stop() {

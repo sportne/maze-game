@@ -33,6 +33,18 @@ final class GameInputRouterTest {
   }
 
   @Test
+  void missingQuitControlIsNotRouted() {
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.MAIN_MENU, SCREEN_WIDTH, SCREEN_HEIGHT, GRID_SIZE, false);
+
+    GameInputAction action =
+        GameInputRouter.route(
+            layout, GamePhase.MAIN_MENU, SCREEN_WIDTH / 2, 432, Input.Buttons.LEFT, GRID_SIZE);
+
+    assertEquals(GameInputAction.NONE, action);
+  }
+
+  @Test
   void routesLevelSelectButtons() {
     assertEquals(
         GameInputActionType.START_MILESTONE_ONE,

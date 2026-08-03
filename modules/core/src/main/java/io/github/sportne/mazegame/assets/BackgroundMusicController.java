@@ -16,6 +16,9 @@ public final class BackgroundMusicController {
   /** Whether session audio is currently enabled. */
   private boolean audioEnabled;
 
+  /** Whether lifecycle resume should restart music that was playing before pause. */
+  private boolean resumeAfterPause;
+
   /**
    * Creates a controller.
    *
@@ -104,8 +107,25 @@ public final class BackgroundMusicController {
     if (audioEnabled) {
       start(musicLoader);
     } else if (backgroundMusic != null) {
+      resumeAfterPause = false;
       backgroundMusic.stop();
     }
+  }
+
+  /** Pauses active music until the application resumes. */
+  public void pause() {
+    resumeAfterPause = backgroundMusic != null && backgroundMusic.isPlaying();
+    if (resumeAfterPause) {
+      backgroundMusic.pause();
+    }
+  }
+
+  /** Restarts music that was playing when the application paused. */
+  public void resume() {
+    if (resumeAfterPause && audioEnabled && backgroundMusic != null) {
+      backgroundMusic.play();
+    }
+    resumeAfterPause = false;
   }
 
   /** Stops and disposes the current music instance when one exists. */
@@ -115,6 +135,7 @@ public final class BackgroundMusicController {
       backgroundMusic.dispose();
       backgroundMusic = null;
     }
+    resumeAfterPause = false;
   }
 
   /** Loader for lazily creating a libGDX music instance. */
