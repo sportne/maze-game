@@ -12,6 +12,7 @@ import org.teavm.jso.dom.html.HTMLElement;
 /** Launches Maze Game in a gdx-teavm browser application. */
 public final class TeaVMLauncher {
   private static boolean pageHiding;
+  private static boolean loadingStateHidden;
 
   private TeaVMLauncher() {}
 
@@ -22,38 +23,32 @@ public final class TeaVMLauncher {
    */
   public static void main(String[] args) {
     configurePage();
-    new WebApplication(
-        new MazeGame(
-            TeaVMRuntimeConfiguration.create(assetPath -> Gdx.files.internal(assetPath)),
-            TeaVMBestResultStore.create()),
-        TeaVMApplicationConfiguration.create());
+    try {
+      new WebApplication(
+          new MazeGame(
+              TeaVMRuntimeConfiguration.create(
+                  assetPath -> Gdx.files.internal(assetPath), TeaVMLauncher::gameRendered),
+              TeaVMBestResultStore.create()),
+          TeaVMApplicationConfiguration.create()) {
+        @Override
+        protected void onError(Throwable error) {
+          showFailureState();
+          super.onError(error);
+        }
+      };
+    } catch (RuntimeException | Error error) {
+      showFailureState();
+      throw error;
+    }
   }
 
   private static void configurePage() {
     HTMLDocument document = HTMLDocument.current();
     installPageHideGuard(document);
-    HTMLElement viewport = document.createElement("meta");
-    viewport.setAttribute("name", "viewport");
-    viewport.setAttribute("content", "width=device-width, initial-scale=1");
-    document.getHead().appendChild(viewport);
-
     HTMLElement canvas = document.getElementById(TeaVMApplicationConfiguration.CANVAS_ID);
-    canvas.getStyle().setProperty("display", "block");
-    canvas.getStyle().setProperty("touch-action", "none");
     canvas.addEventListener("contextmenu", event -> event.preventDefault());
 
-    HTMLElement guidance = document.createElement("div");
-    guidance.setAttribute("id", "viewport-guidance");
-    guidance.setInnerText(
-        "Maze Game needs a landscape window at least 640 × 360. Rotate or resize to play.");
-    guidance
-        .getStyle()
-        .setCssText(
-            "position:fixed;inset:0;z-index:1;display:flex;align-items:center;"
-                + "justify-content:center;padding:24px;box-sizing:border-box;background:#000;"
-                + "color:#fff;font:20px sans-serif;text-align:center");
-    document.getBody().appendChild(guidance);
-
+    HTMLElement guidance = document.getElementById("viewport-guidance");
     updateGuidance(guidance);
     Window.current().addEventListener("resize", event -> updateGuidance(guidance));
   }
@@ -72,10 +67,27 @@ public final class TeaVMLauncher {
   @JSBody(params = "event", script = "event.stopImmediatePropagation();")
   private static native void stopImmediatePropagation(Event event);
 
+  private static void gameRendered(float ignoredDelta) {
+    if (!loadingStateHidden) {
+      HTMLDocument.current().getElementById("loading-state").setAttribute("hidden", "");
+      loadingStateHidden = true;
+    }
+  }
+
+  private static void showFailureState() {
+    HTMLDocument document = HTMLDocument.current();
+    document.getElementById("loading-state").setAttribute("hidden", "");
+    document.getElementById("failure-state").removeAttribute("hidden");
+  }
+
   private static void updateGuidance(HTMLElement guidance) {
     Window window = Window.current();
     boolean guidanceRequired =
         BrowserViewportPolicy.requiresGuidance(window.getInnerWidth(), window.getInnerHeight());
-    guidance.getStyle().setProperty("display", guidanceRequired ? "flex" : "none");
+    if (guidanceRequired) {
+      guidance.removeAttribute("hidden");
+    } else {
+      guidance.setAttribute("hidden", "");
+    }
   }
 }

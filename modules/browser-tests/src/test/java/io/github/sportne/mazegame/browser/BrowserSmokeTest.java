@@ -36,8 +36,9 @@ final class BrowserSmokeTest {
   private static final int VIEWPORT_WIDTH = 1280;
   private static final int VIEWPORT_HEIGHT = 720;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
+  private static final String APPLICATION_PATH = "/maze-game/";
   private static final Set<String> REQUIRED_ASSETS =
-      Set.of("app.js", "mouse-sprites.png", "exploreMaze_T1.mp3");
+      Set.of("app.js", "styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
 
   @Test
   @Timeout(45)
@@ -74,6 +75,8 @@ final class BrowserSmokeTest {
     page.navigate(applicationUri.toString());
     waitForRenderedControl(page, 640, 280);
     assertCanvas(page);
+    assertTrue(page.locator("#loading-state").isHidden());
+    assertTrue(page.locator("#failure-state").isHidden());
 
     page.mouse().click(640, 280);
     waitForRenderedControl(page, 404, 280);
@@ -229,14 +232,16 @@ final class BrowserSmokeTest {
     }
 
     private URI uri() {
-      return URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/");
+      return URI.create("http://127.0.0.1:" + server.getAddress().getPort() + APPLICATION_PATH);
     }
 
     private void serve(HttpExchange exchange) throws IOException {
       String requestPath = exchange.getRequestURI().getPath();
-      Path requestedFile =
-          root.resolve(requestPath.equals("/") ? "index.html" : requestPath.substring(1))
-              .normalize();
+      String relativePath =
+          requestPath.equals(APPLICATION_PATH)
+              ? "index.html"
+              : requestPath.substring(APPLICATION_PATH.length());
+      Path requestedFile = root.resolve(relativePath).normalize();
       if (!requestedFile.startsWith(root) || !Files.isRegularFile(requestedFile)) {
         exchange.sendResponseHeaders(404, -1);
         exchange.close();
@@ -258,6 +263,12 @@ final class BrowserSmokeTest {
       }
       if (name.endsWith(".js")) {
         return "text/javascript; charset=utf-8";
+      }
+      if (name.endsWith(".css")) {
+        return "text/css; charset=utf-8";
+      }
+      if (name.endsWith(".svg")) {
+        return "image/svg+xml";
       }
       if (name.endsWith(".png")) {
         return "image/png";

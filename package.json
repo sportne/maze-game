@@ -1,0 +1,19 @@
+{
+  "name": "maze-game-web-quality",
+  "private": true,
+  "engines": {
+    "node": ">=18.19.0"
+  },
+  "scripts": {
+    "check:format:web": "prettier --check modules/teavm/src/main/webapp",
+    "format:web": "prettier --write modules/teavm/src/main/webapp",
+    "lint:css": "stylelint modules/teavm/src/main/webapp/styles.css",
+    "lint:html": "html-validate modules/teavm/src/main/webapp/index.html"
+  },
+  "devDependencies": {
+    "html-validate": "9.7.1",
+    "prettier": "3.9.6",
+    "stylelint": "16.12.0",
+    "stylelint-config-standard": "36.0.1"
+  }
+}

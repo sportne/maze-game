@@ -1,6 +1,6 @@
 # WEB-08: Produce a Release-Quality Static Site
 
-Status: pending
+Status: complete
 
 Depends on: WEB-05, WEB-06
 
@@ -36,3 +36,23 @@ Turn the generated TeaVM output into a polished, cache-safe, GitHub Pages-compat
 - `./gradlew webBuild`
 - Browser smoke tests against a `/maze-game/` path prefix.
 - Inspect the final artifact manifest and sizes.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Added a maintained, responsive HTML/CSS shell with accessible loading, startup-failure,
+  unsupported-browser, small-viewport, and no-JavaScript guidance plus a favicon.
+- Added exact-version Prettier, html-validate, and Stylelint tooling with a committed npm lockfile;
+  web formatting and validation now run through `spotlessApply` and `qualityGate`.
+- Assembled the maintained shell after TeaVM generation for both `webBuild` and `webRun`, using only
+  relative URLs and including `.nojekyll` for GitHub Pages.
+- Kept loading visible through asset initialization until the first game frame, and verified that a
+  simulated unavailable WebGL context reveals the failure message instead of a blank canvas.
+- Pruned development metadata, source maps, classes, and source-art formats; verified that the
+  artifact contains no symbolic links.
+- Recorded a sorted artifact manifest with 4,828,502 uncompressed bytes and 3,938,845 aggregate
+  gzip bytes, below the defined 6,500,000 and 4,500,000 byte regression budgets.
+- Passed `spotlessApply`, `qualityGate`, `webBuild`, the `/maze-game/` browser smoke flow, and the
+  development-server task-order check.
+- Received approval from both general and simplicity-focused reviewers with no remaining findings.

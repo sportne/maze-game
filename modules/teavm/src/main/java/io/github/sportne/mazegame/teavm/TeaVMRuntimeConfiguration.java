@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.teavm;
 
+import io.github.sportne.mazegame.runtime.AfterRenderHook;
 import io.github.sportne.mazegame.runtime.AssetResolver;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 
@@ -7,9 +8,10 @@ import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 final class TeaVMRuntimeConfiguration {
   private TeaVMRuntimeConfiguration() {}
 
-  /** Creates the browser runtime configuration with gesture-gated audio and no Quit action. */
-  static MazeGameRuntimeConfiguration create(AssetResolver assetResolver) {
+  /** Creates the browser configuration with a page-state callback after each rendered frame. */
+  static MazeGameRuntimeConfiguration create(
+      AssetResolver assetResolver, AfterRenderHook afterRenderHook) {
     return new MazeGameRuntimeConfiguration(
-        assetResolver, ignoredDelta -> {}, () -> {}, false, true, true);
+        assetResolver, afterRenderHook, () -> {}, false, true, true);
   }
 }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Build a maze and guide the mouse to the cheese in Maze Game."
+    />
+    <title>Maze Game</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="game-shell">
+      <canvas id="canvas">
+        This browser cannot display Maze Game. Try a current browser with WebGL
+        enabled.
+      </canvas>
+      <p id="loading-state" role="status" aria-live="polite">
+        Loading Maze Game…
+      </p>
+      <p id="failure-state" role="alert" hidden>
+        Maze Game could not start. Refresh the page or try a current browser
+        with WebGL enabled.
+      </p>
+      <p id="viewport-guidance" role="status" hidden>
+        Maze Game needs a landscape window at least 640 × 360. Rotate or resize
+        to play.
+      </p>
+      <noscript>Maze Game requires JavaScript to run.</noscript>
+    </main>
+    <script
+      src="./app.js"
+      onload="main()"
+      onerror="
+        document.getElementById('loading-state').hidden = true;
+        document.getElementById('failure-state').hidden = false;
+      "
+    ></script>
+  </body>
+</html>

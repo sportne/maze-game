@@ -27,6 +27,60 @@ tasks.register('qualityGate') {
     dependsOn checkedProjects.collect { "${it}:spotlessCheck" }
     dependsOn tasks.named('pmdCheck')
     dependsOn tasks.named('cpdCheck')
+    dependsOn tasks.named('webFormatCheck')
+    dependsOn tasks.named('webMarkupCheck')
+    dependsOn tasks.named('webStyleCheck')
+}
+
+def webToolSources = files(
+    'modules/teavm/src/main/webapp/index.html',
+    'modules/teavm/src/main/webapp/styles.css',
+    'modules/teavm/src/main/webapp/favicon.svg',
+)
+def npmInstall = tasks.register('npmInstall', Exec) {
+    group = 'build setup'
+    description = 'Installs pinned web quality tools from package-lock.json.'
+    inputs.files 'package.json', 'package-lock.json'
+    outputs.file 'node_modules/.package-lock.json'
+    commandLine 'npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund'
+}
+
+tasks.register('webFormatApply', Exec) {
+    group = 'formatting'
+    description = 'Formats maintained HTML, CSS, and SVG web-shell files.'
+    dependsOn npmInstall
+    inputs.files webToolSources
+    commandLine 'npm', 'run', 'format:web'
+}
+
+tasks.register('webFormatCheck', Exec) {
+    group = 'verification'
+    description = 'Checks maintained web-shell formatting with pinned Prettier.'
+    dependsOn npmInstall
+    inputs.files webToolSources
+    commandLine 'npm', 'run', 'check:format:web'
+}
+
+tasks.register('webMarkupCheck', Exec) {
+    group = 'verification'
+    description = 'Validates maintained HTML with pinned html-validate.'
+    dependsOn npmInstall
+    inputs.files 'modules/teavm/src/main/webapp/index.html', '.htmlvalidate.json'
+    commandLine 'npm', 'run', 'lint:html'
+}
+
+tasks.register('webStyleCheck', Exec) {
+    group = 'verification'
+    description = 'Lints maintained CSS with pinned Stylelint.'
+    dependsOn npmInstall
+    inputs.files 'modules/teavm/src/main/webapp/styles.css', '.stylelintrc.json'
+    commandLine 'npm', 'run', 'lint:css'
+}
+
+tasks.register('spotlessApply') {
+    group = 'formatting'
+    description = 'Applies repository formatting, including maintained web-shell files.'
+    dependsOn tasks.named('webFormatApply')
 }
 
 tasks.register('nativeImage') {
@@ -44,7 +98,7 @@ tasks.register('nativeRun') {
 tasks.register('webBuild') {
     group = 'build'
     description = 'Builds the optimized TeaVM JavaScript web application.'
-    dependsOn ':modules:teavm:gdx_teavm_web_js_build'
+    dependsOn ':modules:teavm:assembleWebSite'
 }
 
 tasks.register('webRun') {

@@ -1,5 +1,7 @@
 import org.teavm.gradle.api.OptimizationLevel
 import org.teavm.gradle.api.SourceFilePolicy
+import java.nio.file.Files
+import java.util.zip.GZIPOutputStream
 
 plugins {
     id 'mazegame.java-conventions'
@@ -22,6 +24,11 @@ def prepareWebAssets = tasks.register('prepareWebAssets', Sync) {
 def cleanWebOutput = tasks.register('cleanWebOutput', Delete) {
     delete layout.buildDirectory.dir('dist/js/webapp')
 }
+def webApplicationDirectory = layout.buildDirectory.dir('dist/js/webapp')
+def webShellDirectory = layout.projectDirectory.dir('src/main/webapp')
+def webArtifactReport = layout.buildDirectory.file('reports/web-artifact/manifest.txt')
+def maximumUncompressedBytes = 6_500_000L
+def maximumCompressedBytes = 4_500_000L
 
 dependencies {
     implementation project(':modules:core')
@@ -29,8 +36,8 @@ dependencies {
     testCompileOnly libs.jetbrains.annotations
 }
 
-// The TeaVM process entry point requires a browser; configuration factories remain covered on JVM.
-def coverageExclusions = ['**/TeaVMLauncher.class']
+// The TeaVM process entry point and its WebApplication error adapter require a browser.
+def coverageExclusions = ['**/TeaVMLauncher*.class']
 
 tasks.named('jacocoTestReport') {
     classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
@@ -59,6 +66,87 @@ tasks.matching { task ->
 tasks.named('generateJavaScript') {
     dependsOn cleanWebOutput
     dependsOn prepareWebAssets
+}
+
+def installWebShell = tasks.register('installWebShell', Copy) {
+    dependsOn tasks.named('generateJavaScript')
+    from webShellDirectory
+    into webApplicationDirectory
+}
+
+def pruneWebArtifact = tasks.register('pruneWebArtifact', Delete) {
+    dependsOn tasks.named('gdx_teavm_web_js_build')
+    dependsOn installWebShell
+    delete webApplicationDirectory.map { directory -> directory.dir('WEB-INF') }
+    delete fileTree(webApplicationDirectory) {
+        include '**/*.map'
+        include '**/*.java'
+        include '**/*.class'
+        include '**/*.xcf'
+        include '**/*.psd'
+        include '**/*.aseprite'
+    }
+}
+
+tasks.matching { task -> task.name == 'gdx_teavm_web_js_run' }.configureEach {
+    dependsOn installWebShell
+}
+
+def verifyWebArtifact = tasks.register('verifyWebArtifact') {
+    group = 'verification'
+    description = 'Verifies and records the production static-site artifact and size budgets.'
+    dependsOn pruneWebArtifact
+    inputs.dir webApplicationDirectory
+    outputs.file webArtifactReport
+    doLast {
+        def root = webApplicationDirectory.get().asFile.toPath()
+        def files = []
+        def paths = Files.walk(root)
+        try {
+            paths.forEach { path ->
+                if (Files.isSymbolicLink(path)) {
+                    throw new GradleException("Web artifact contains symbolic link: ${root.relativize(path)}")
+                }
+                if (Files.isRegularFile(path)) {
+                    files.add(path)
+                }
+            }
+        } finally {
+            paths.close()
+        }
+        files.sort { left, right -> root.relativize(left).toString() <=> root.relativize(right).toString() }
+        long uncompressedBytes = 0L
+        long compressedBytes = 0L
+        def reportLines = []
+        files.each { path ->
+            long fileBytes = Files.size(path)
+            def compressed = new ByteArrayOutputStream()
+            new GZIPOutputStream(compressed).withCloseable { gzip ->
+                Files.copy(path, gzip)
+            }
+            long gzipBytes = compressed.size()
+            uncompressedBytes += fileBytes
+            compressedBytes += gzipBytes
+            reportLines.add("${root.relativize(path)}\t${fileBytes}\t${gzipBytes}")
+        }
+        reportLines.add(0, 'path\tbytes\tgzip-bytes')
+        reportLines.add("TOTAL\t${uncompressedBytes}\t${compressedBytes}")
+        reportLines.add("BUDGET\t${maximumUncompressedBytes}\t${maximumCompressedBytes}")
+        def report = webArtifactReport.get().asFile
+        report.parentFile.mkdirs()
+        report.text = reportLines.join(System.lineSeparator()) + System.lineSeparator()
+        if (uncompressedBytes > maximumUncompressedBytes || compressedBytes > maximumCompressedBytes) {
+            throw new GradleException(
+            "Web artifact exceeds size budget; see ${report.absolutePath}"
+            )
+        }
+    }
+}
+
+tasks.register('assembleWebSite') {
+    group = 'build'
+    description = 'Assembles and verifies the release-quality static website.'
+    dependsOn verifyWebArtifact
 }
 
 gdxTeaVM {

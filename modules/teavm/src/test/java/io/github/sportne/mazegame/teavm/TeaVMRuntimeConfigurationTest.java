@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.files.FileHandle;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 final class TeaVMRuntimeConfigurationTest {
@@ -14,7 +15,7 @@ final class TeaVMRuntimeConfigurationTest {
   void createsBrowserCapabilitiesAroundAssetResolver() {
     FileHandle expectedAsset = new FileHandle("mouse-sprites.png");
     MazeGameRuntimeConfiguration configuration =
-        TeaVMRuntimeConfiguration.create(ignoredPath -> expectedAsset);
+        TeaVMRuntimeConfiguration.create(ignoredPath -> expectedAsset, ignoredDelta -> {});
 
     assertSame(expectedAsset, configuration.assetResolver().resolve("mouse-sprites.png"));
     assertFalse(configuration.quitAvailable());
@@ -22,5 +23,16 @@ final class TeaVMRuntimeConfigurationTest {
     assertTrue(configuration.audioRequiresUserGesture());
     assertDoesNotThrow(() -> configuration.afterRenderHook().afterRender(0.25F));
     assertDoesNotThrow(configuration.exitAction()::run);
+  }
+
+  @Test
+  void acceptsBrowserPageStateAfterRenderHook() {
+    AtomicBoolean rendered = new AtomicBoolean(false);
+    MazeGameRuntimeConfiguration configuration =
+        TeaVMRuntimeConfiguration.create(ignoredPath -> null, ignoredDelta -> rendered.set(true));
+
+    configuration.afterRenderHook().afterRender(0.25F);
+
+    assertTrue(rendered.get());
   }
 }
