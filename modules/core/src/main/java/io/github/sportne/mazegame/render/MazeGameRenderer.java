@@ -345,7 +345,7 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        "Tap/click: selected mode   Right click: clear",
+        "Delay the mouse 5s; keep a path to the cheese",
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
@@ -369,7 +369,7 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
-        snapshot.resultPassed() ? "Pass" : "Fail",
+        snapshot.resultPassed() ? "Success: mouse delayed" : "Failed: cheese reached too soon",
         layout.bounds(MazeGameLayout.RESULT_STATUS).x(),
         textBaseline(layout.bounds(MazeGameLayout.RESULT_STATUS)));
     font.draw(

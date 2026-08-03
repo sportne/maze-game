@@ -192,18 +192,23 @@ final class MazeGameRendererTest {
             LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
     MouseRunResult result =
         new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, MouseRunStatus.TIMED_OUT);
+    MouseRunResult failedResult =
+        new MouseRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(2L), 8, MouseRunStatus.REACHED_CHEESE);
 
     renderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
     renderer.render(layout(GamePhase.MOUSE_RUNNING), snapshot(GamePhase.MOUSE_RUNNING, running));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, result));
+    renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, failedResult));
 
     assertTrue(font.capturedText().contains("Maze Game"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
-    assertTrue(font.capturedText().contains("Tap/click: selected mode   Right click: clear"));
+    assertTrue(font.capturedText().contains("Delay the mouse 5s; keep a path to the cheese"));
     assertTrue(font.capturedText().contains("Mode: Place"));
     assertTrue(font.capturedText().contains("Start Mouse"));
     assertTrue(font.capturedText().contains("Run: 7.5s"));
-    assertTrue(font.capturedText().contains("Pass"));
+    assertTrue(font.capturedText().contains("Success: mouse delayed"));
+    assertTrue(font.capturedText().contains("Failed: cheese reached too soon"));
     assertTrue(font.capturedText().contains("Time: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Retry"));
@@ -232,6 +237,9 @@ final class MazeGameRendererTest {
   }
 
   private static GameRenderSnapshot snapshot(GamePhase phase, MouseRunResult mouseRunResult) {
+    boolean resultPassed =
+        mouseRunResult != null
+            && mouseRunResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0;
     return new GameRenderSnapshot(
         phase,
         LEVEL,
@@ -243,7 +251,7 @@ final class MazeGameRendererTest {
         mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
         true,
         false,
-        true,
+        resultPassed,
         false);
   }
 
