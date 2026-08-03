@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
+import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -50,6 +51,18 @@ final class Lwjgl3LauncherTest {
   @Test
   void audioCanBeDisabledWithLaunchArgument() {
     assertFalse(Lwjgl3Launcher.audioEnabled("--no-audio"));
+  }
+
+  @Test
+  void runtimeConfigurationUsesDesktopCapabilitiesAndOptions() {
+    MazeGameRuntimeConfiguration configuration =
+        Lwjgl3Launcher.runtimeConfiguration("--no-audio", "--screenshot=game.png");
+
+    assertTrue(configuration.assetResolver() instanceof DesktopAssetResolver);
+    assertTrue(configuration.afterRenderHook() instanceof ScreenshotCapture);
+    assertTrue(configuration.quitAvailable());
+    assertFalse(configuration.audioAvailable());
+    assertFalse(configuration.audioRequiresUserGesture());
   }
 
   @Test

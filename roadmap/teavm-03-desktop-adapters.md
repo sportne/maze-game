@@ -1,6 +1,6 @@
 # WEB-03: Isolate Desktop Filesystem and Screenshot Behavior
 
-Status: pending
+Status: complete
 
 Depends on: WEB-02
 
@@ -43,3 +43,23 @@ and command-line screenshots.
 ## Out of Scope
 
 - Browser screenshots or browser download support.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Reduced shared asset paths to browser-safe relative names and moved environment, working
+  directory, existence, and absolute-path handling into `DesktopAssetResolver`.
+- Moved delayed screenshot coordination, directory creation, framebuffer reading, and PNG writing
+  into the LWJGL3 module and connected it through the portable after-render hook.
+- Updated the desktop launcher to inject its resolver, screenshot hook, exit behavior, and audio
+  capability through `MazeGameRuntimeConfiguration`.
+- Applied the standard JaCoCo thresholds to testable LWJGL3 code; only the GraalVM registration
+  package is excluded because it is exercised by the Native Image build rather than the test JVM.
+- Added architecture guards against NIO filesystem access, `java.io.File`, environment-variable
+  reads, and system-property reads outside the desktop adapter boundary.
+- Passed `qualityGate`, `nativeImage`, and a real 640 by 360 LWJGL3 framebuffer screenshot smoke
+  test with audio disabled. The Native Image contains the default bitmap font resource names and
+  both production asset names.
+- Received approval from both general and simplicity-focused reviewers after addressing the
+  architecture review finding.

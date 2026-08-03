@@ -21,18 +21,12 @@ import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 final class MazeGameTest {
-  @TempDir private Path temporaryDirectory;
-
   @Test
   void gameCanBeConstructed() {
     assertNotNull(new MazeGame());
@@ -89,8 +83,7 @@ final class MazeGameTest {
   void settingsAudioToggleUpdatesSessionStateAndBackReturnsToMenu() {
     RecordingMusic music = new RecordingMusic();
     MazeGame game =
-        new MazeGame(
-            music, null, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
+        new MazeGame(music, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
 
     game.openSettings();
     game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
@@ -104,8 +97,7 @@ final class MazeGameTest {
   @Test
   void unavailableAudioStartsOffAndIgnoresToggle() {
     MazeGame game =
-        new MazeGame(
-            null, null, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore());
+        new MazeGame(null, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore());
 
     game.openSettings();
     game.toggleAudio();
@@ -117,7 +109,7 @@ final class MazeGameTest {
   void injectedMusicIsNotStartedFromConstructor() {
     RecordingMusic music = new RecordingMusic();
 
-    new MazeGame(music, null, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
+    new MazeGame(music, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
 
     assertFalse(music.playing());
   }
@@ -126,7 +118,7 @@ final class MazeGameTest {
   void unavailableAudioStillDisposesInjectedMusic() {
     RecordingMusic music = new RecordingMusic();
 
-    new MazeGame(music, null, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore())
+    new MazeGame(music, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore())
         .dispose();
 
     assertTrue(music.stopped());
@@ -138,7 +130,6 @@ final class MazeGameTest {
     AtomicBoolean exitRequested = new AtomicBoolean(false);
     MazeGame game =
         new MazeGame(
-            null,
             null,
             runtimeConfiguration(true, () -> exitRequested.set(true)),
             new RecordingBestResultStore());
@@ -163,7 +154,7 @@ final class MazeGameTest {
             true,
             true,
             false);
-    MazeGame game = new MazeGame(null, null, runtimeConfiguration, new RecordingBestResultStore());
+    MazeGame game = new MazeGame(null, runtimeConfiguration, new RecordingBestResultStore());
 
     game.completeFrame(0.375F);
 
@@ -187,53 +178,8 @@ final class MazeGameTest {
   }
 
   @Test
-  void backgroundMusicPathUsesConfiguredAssetsDirectory() {
-    assertEquals(
-        temporaryDirectory.resolve("audio/exploreMaze_T1.mp3").toString(),
-        MazeGame.backgroundMusicPath(temporaryDirectory.toString(), temporaryDirectory.toString()));
-  }
-
-  @Test
-  void backgroundMusicPathUsesAssetRelativePathFromAssetsWorkingDirectory() throws IOException {
-    Files.createDirectories(temporaryDirectory.resolve("audio"));
-    Files.createFile(temporaryDirectory.resolve("audio/exploreMaze_T1.mp3"));
-
-    assertEquals(
-        "audio/exploreMaze_T1.mp3",
-        MazeGame.backgroundMusicPath(null, temporaryDirectory.toString()));
-  }
-
-  @Test
-  void backgroundMusicPathFallsBackToProjectRelativeAssetsDirectory() {
-    assertEquals(
-        "assets/audio/exploreMaze_T1.mp3",
-        MazeGame.backgroundMusicPath(null, temporaryDirectory.toString()));
-  }
-
-  @Test
   void spriteSheetPathPointsAtTheBundledSheet() {
     assertEquals("mouse-sprites.png", MazeGame.spriteSheetPath());
-  }
-
-  @Test
-  void spriteSheetPathUsesConfiguredAssetsDirectory() {
-    assertEquals(
-        temporaryDirectory.resolve("mouse-sprites.png").toString(),
-        MazeGame.spriteSheetPath(temporaryDirectory.toString(), temporaryDirectory.toString()));
-  }
-
-  @Test
-  void spriteSheetPathUsesAssetRelativePathFromAssetsWorkingDirectory() throws IOException {
-    Files.createFile(temporaryDirectory.resolve("mouse-sprites.png"));
-
-    assertEquals(
-        "mouse-sprites.png", MazeGame.spriteSheetPath(null, temporaryDirectory.toString()));
-  }
-
-  @Test
-  void spriteSheetPathFallsBackToProjectRelativeAssetsDirectory() {
-    assertEquals(
-        "assets/mouse-sprites.png", MazeGame.spriteSheetPath(null, temporaryDirectory.toString()));
   }
 
   @Test
@@ -334,7 +280,7 @@ final class MazeGameTest {
   @Test
   void appBoundaryPersistsPassingBestResultThroughInjectedStore() {
     RecordingBestResultStore store = new RecordingBestResultStore();
-    MazeGame game = new MazeGame(null, null, runtimeConfiguration(true, () -> {}), store);
+    MazeGame game = new MazeGame(null, runtimeConfiguration(true, () -> {}), store);
 
     game.startMilestoneOneLevel();
     game.startRun();

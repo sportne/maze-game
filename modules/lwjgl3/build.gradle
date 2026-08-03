@@ -1,7 +1,23 @@
 plugins {
     id 'mazegame.application-conventions'
     id 'mazegame.quality-conventions'
+    id 'mazegame.coverage-conventions'
     id 'mazegame.native-conventions'
+}
+
+// Native Image registration is exercised by nativeImage rather than the unit-test JVM.
+def coverageExclusions = ['**/nativeimage/**']
+
+tasks.named('jacocoTestReport') {
+    classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
+        exclude coverageExclusions
+    })
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
+        exclude coverageExclusions
+    })
 }
 
 description = 'LWJGL3 desktop launcher for Maze Game.'

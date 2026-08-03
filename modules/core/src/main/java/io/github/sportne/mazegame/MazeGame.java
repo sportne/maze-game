@@ -7,23 +7,18 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.assets.AssetPaths;
 import io.github.sportne.mazegame.assets.BackgroundMusicController;
 import io.github.sportne.mazegame.assets.MouseSpriteSheet;
-import io.github.sportne.mazegame.debug.ScreenshotCapture;
 import io.github.sportne.mazegame.input.GameInputAction;
 import io.github.sportne.mazegame.input.GameInputRouter;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
@@ -39,9 +34,6 @@ import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -49,7 +41,7 @@ import java.util.Objects;
  *
  * <p>This class is the bridge between the immutable core model and the desktop runtime. It owns the
  * current level, maze state, build timer, mouse simulation, simple primitive rendering, sprite
- * rendering, and optional one-frame screenshot capture. The domain rules remain in {@code
+ * rendering, and platform callbacks. The domain rules remain in {@code
  * io.github.sportne.mazegame.model}; this class turns those rules into input handling and drawing.
  */
 public final class MazeGame extends ApplicationAdapter {
@@ -67,9 +59,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Height of the stable virtual coordinate system used for rendering and input. */
   private static final int VIRTUAL_HEIGHT = 720;
-
-  /** Optional one-frame screenshot request supplied by the launcher. */
-  private final ScreenshotCapture screenshotCapture;
 
   /** Platform capabilities and services supplied by the active launcher. */
   private final MazeGameRuntimeConfiguration runtimeConfiguration;
@@ -104,38 +93,9 @@ public final class MazeGame extends ApplicationAdapter {
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
 
-  /** Whether the optional screenshot request has already been fulfilled. */
-  private boolean screenshotCaptured;
-
-  /** Accumulated rendered time used to support delayed screenshot capture. */
-  private float screenshotElapsedSeconds;
-
-  /** Creates the game without screenshot capture. */
+  /** Creates the game with default platform services. */
   public MazeGame() {
-    this(null, null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
-  }
-
-  /**
-   * Creates the game with an optional screenshot request.
-   *
-   * @param screenshotCapture screenshot request to fulfill after rendering, or null
-   */
-  public MazeGame(ScreenshotCapture screenshotCapture) {
-    this(null, screenshotCapture, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
-  }
-
-  /**
-   * Creates the game with an optional screenshot request and audio availability.
-   *
-   * @param screenshotCapture screenshot request to fulfill after rendering, or null
-   * @param audioAvailable true when the backend audio system should be used
-   */
-  public MazeGame(ScreenshotCapture screenshotCapture, boolean audioAvailable) {
-    this(
-        null,
-        screenshotCapture,
-        defaultRuntimeConfiguration(audioAvailable),
-        new LibGdxBestResultStore());
+    this(null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
   }
 
   /**
@@ -144,7 +104,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param runtimeConfiguration platform runtime configuration
    */
   public MazeGame(MazeGameRuntimeConfiguration runtimeConfiguration) {
-    this(null, null, runtimeConfiguration, new LibGdxBestResultStore());
+    this(null, runtimeConfiguration, new LibGdxBestResultStore());
   }
 
   /**
@@ -153,23 +113,20 @@ public final class MazeGame extends ApplicationAdapter {
    * @param backgroundMusic music instance to dispose when the game is disposed
    */
   MazeGame(Music backgroundMusic) {
-    this(backgroundMusic, null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
+    this(backgroundMusic, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
   }
 
   /**
    * Creates the game with test/runtime dependencies.
    *
    * @param backgroundMusic optional injected music
-   * @param screenshotCapture optional screenshot capture request
    * @param runtimeConfiguration platform runtime configuration
    * @param bestResultStore persistence boundary for level best results
    */
   MazeGame(
       Music backgroundMusic,
-      ScreenshotCapture screenshotCapture,
       MazeGameRuntimeConfiguration runtimeConfiguration,
       BestResultStore bestResultStore) {
-    this.screenshotCapture = screenshotCapture;
     this.runtimeConfiguration =
         Objects.requireNonNull(runtimeConfiguration, "runtimeConfiguration");
     this.session = new GameSession(bestResultStore);
@@ -182,17 +139,6 @@ public final class MazeGame extends ApplicationAdapter {
 
   private static MazeGameRuntimeConfiguration defaultRuntimeConfiguration() {
     return MazeGameRuntimeConfiguration.defaults(MazeGame::resolveDefaultAsset);
-  }
-
-  private static MazeGameRuntimeConfiguration defaultRuntimeConfiguration(boolean audioAvailable) {
-    MazeGameRuntimeConfiguration defaults = defaultRuntimeConfiguration();
-    return new MazeGameRuntimeConfiguration(
-        defaults.assetResolver(),
-        defaults.afterRenderHook(),
-        defaults.exitAction(),
-        defaults.quitAvailable(),
-        audioAvailable,
-        defaults.audioRequiresUserGesture());
   }
 
   /**
@@ -223,34 +169,12 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Resolves the background music path for the current runtime environment.
-   *
-   * @param assetsDirectory optional explicit assets directory
-   * @param userDirectory process working directory
-   * @return absolute, asset-relative, or project-relative path to the music file
-   */
-  static String backgroundMusicPath(String assetsDirectory, String userDirectory) {
-    return AssetPaths.backgroundMusicPath(assetsDirectory, userDirectory);
-  }
-
-  /**
    * Returns the asset-relative sprite sheet path.
    *
    * @return default sprite sheet asset path
    */
   static String spriteSheetPath() {
     return AssetPaths.spriteSheetPath();
-  }
-
-  /**
-   * Resolves the sprite sheet path for the current runtime environment.
-   *
-   * @param assetsDirectory optional explicit assets directory
-   * @param userDirectory process working directory
-   * @return absolute, asset-relative, or project-relative path to the sprite sheet
-   */
-  static String spriteSheetPath(String assetsDirectory, String userDirectory) {
-    return AssetPaths.spriteSheetPath(assetsDirectory, userDirectory);
   }
 
   /**
@@ -280,13 +204,11 @@ public final class MazeGame extends ApplicationAdapter {
   /** Resets all session state and enters the startup menu. */
   private void initializeMainMenu() {
     session.initializeMainMenu();
-    screenshotElapsedSeconds = 0.0F;
   }
 
   /** Resets all session state for a fresh attempt of the first level. */
   void startMilestoneOneLevel() {
     session.startMilestoneOneLevel();
-    screenshotElapsedSeconds = 0.0F;
   }
 
   /**
@@ -559,7 +481,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
     session.retryLevel();
-    screenshotElapsedSeconds = 0.0F;
   }
 
   /** Replays the completed maze from the same deterministic seed. */
@@ -660,12 +581,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   private static FileHandle resolveDefaultAsset(String assetPath) {
-    String resolvedPath =
-        AssetPaths.resolve(
-            assetPath,
-            System.getenv(AssetPaths.ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE),
-            System.getProperty("user.dir"));
-    return fileHandle(resolvedPath);
+    return Gdx.files.internal(assetPath);
   }
 
   /**
@@ -674,21 +590,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   void completeFrame(float deltaSeconds) {
-    captureScreenshotIfRequested(deltaSeconds);
     runtimeConfiguration.afterRenderHook().afterRender(deltaSeconds);
-  }
-
-  /**
-   * Converts a path string into the correct libGDX file handle type.
-   *
-   * @param path absolute or internal path
-   * @return absolute handle for absolute paths, internal handle otherwise
-   */
-  private static FileHandle fileHandle(String path) {
-    if (Path.of(path).isAbsolute()) {
-      return Gdx.files.absolute(path);
-    }
-    return Gdx.files.internal(path);
   }
 
   /** Updates renderers to use the viewport camera projection. */
@@ -701,42 +603,6 @@ public final class MazeGame extends ApplicationAdapter {
     }
     if (shapeRenderer != null) {
       shapeRenderer.setProjectionMatrix(viewport.getCamera().combined);
-    }
-  }
-
-  /**
-   * Captures one PNG screenshot after the requested delay has elapsed.
-   *
-   * @param deltaSeconds elapsed frame time in seconds
-   */
-  private void captureScreenshotIfRequested(float deltaSeconds) {
-    if (screenshotCapture == null || screenshotCaptured) {
-      return;
-    }
-    screenshotElapsedSeconds += Math.max(0.0F, deltaSeconds);
-    float captureDelaySeconds = screenshotCapture.delay().toMillis() / 1000.0F;
-    if (screenshotElapsedSeconds < captureDelaySeconds) {
-      return;
-    }
-    screenshotCaptured = true;
-    Path outputPath = screenshotCapture.outputPath().toAbsolutePath();
-    try {
-      Path parent = outputPath.getParent();
-      if (parent != null) {
-        Files.createDirectories(parent);
-      }
-      int width = Gdx.graphics.getWidth();
-      int height = Gdx.graphics.getHeight();
-      byte[] pixels = ScreenUtils.getFrameBufferPixels(0, 0, width, height, true);
-      Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
-      BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-      try {
-        PixmapIO.writePNG(Gdx.files.absolute(outputPath.toString()), pixmap);
-      } finally {
-        pixmap.dispose();
-      }
-    } catch (IOException exception) {
-      throw new GdxRuntimeException("Failed to capture screenshot to " + outputPath, exception);
     }
   }
 

@@ -6,7 +6,8 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3WindowListener;
 import io.github.sportne.mazegame.MazeGame;
-import io.github.sportne.mazegame.debug.ScreenshotCapture;
+import io.github.sportne.mazegame.runtime.AfterRenderHook;
+import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
@@ -62,8 +63,33 @@ public final class Lwjgl3Launcher {
    */
   private static Lwjgl3Application createApplication(String[] args) {
     return new Lwjgl3Application(
-        new MazeGame(screenshotCapture(args).orElse(null), audioEnabled(args)),
-        defaultConfiguration(args));
+        new MazeGame(runtimeConfiguration(args)), defaultConfiguration(args));
+  }
+
+  /**
+   * Creates the portable services backed by the desktop runtime.
+   *
+   * @param args command-line options
+   * @return desktop runtime configuration
+   */
+  static MazeGameRuntimeConfiguration runtimeConfiguration(String... args) {
+    AfterRenderHook afterRenderHook =
+        screenshotCapture(args)
+            .map(capture -> (AfterRenderHook) capture)
+            .orElse(ignoredDelta -> {});
+    return new MazeGameRuntimeConfiguration(
+        new DesktopAssetResolver(),
+        afterRenderHook,
+        Lwjgl3Launcher::requestApplicationExit,
+        true,
+        audioEnabled(args),
+        false);
+  }
+
+  private static void requestApplicationExit() {
+    if (Gdx.app != null) {
+      Gdx.app.exit();
+    }
   }
 
   /**

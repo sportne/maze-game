@@ -25,6 +25,56 @@ final class ArchitectureRulesTest {
               "org.lwjgl..");
 
   @ArchTest
+  static final ArchRule browserReachableCodeDoesNotUseJvmFilesystem =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("java.nio.file..");
+
+  @ArchTest
+  static final ArchRule browserReachableCodeDoesNotUseLegacyJvmFiles =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .dependOnClassesThat()
+          .haveFullyQualifiedName("java.io.File");
+
+  @ArchTest
+  static final ArchRule browserReachableCodeDoesNotReadEnvironmentVariableMap =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .callMethod(System.class, "getenv");
+
+  @ArchTest
+  static final ArchRule browserReachableCodeDoesNotReadEnvironmentVariablesByName =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .callMethod(System.class, "getenv", String.class);
+
+  @ArchTest
+  static final ArchRule browserReachableCodeDoesNotReadSystemProperties =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .callMethod(System.class, "getProperty", String.class);
+
+  @ArchTest
+  static final ArchRule browserReachableCodeDoesNotReadSystemPropertiesWithDefaults =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..lwjgl3..")
+          .should()
+          .callMethod(System.class, "getProperty", String.class, String.class);
+
+  @ArchTest
   static final ArchRule oldGeneratedSamplePackagesAreNotUsed =
       noClasses().should().resideInAnyPackage("org.example..");
 
