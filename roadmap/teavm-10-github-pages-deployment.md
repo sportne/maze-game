@@ -1,6 +1,6 @@
 # WEB-10: Deploy the JavaScript Site to GitHub Pages
 
-Status: pending
+Status: in progress
 
 Depends on: WEB-09
 

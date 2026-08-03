@@ -23,6 +23,16 @@ level selection scaffold, retry/replay, and persistent best results for complete
 `webBuild` produces an optimized static site in `modules/teavm/build/dist/js/webapp`; `webRun`
 starts the development server with source maps and automatic reload enabled.
 
+## GitHub Pages
+
+The `Deploy GitHub Pages` workflow builds and verifies the static site from source before deploying
+the `main` branch to `https://sportne.github.io/maze-game/`. To enable it for the first time, open
+the repository's **Settings > Pages** page and select **GitHub Actions** as the source under **Build
+and deployment**, then run the workflow manually once before relying on automatic deployments.
+The assembled site retains `.nojekyll` for compatibility with branch-based Pages publishing;
+GitHub's Actions-based Pages artifact uploader omits dotfiles and deploys the static files directly
+without a Jekyll build.
+
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
 `-DmazeGame.audio=false`, or `MAZE_GAME_AUDIO=false`.
