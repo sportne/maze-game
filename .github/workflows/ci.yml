@@ -4,9 +4,12 @@ on:
   pull_request:
   push:
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    name: Quality gate and native image
+    name: Quality gate, web artifact, and native image
     runs-on: ubuntu-latest
 
     steps:
@@ -34,8 +37,16 @@ jobs:
       - name: Install Playwright system dependencies
         run: ./gradlew :modules:browser-tests:playwrightInstallDependencies
 
-      - name: Run quality gate and native image build
-        run: ./gradlew qualityGate nativeImage
+      - name: Run quality gate, web build, and native image build
+        run: ./gradlew qualityGate webBuild nativeImage
+
+      - name: Upload static website
+        uses: actions/upload-artifact@v4
+        with:
+          name: maze-game-static-site
+          path: modules/teavm/build/dist/js/webapp
+          if-no-files-found: error
+          include-hidden-files: true
 
       - name: Upload browser smoke-test evidence
         if: failure()
