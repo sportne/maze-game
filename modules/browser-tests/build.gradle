@@ -1,0 +1,39 @@
+plugins {
+    id 'mazegame.java-conventions'
+    id 'mazegame.quality-conventions'
+}
+
+description = 'Browser smoke tests for the optimized TeaVM web application.'
+
+def webApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/js/webapp')
+def smokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke')
+
+dependencies {
+    testImplementation libs.playwright
+}
+
+def playwrightInstall = tasks.register('playwrightInstall', JavaExec) {
+    group = 'verification'
+    description = 'Installs the Chromium headless shell pinned by the Playwright dependency.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', '--only-shell', 'chromium'
+}
+
+tasks.register('playwrightInstallDependencies', JavaExec) {
+    group = 'verification'
+    description = 'Installs Linux system dependencies required by Playwright Chromium.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install-deps', 'chromium'
+}
+
+tasks.named('test') {
+    dependsOn rootProject.tasks.named('webBuild')
+    dependsOn playwrightInstall
+    inputs.dir webApplicationDirectory
+    environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
+    systemProperty 'mazeGame.webAppDirectory', webApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.browserSmokeReportDirectory',
+            smokeReportDirectory.get().asFile.absolutePath
+}

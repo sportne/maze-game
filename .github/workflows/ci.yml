@@ -25,5 +25,22 @@ jobs:
       - name: Fetch PMD submodule tags
         run: git -C tools/pmd fetch --tags --force origin
 
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Install Playwright system dependencies
+        run: ./gradlew :modules:browser-tests:playwrightInstallDependencies
+
       - name: Run quality gate and native image build
         run: ./gradlew qualityGate nativeImage
+
+      - name: Upload browser smoke-test evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-evidence
+          path: modules/browser-tests/build/reports/browser-smoke
+          if-no-files-found: ignore

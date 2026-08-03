@@ -11,6 +11,7 @@ def checkedProjects = [
     ':modules:lwjgl3',
     ':modules:teavm',
     ':modules:architecture-tests',
+    ':modules:browser-tests',
 ]
 
 tasks.register('checkAll') {
@@ -50,4 +51,10 @@ tasks.register('webRun') {
     group = 'application'
     description = 'Runs the TeaVM JavaScript development server.'
     dependsOn ':modules:teavm:gdx_teavm_web_js_run'
+}
+
+tasks.register('browserSmokeTest') {
+    group = 'verification'
+    description = 'Runs browser smoke tests against the optimized TeaVM web application.'
+    dependsOn ':modules:browser-tests:test'
 }

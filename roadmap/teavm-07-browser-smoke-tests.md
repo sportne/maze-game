@@ -1,6 +1,6 @@
 # WEB-07: Add Automated Browser Smoke Coverage
 
-Status: pending
+Status: complete
 
 Depends on: WEB-05, WEB-06
 
@@ -36,3 +36,24 @@ Catch failures that JVM unit tests and successful TeaVM compilation cannot detec
 - `./gradlew qualityGate`
 - `./gradlew webBuild`
 - Run the browser smoke suite twice from a clean browser profile.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Added a Java Playwright smoke-test module that installs a pinned Chromium headless shell, serves
+  the optimized TeaVM artifact over an embedded loopback HTTP server, and runs inside the existing
+  Java formatting and static-analysis conventions.
+- Automated release-artifact startup, canvas rendering, Milestone 1 navigation, wall placement and
+  clearing, mouse start, result persistence, reload, and saved-result availability without
+  duplicating deterministic maze-model assertions.
+- Made the suite fail on page or console errors, failed requests, HTTP errors, missing required
+  assets, and absent or non-rendering canvas output.
+- Captured a live-page screenshot and browser error log on failure, uploaded that evidence from
+  failed CI runs, and verified the evidence path by intentionally withholding the generated script.
+- Added a Playwright browser cache keyed by the pinned dependency catalog and a separate Linux
+  system-dependency installation step for CI.
+- Included the smoke module in `qualityGate` and added the `browserSmokeTest` convenience task.
+- Passed `spotlessApply`, `qualityGate`, `webBuild`, PMD, CPD, Checkstyle, SpotBugs, and two forced
+  smoke-suite executions using fresh browser contexts.
+- Received approval from both general and simplicity-focused reviewers with no remaining findings.

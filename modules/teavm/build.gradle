@@ -26,6 +26,7 @@ def cleanWebOutput = tasks.register('cleanWebOutput', Delete) {
 dependencies {
     implementation project(':modules:core')
     compileOnly libs.jetbrains.annotations
+    testCompileOnly libs.jetbrains.annotations
 }
 
 // The TeaVM process entry point requires a browser; configuration factories remain covered on JVM.
