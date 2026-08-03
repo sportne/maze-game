@@ -8,4 +8,5 @@ description = 'Repository-wide architecture tests for Maze Game.'
 dependencies {
     testImplementation project(':modules:core')
     testImplementation project(':modules:lwjgl3')
+    testImplementation project(':modules:teavm')
 }

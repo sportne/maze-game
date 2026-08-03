@@ -1,6 +1,6 @@
 # WEB-04: Add the TeaVM JavaScript Module
 
-Status: pending
+Status: complete
 
 Depends on: WEB-03
 
@@ -43,3 +43,24 @@ Produce the first playable static JavaScript build from a dedicated browser laun
 
 - Production Pages deployment.
 - WebAssembly output.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Replaced the isolated toolchain probe with a production `TeaVMLauncher` that starts `MazeGame`
+  in a full-window `WebApplication` canvas.
+- Added JVM-tested browser backend and runtime configuration factories with a stable
+  `maze-game_` storage prefix and browser capability values.
+- Added `webBuild` and `webRun`; development runs use source maps and unobfuscated output, while
+  release builds use aggressive optimization, obfuscation, and no debug artifacts.
+- Staged only `mouse-sprites.png` and `audio/exploreMaze_T1.mp3` from project assets so their
+  relative paths are preserved and the XCF source is excluded. Release output is cleaned before
+  generation to prevent stale development files.
+- Applied JaCoCo to the TeaVM module with only the browser process entry point excluded, and added
+  the TeaVM production classes to repository architecture analysis.
+- Passed `qualityGate`, optimized `webBuild`, and `nativeImage`.
+- Verified the development server in headless Chromium: the 1280 by 720 canvas rendered and
+  navigation from the main menu through level selection into Milestone 1 produced no page,
+  console, asset, or HTTP errors.
+- Received approval from both general and simplicity-focused reviewers with no remaining findings.

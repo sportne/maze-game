@@ -39,3 +39,15 @@ tasks.register('nativeRun') {
     description = 'Runs the GraalVM Native Image desktop executable.'
     dependsOn ':modules:lwjgl3:nativeRun'
 }
+
+tasks.register('webBuild') {
+    group = 'build'
+    description = 'Builds the optimized TeaVM JavaScript web application.'
+    dependsOn ':modules:teavm:gdx_teavm_web_js_build'
+}
+
+tasks.register('webRun') {
+    group = 'application'
+    description = 'Runs the TeaVM JavaScript development server.'
+    dependsOn ':modules:teavm:gdx_teavm_web_js_run'
+}

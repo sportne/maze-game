@@ -1,14 +1,46 @@
+import org.teavm.gradle.api.OptimizationLevel
+import org.teavm.gradle.api.SourceFilePolicy
+
 plugins {
     id 'mazegame.java-conventions'
     id 'mazegame.quality-conventions'
+    id 'mazegame.coverage-conventions'
     alias(libs.plugins.gdx.teavm)
 }
 
 description = 'TeaVM browser launcher for Maze Game.'
 
+def webAssetsDirectory = layout.buildDirectory.dir('generated/web-assets')
+def prepareWebAssets = tasks.register('prepareWebAssets', Sync) {
+    from(rootProject.file('assets')) {
+        include 'mouse-sprites.png'
+        include 'audio/exploreMaze_T1.mp3'
+    }
+    into webAssetsDirectory
+}
+
+def cleanWebOutput = tasks.register('cleanWebOutput', Delete) {
+    delete layout.buildDirectory.dir('dist/js/webapp')
+}
+
 dependencies {
-    implementation libs.gdx.core
+    implementation project(':modules:core')
     compileOnly libs.jetbrains.annotations
+}
+
+// The TeaVM process entry point requires a browser; configuration factories remain covered on JVM.
+def coverageExclusions = ['**/TeaVMLauncher.class']
+
+tasks.named('jacocoTestReport') {
+    classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
+        exclude coverageExclusions
+    })
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
+        exclude coverageExclusions
+    })
 }
 
 configurations.named('annotationProcessor') {
@@ -23,16 +55,31 @@ tasks.matching { task ->
             )
 }
 
+tasks.named('generateJavaScript') {
+    dependsOn cleanWebOutput
+    dependsOn prepareWebAssets
+}
+
 gdxTeaVM {
+    assets.from(webAssetsDirectory)
+
     js {
-        mainClass.set('io.github.sportne.mazegame.teavm.TeaVMToolchainProbeLauncher')
-        htmlTitle.set('Maze Game TeaVM Toolchain Probe')
-        htmlWidth.set(320)
-        htmlHeight.set(180)
+        mainClass.set('io.github.sportne.mazegame.teavm.TeaVMLauncher')
+        htmlTitle.set('Maze Game')
+        htmlWidth.set(1280)
+        htmlHeight.set(720)
         targetFileName.set('app.js')
-        obfuscated.set(false)
-        debugInformation.set(true)
-        sourceMap.set(true)
+        def developmentRequested = gradle.startParameter.taskNames.any { taskName ->
+            taskName == 'webRun' || taskName.endsWith(':webRun') ||
+                    taskName.endsWith('gdx_teavm_web_js_run')
+        }
+        optimization.set(developmentRequested ? OptimizationLevel.NONE : OptimizationLevel.AGGRESSIVE)
+        obfuscated.set(!developmentRequested)
+        debugInformation.set(developmentRequested)
+        sourceMap.set(developmentRequested)
+        sourceFilePolicy.set(
+                developmentRequested ? SourceFilePolicy.COPY : SourceFilePolicy.DO_NOTHING
+                )
         devServer {
             enabled.set(true)
             autoBuild.set(true)
