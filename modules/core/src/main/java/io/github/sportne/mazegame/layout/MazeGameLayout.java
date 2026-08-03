@@ -52,6 +52,9 @@ public final class MazeGameLayout {
   /** Build start button id. */
   public static final String BUILD_START = "build.start";
 
+  /** Touch-safe wall edit-mode button id. */
+  public static final String BUILD_WALL_MODE = "build.wall-mode";
+
   /** Running-phase countdown region id. */
   public static final String RUN_STATUS = "run.status";
 
@@ -111,6 +114,9 @@ public final class MazeGameLayout {
 
   /** Vertical space between the grid/instructions area and the primary button. */
   private static final float BUILD_BUTTON_GAP = 52.0F;
+
+  /** Horizontal space between build action buttons. */
+  private static final float BUILD_BUTTON_HORIZONTAL_GAP = 16.0F;
 
   /** Horizontal space between result-phase buttons. */
   private static final float RESULT_BUTTON_GAP = 12.0F;
@@ -205,6 +211,8 @@ public final class MazeGameLayout {
         text(
             BUILD_INSTRUCTIONS,
             new ScreenRectangle(grid.x(), grid.y() - 34.0F, 320.0F, TEXT_REGION_HEIGHT)));
+    elements.add(
+        button(BUILD_WALL_MODE, buildActionButton(screenWidth, screenHeight, gridSize, 0)));
     elements.add(button(BUILD_START, buildStartButton(screenWidth, screenHeight, gridSize)));
     return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
   }
@@ -326,10 +334,20 @@ public final class MazeGameLayout {
 
   private static ScreenRectangle buildStartButton(
       int screenWidth, int screenHeight, GridSize gridSize) {
+    return buildActionButton(screenWidth, screenHeight, gridSize, 1);
+  }
+
+  private static ScreenRectangle buildActionButton(
+      int screenWidth, int screenHeight, GridSize gridSize, int index) {
     ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
-    float buttonX = (screenWidth - BUILD_BUTTON_WIDTH) / 2.0F;
+    float totalWidth = 2.0F * BUILD_BUTTON_WIDTH + BUILD_BUTTON_HORIZONTAL_GAP;
+    float buttonX = (screenWidth - totalWidth) / 2.0F;
     float buttonY = Math.max(24.0F, grid.y() - BUILD_BUTTON_GAP - BUILD_BUTTON_HEIGHT);
-    return new ScreenRectangle(buttonX, buttonY, BUILD_BUTTON_WIDTH, BUILD_BUTTON_HEIGHT);
+    return new ScreenRectangle(
+        buttonX + index * (BUILD_BUTTON_WIDTH + BUILD_BUTTON_HORIZONTAL_GAP),
+        buttonY,
+        BUILD_BUTTON_WIDTH,
+        BUILD_BUTTON_HEIGHT);
   }
 
   private static ScreenRectangle resultRetryButton(

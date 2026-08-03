@@ -1,6 +1,6 @@
 # WEB-05: Make Input and Layout Browser-Ready
 
-Status: pending
+Status: complete
 
 Depends on: WEB-04
 
@@ -32,3 +32,20 @@ Provide reliable gameplay across desktop browser sizes and a usable touch intera
 - `./gradlew qualityGate`
 - `./gradlew webBuild`
 - Manual viewport matrix at 1280x720, 1024x768, 390x844, and a high-DPI desktop viewport.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Added a visible Place/Clear wall mode so a primary mouse click or touch can perform either build
+  action, while retaining desktop right-click clearing and resetting the mode for fresh attempts.
+- Added browser page setup for mobile viewport sizing, physical-pixel canvas backing, touch gesture
+  ownership, canvas-scoped context-menu suppression, and resize-aware minimum-viewport guidance.
+- Defined 640x360 landscape as the minimum usable viewport; smaller and portrait windows receive a
+  clear rotate-or-resize message instead of undersized controls.
+- Passed `spotlessApply`, the full `qualityGate`, and the optimized `webBuild`.
+- Verified in headless Chromium at 1280x720, post-resize 1024x768, touch 844x390, portrait 390x844,
+  DPR2 1280x720, and a 125% zoom-equivalent 1024x576 CSS viewport backed by 1280x720 pixels. Wall
+  placement and both clear paths produced the expected pixels with no page, console, asset, or
+  request errors.
+- Received approval from both general and simplicity-focused reviewers with no remaining findings.

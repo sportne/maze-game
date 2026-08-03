@@ -15,6 +15,7 @@ final class TeaVMApplicationConfigurationTest {
     assertEquals(0, configuration.width);
     assertEquals(0, configuration.height);
     assertTrue(configuration.isAutoSizeApplication());
+    assertTrue(configuration.usePhysicalPixels);
     assertEquals("maze-game_", configuration.storagePrefix);
   }
 }

@@ -20,6 +20,7 @@ import java.util.Objects;
  * @param mouseRunResult latest mouse result, or null before a run starts
  * @param bestResult best saved result for the current level, or null when none exists
  * @param audioEnabled whether session audio is enabled
+ * @param clearWallMode whether a primary pointer clears walls during the build phase
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
  */
@@ -33,6 +34,7 @@ public record GameRenderSnapshot(
     MouseRunResult mouseRunResult,
     BestResult bestResult,
     boolean audioEnabled,
+    boolean clearWallMode,
     boolean resultPassed,
     boolean hasNextLevel) {
   /** Creates a render snapshot with required frame state validated. */

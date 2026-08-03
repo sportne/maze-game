@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.state.GamePhase;
 import org.junit.jupiter.api.Test;
 
 final class BuildPhaseLayoutTest {
@@ -38,8 +40,13 @@ final class BuildPhaseLayoutTest {
   @Test
   void startButtonContainsUsesTopLeftInputCoordinates() {
     BuildPhaseLayout layout = BuildPhaseLayout.centered(1280, 720, GridSize.square(5));
+    var button =
+        MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, GridSize.square(5))
+            .bounds(MazeGameLayout.BUILD_START);
+    float centerX = button.x() + button.width() / 2.0F;
+    float centerYFromTop = 720.0F - (button.y() + button.height() / 2.0F);
 
-    assertTrue(layout.startButtonContains(640.0F, 656.5F, 720.0F));
-    assertFalse(layout.startButtonContains(640.0F, 608.0F, 720.0F));
+    assertTrue(layout.startButtonContains(centerX, centerYFromTop, 720.0F));
+    assertFalse(layout.startButtonContains(centerX, centerYFromTop - button.height(), 720.0F));
   }
 }

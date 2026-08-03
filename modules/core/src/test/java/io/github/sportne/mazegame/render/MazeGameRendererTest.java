@@ -108,6 +108,7 @@ final class MazeGameRendererTest {
             bestResult,
             true,
             false,
+            false,
             true);
 
     assertEquals(GamePhase.MOUSE_RUNNING, snapshot.phase());
@@ -130,7 +131,7 @@ final class MazeGameRendererTest {
         NullPointerException.class,
         () ->
             new GameRenderSnapshot(
-                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, true, false, false));
+                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, true, false, false, false));
   }
 
   @Test
@@ -177,7 +178,8 @@ final class MazeGameRendererTest {
 
     assertTrue(font.capturedText().contains("Maze Game"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
-    assertTrue(font.capturedText().contains("Left click: wall   Right click: clear"));
+    assertTrue(font.capturedText().contains("Tap/click: selected mode   Right click: clear"));
+    assertTrue(font.capturedText().contains("Mode: Place"));
     assertTrue(font.capturedText().contains("Start Mouse"));
     assertTrue(font.capturedText().contains("Run: 7.5s"));
     assertTrue(font.capturedText().contains("Pass"));
@@ -219,6 +221,7 @@ final class MazeGameRendererTest {
         mouseRunResult,
         mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
         true,
+        false,
         true,
         false);
   }

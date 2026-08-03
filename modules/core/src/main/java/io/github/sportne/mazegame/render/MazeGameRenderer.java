@@ -295,6 +295,7 @@ public final class MazeGameRenderer {
 
   private void drawControls(ScreenLayout layout, GamePhase phase) {
     if (phase == GamePhase.BUILDING) {
+      drawButton(layout.bounds(MazeGameLayout.BUILD_WALL_MODE));
       drawButton(layout.bounds(MazeGameLayout.BUILD_START));
     } else if (phase == GamePhase.RESULT) {
       drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
@@ -340,10 +341,14 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        "Left click: wall   Right click: clear",
+        "Tap/click: selected mode   Right click: clear",
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
+    drawTextInRegion(
+        snapshot.clearWallMode() ? "Mode: Clear" : "Mode: Place",
+        layout.bounds(MazeGameLayout.BUILD_WALL_MODE),
+        44.0F);
     drawTextInRegion("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START), 44.0F);
   }
 

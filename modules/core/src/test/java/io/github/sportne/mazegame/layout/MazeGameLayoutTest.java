@@ -91,6 +91,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.BUILD_TITLE,
                 MazeGameLayout.BUILD_STATUS,
                 MazeGameLayout.BUILD_INSTRUCTIONS,
+                MazeGameLayout.BUILD_WALL_MODE,
                 MazeGameLayout.BUILD_START)),
         Arguments.of(
             GamePhase.MOUSE_RUNNING, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)),

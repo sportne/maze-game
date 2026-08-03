@@ -58,6 +58,9 @@ final class GameInputRouterTest {
   @Test
   void routesBuildControlsAndGridCells() {
     assertEquals(
+        GameInputActionType.TOGGLE_WALL_MODE,
+        click(GamePhase.BUILDING, MazeGameLayout.BUILD_WALL_MODE).type());
+    assertEquals(
         GameInputActionType.START_RUN,
         click(GamePhase.BUILDING, MazeGameLayout.BUILD_START).type());
 

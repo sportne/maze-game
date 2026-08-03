@@ -51,13 +51,21 @@ public final class GameInputRouter {
       case MAIN_MENU -> routeMainMenu(layout, screenX, screenYFromBottom);
       case LEVEL_SELECT -> routeLevelSelect(layout, screenX, screenYFromBottom);
       case SETTINGS -> routeSettings(layout, screenX, screenYFromBottom);
-      case BUILDING ->
-          contains(layout, MazeGameLayout.BUILD_START, screenX, screenYFromBottom)
-              ? GameInputAction.of(GameInputActionType.START_RUN)
-              : GameInputAction.NONE;
+      case BUILDING -> routeBuildControls(layout, screenX, screenYFromBottom);
       case RESULT -> routeResult(layout, screenX, screenYFromBottom);
       case MOUSE_RUNNING, REPLAY -> GameInputAction.NONE;
     };
+  }
+
+  private static GameInputAction routeBuildControls(
+      ScreenLayout layout, int screenX, float screenYFromBottom) {
+    if (contains(layout, MazeGameLayout.BUILD_WALL_MODE, screenX, screenYFromBottom)) {
+      return GameInputAction.of(GameInputActionType.TOGGLE_WALL_MODE);
+    }
+    if (contains(layout, MazeGameLayout.BUILD_START, screenX, screenYFromBottom)) {
+      return GameInputAction.of(GameInputActionType.START_RUN);
+    }
+    return GameInputAction.NONE;
   }
 
   private static GameInputAction routeMainMenu(
