@@ -42,17 +42,22 @@ The release matrix was run against the live Pages URL on 2026-08-03:
 | Microsoft Edge on Windows | 151.0.4129.59 | Full mouse game flow passed |
 | Firefox engine | 151.0 | Full mouse game flow passed |
 | WebKit compatibility | 26.5 | Full mouse game flow passed |
+| Safari on macOS | 26.5 | Automated branded Safari release flow passed |
 | Chromium touch emulation | 149.0.7827.55 | Full touch game flow passed |
 
 Each passing flow covered cache-busted direct navigation, relative asset loading from
 `/maze-game/`, canvas initialization, audio loading and Web Audio resume after interaction, menu
-and level selection, maze editing, game completion, local persistence, and reload. No page,
-console, request, or HTTP response errors were observed.
+and level selection, maze editing, game completion, local persistence, and reload. The Chrome,
+Edge, Firefox, WebKit, and touch-emulation flows observed no page, console, request, or HTTP
+response errors.
 
-Current macOS Safari could not be exercised directly from the Linux/Windows release environment.
-The matching WebKit compatibility flow passes, but branded Safari support remains provisional
-until a manual macOS Safari run repeats this checklist. This boundary must remain visible in future
-release notes rather than treating WebKit automation as proof of identical Safari behavior.
+The Pages workflow validates every deployment in branded Safari through Apple's `safaridriver` on
+GitHub's `macos-15` runner. The test records the exact browser and platform version with its
+screenshot artifact. It covers the live game loop, required asset HTTP status and MIME types,
+audio loading, runtime errors after initialization, local persistence, and refresh behavior.
+SafariDriver does not expose complete browser-console history, so initialization is additionally
+guarded by the page's visible failure state. Real iPhone or iPad Safari has not been exercised and
+remains an explicit rollout constraint.
 
 ## Browser Data and Audio
 

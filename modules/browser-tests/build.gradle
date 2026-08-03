@@ -7,9 +7,12 @@ description = 'Browser smoke tests for the optimized TeaVM web application.'
 
 def webApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/js/webapp')
 def smokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke')
+def safariReportDirectory = layout.buildDirectory.dir('reports/safari-release')
 
 dependencies {
     testImplementation libs.playwright
+    testImplementation libs.selenium.safari.driver
+    testImplementation libs.selenium.support
 }
 
 def playwrightInstall = tasks.register('playwrightInstall', JavaExec) {
@@ -36,4 +39,26 @@ tasks.named('test') {
     systemProperty 'mazeGame.webAppDirectory', webApplicationDirectory.get().asFile.absolutePath
     systemProperty 'mazeGame.browserSmokeReportDirectory',
             smokeReportDirectory.get().asFile.absolutePath
+}
+
+tasks.register('safariReleaseTest', Test) {
+    group = 'verification'
+    description = 'Runs the live release flow in branded Safari on macOS.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    filter {
+        includeTestsMatching 'io.github.sportne.mazegame.browser.SafariReleaseTest'
+    }
+    def releaseUrl = providers.systemProperty('mazeGame.safariReleaseUrl')
+    onlyIf {
+        System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('mac')
+    }
+    doFirst {
+        if (!releaseUrl.isPresent()) {
+            throw new GradleException('mazeGame.safariReleaseUrl must be configured')
+        }
+    }
+    systemProperty 'mazeGame.safariReleaseUrl', releaseUrl
+    systemProperty 'mazeGame.safariReportDirectory',
+            safariReportDirectory.get().asFile.absolutePath
 }

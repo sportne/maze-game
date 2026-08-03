@@ -1,6 +1,6 @@
 # WEB-11A: Validate the JavaScript Release in Safari
 
-Status: pending
+Status: complete
 
 Depends on: WEB-11
 
@@ -28,3 +28,16 @@ on macOS before any WebAssembly production rollout.
 - Repeat the live release checklist in `docs/javascript-release.md` on macOS Safari.
 - Record whether real mobile Safari was exercised or remains an explicit rollout constraint.
 - Re-run `./gradlew qualityGate webBuild` if validation requires a source change.
+
+## Completion Notes
+
+- Added a branded Safari release test driven by Apple's `safaridriver` on GitHub's `macos-15`
+  runner after the Pages deployment completes.
+- Covered cache-busted live navigation, required assets, Web Audio resume after interaction, the
+  complete game loop, local result persistence, and refresh.
+- Published the Safari version, platform, saved result, and screenshots as workflow evidence.
+- Verified required assets through explicit no-cache requests with successful status and expected
+  MIME types. SafariDriver does not expose complete console history, so the check combines the
+  page's startup failure state with post-initialization error listeners.
+- Kept real iPhone and iPad Safari validation as an explicit rollout constraint because no physical
+  mobile device is attached to the runner.

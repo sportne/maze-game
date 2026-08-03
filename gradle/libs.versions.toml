@@ -16,6 +16,7 @@ errorproneCore = "2.49.0"
 graalNativePlugin = "1.1.0"
 graalSdk = "23.1.2"
 playwright = "1.61.0"
+selenium = "4.46.0"
 
 [libraries]
 gdx-core = { module = "com.badlogicgames.gdx:gdx", version.ref = "gdx" }
@@ -29,6 +30,8 @@ archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorproneCore" }
 graal-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graalSdk" }
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
+selenium-safari-driver = { module = "org.seleniumhq.selenium:selenium-safari-driver", version.ref = "selenium" }
+selenium-support = { module = "org.seleniumhq.selenium:selenium-support", version.ref = "selenium" }
 
 [plugins]
 gdx-teavm = { id = "com.github.xpenatan.gdx-teavm", version.ref = "gdxTeaVM" }

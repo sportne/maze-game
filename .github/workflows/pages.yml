@@ -58,6 +58,8 @@ jobs:
     permissions:
       pages: write
       id-token: write
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -69,3 +71,37 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  safari:
+    name: Validate deployed site in Safari
+    needs: deploy
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Enable Safari WebDriver
+        run: |
+          safaridriver --version
+          sudo safaridriver --enable
+
+      - name: Validate live release in Safari
+        run: >-
+          ./gradlew :modules:browser-tests:safariReleaseTest
+          -DmazeGame.safariReleaseUrl="${{ needs.deploy.outputs.page_url }}"
+
+      - name: Upload Safari release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safari-release-evidence
+          path: modules/browser-tests/build/reports/safari-release
+          if-no-files-found: error
