@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
@@ -16,6 +18,7 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.io.IOException;
@@ -33,6 +36,12 @@ final class MazeGameTest {
   @Test
   void gameCanBeConstructed() {
     assertNotNull(new MazeGame());
+  }
+
+  @Test
+  void gameRejectsNullRuntimeConfiguration() {
+    assertThrows(
+        NullPointerException.class, () -> new MazeGame((MazeGameRuntimeConfiguration) null));
   }
 
   @Test
@@ -79,7 +88,9 @@ final class MazeGameTest {
   @Test
   void settingsAudioToggleUpdatesSessionStateAndBackReturnsToMenu() {
     RecordingMusic music = new RecordingMusic();
-    MazeGame game = new MazeGame(music, null, true, () -> {});
+    MazeGame game =
+        new MazeGame(
+            music, null, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
 
     game.openSettings();
     game.handleScreenClick(640, 292, Input.Buttons.LEFT, 1280, 720);
@@ -92,7 +103,9 @@ final class MazeGameTest {
 
   @Test
   void unavailableAudioStartsOffAndIgnoresToggle() {
-    MazeGame game = new MazeGame(null, null, false, () -> {});
+    MazeGame game =
+        new MazeGame(
+            null, null, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore());
 
     game.openSettings();
     game.toggleAudio();
@@ -104,7 +117,7 @@ final class MazeGameTest {
   void injectedMusicIsNotStartedFromConstructor() {
     RecordingMusic music = new RecordingMusic();
 
-    new MazeGame(music, null, true, () -> {});
+    new MazeGame(music, null, runtimeConfiguration(true, () -> {}), new RecordingBestResultStore());
 
     assertFalse(music.playing());
   }
@@ -113,7 +126,8 @@ final class MazeGameTest {
   void unavailableAudioStillDisposesInjectedMusic() {
     RecordingMusic music = new RecordingMusic();
 
-    new MazeGame(music, null, false, () -> {}).dispose();
+    new MazeGame(music, null, runtimeConfiguration(false, () -> {}), new RecordingBestResultStore())
+        .dispose();
 
     assertTrue(music.stopped());
     assertTrue(music.disposed());
@@ -122,11 +136,39 @@ final class MazeGameTest {
   @Test
   void quitClickRunsExitHook() {
     AtomicBoolean exitRequested = new AtomicBoolean(false);
-    MazeGame game = new MazeGame(null, null, true, () -> exitRequested.set(true));
+    MazeGame game =
+        new MazeGame(
+            null,
+            null,
+            runtimeConfiguration(true, () -> exitRequested.set(true)),
+            new RecordingBestResultStore());
 
     game.handleScreenClick(640, 432, Input.Buttons.LEFT, 1280, 720);
 
     assertTrue(exitRequested.get());
+  }
+
+  @Test
+  void completeFrameInvokesAfterRenderHookWithFrameDelta() {
+    float[] observedDelta = {Float.NaN};
+    int[] invocationCount = {0};
+    MazeGameRuntimeConfiguration runtimeConfiguration =
+        new MazeGameRuntimeConfiguration(
+            FileHandle::new,
+            deltaSeconds -> {
+              observedDelta[0] = deltaSeconds;
+              invocationCount[0]++;
+            },
+            () -> {},
+            true,
+            true,
+            false);
+    MazeGame game = new MazeGame(null, null, runtimeConfiguration, new RecordingBestResultStore());
+
+    game.completeFrame(0.375F);
+
+    assertEquals(0.375F, observedDelta[0]);
+    assertEquals(1, invocationCount[0]);
   }
 
   @Test
@@ -292,7 +334,7 @@ final class MazeGameTest {
   @Test
   void appBoundaryPersistsPassingBestResultThroughInjectedStore() {
     RecordingBestResultStore store = new RecordingBestResultStore();
-    MazeGame game = new MazeGame(null, null, true, () -> {}, store);
+    MazeGame game = new MazeGame(null, null, runtimeConfiguration(true, () -> {}), store);
 
     game.startMilestoneOneLevel();
     game.startRun();
@@ -488,6 +530,12 @@ final class MazeGameTest {
     MazeGame game = new MazeGame();
     game.startMilestoneOneLevel();
     return game;
+  }
+
+  private static MazeGameRuntimeConfiguration runtimeConfiguration(
+      boolean audioAvailable, Runnable exitAction) {
+    return new MazeGameRuntimeConfiguration(
+        FileHandle::new, ignoredDelta -> {}, exitAction, true, audioAvailable, false);
   }
 
   private static void addVerticalCorridorWalls(MazeGame game) {

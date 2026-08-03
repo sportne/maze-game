@@ -1,6 +1,6 @@
 # WEB-02: Introduce Portable Runtime Services
 
-Status: pending
+Status: complete
 
 Depends on: WEB-01
 
@@ -36,3 +36,25 @@ runtime behavior without placing TeaVM-specific code in `modules/core`.
 
 - Removing all desktop filesystem code; WEB-03 performs that migration.
 - Adding the web launcher.
+
+## Completion Notes
+
+Completed on 2026-08-03.
+
+- Added immutable runtime configuration with narrow asset-resolution and after-render boundaries,
+  an exit action, and explicit Quit/audio capability values.
+- Routed `MazeGame` asset lookup, exit handling, audio availability, and frame-completion work
+  through the injected configuration while preserving the existing desktop constructors and
+  behavior.
+- Kept browser-specific Quit visibility and gesture-gated audio behavior deferred to WEB-06.
+- Generalized the existing desktop asset fallback helper so the default resolver retains explicit
+  assets-directory, assets working-directory, and project-directory behavior.
+- Extended architecture verification to reject both LWJGL3 and gdx-teavm backend dependencies from
+  shared code.
+- Added tests for defaults, injected services, null validation, and `MazeGame` after-render
+  delegation with the exact frame delta.
+- Passed `qualityGate`, including tests, JaCoCo coverage verification, Checkstyle, SpotBugs, PMD,
+  CPD, Error Prone compilation, and Spotless checks.
+- Passed `nativeImage` with the installed GraalVM Community Java 21 toolchain.
+- Received approval from both a general implementation reviewer and a simplicity-focused reviewer
+  after addressing their findings.

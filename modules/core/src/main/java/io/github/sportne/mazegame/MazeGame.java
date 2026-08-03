@@ -35,6 +35,7 @@ import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.persistence.LibGdxBestResultStore;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
+import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
@@ -70,8 +71,8 @@ public final class MazeGame extends ApplicationAdapter {
   /** Optional one-frame screenshot request supplied by the launcher. */
   private final ScreenshotCapture screenshotCapture;
 
-  /** Hook used by the quit menu action. */
-  private final Runnable exitAction;
+  /** Platform capabilities and services supplied by the active launcher. */
+  private final MazeGameRuntimeConfiguration runtimeConfiguration;
 
   /** Current mutable gameplay session. */
   private final GameSession session;
@@ -111,7 +112,7 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Creates the game without screenshot capture. */
   public MazeGame() {
-    this(null, true);
+    this(null, null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
   }
 
   /**
@@ -120,7 +121,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param screenshotCapture screenshot request to fulfill after rendering, or null
    */
   public MazeGame(ScreenshotCapture screenshotCapture) {
-    this(screenshotCapture, true);
+    this(null, screenshotCapture, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
   }
 
   /**
@@ -130,7 +131,20 @@ public final class MazeGame extends ApplicationAdapter {
    * @param audioAvailable true when the backend audio system should be used
    */
   public MazeGame(ScreenshotCapture screenshotCapture, boolean audioAvailable) {
-    this(null, screenshotCapture, audioAvailable, MazeGame::requestApplicationExit);
+    this(
+        null,
+        screenshotCapture,
+        defaultRuntimeConfiguration(audioAvailable),
+        new LibGdxBestResultStore());
+  }
+
+  /**
+   * Creates the game with platform services and capabilities.
+   *
+   * @param runtimeConfiguration platform runtime configuration
+   */
+  public MazeGame(MazeGameRuntimeConfiguration runtimeConfiguration) {
+    this(null, null, runtimeConfiguration, new LibGdxBestResultStore());
   }
 
   /**
@@ -139,7 +153,7 @@ public final class MazeGame extends ApplicationAdapter {
    * @param backgroundMusic music instance to dispose when the game is disposed
    */
   MazeGame(Music backgroundMusic) {
-    this(backgroundMusic, null, true, MazeGame::requestApplicationExit);
+    this(backgroundMusic, null, defaultRuntimeConfiguration(), new LibGdxBestResultStore());
   }
 
   /**
@@ -147,51 +161,38 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @param backgroundMusic optional injected music
    * @param screenshotCapture optional screenshot capture request
-   * @param audioAvailable true when audio can be toggled on
-   * @param exitAction action to invoke for the Quit menu command
-   */
-  MazeGame(
-      Music backgroundMusic,
-      ScreenshotCapture screenshotCapture,
-      boolean audioAvailable,
-      Runnable exitAction) {
-    this(
-        backgroundMusic,
-        screenshotCapture,
-        audioAvailable,
-        exitAction,
-        new LibGdxBestResultStore());
-  }
-
-  /**
-   * Creates the game with test/runtime dependencies.
-   *
-   * @param backgroundMusic optional injected music
-   * @param screenshotCapture optional screenshot capture request
-   * @param audioAvailable true when audio can be toggled on
-   * @param exitAction action to invoke for the Quit menu command
+   * @param runtimeConfiguration platform runtime configuration
    * @param bestResultStore persistence boundary for level best results
    */
   MazeGame(
       Music backgroundMusic,
       ScreenshotCapture screenshotCapture,
-      boolean audioAvailable,
-      Runnable exitAction,
+      MazeGameRuntimeConfiguration runtimeConfiguration,
       BestResultStore bestResultStore) {
     this.screenshotCapture = screenshotCapture;
-    this.exitAction = Objects.requireNonNull(exitAction, "exitAction");
+    this.runtimeConfiguration =
+        Objects.requireNonNull(runtimeConfiguration, "runtimeConfiguration");
     this.session = new GameSession(bestResultStore);
-    this.backgroundMusicController = new BackgroundMusicController(audioAvailable);
+    this.backgroundMusicController =
+        new BackgroundMusicController(runtimeConfiguration.audioAvailable());
     if (backgroundMusic != null) {
       this.backgroundMusicController.adopt(backgroundMusic);
     }
   }
 
-  /** Requests a libGDX application exit when the backend is available. */
-  private static void requestApplicationExit() {
-    if (Gdx.app != null) {
-      Gdx.app.exit();
-    }
+  private static MazeGameRuntimeConfiguration defaultRuntimeConfiguration() {
+    return MazeGameRuntimeConfiguration.defaults(MazeGame::resolveDefaultAsset);
+  }
+
+  private static MazeGameRuntimeConfiguration defaultRuntimeConfiguration(boolean audioAvailable) {
+    MazeGameRuntimeConfiguration defaults = defaultRuntimeConfiguration();
+    return new MazeGameRuntimeConfiguration(
+        defaults.assetResolver(),
+        defaults.afterRenderHook(),
+        defaults.exitAction(),
+        defaults.quitAvailable(),
+        audioAvailable,
+        defaults.audioRequiresUserGesture());
   }
 
   /**
@@ -315,13 +316,14 @@ public final class MazeGame extends ApplicationAdapter {
   /** Advances game state, draws one frame, and fulfills screenshot capture when requested. */
   @Override
   public void render() {
-    updateGame(Gdx.graphics.getDeltaTime());
+    float deltaSeconds = Gdx.graphics.getDeltaTime();
+    updateGame(deltaSeconds);
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
     ScreenLayout layout = screenLayout(gamePhase(), VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     renderer.render(layout, renderSnapshot());
-    captureScreenshotIfRequested(Gdx.graphics.getDeltaTime());
+    completeFrame(deltaSeconds);
   }
 
   /**
@@ -538,7 +540,7 @@ public final class MazeGame extends ApplicationAdapter {
     switch (action.type()) {
       case OPEN_LEVEL_SELECT -> openLevelSelect();
       case OPEN_SETTINGS -> openSettings();
-      case QUIT -> exitAction.run();
+      case QUIT -> runtimeConfiguration.exitAction().run();
       case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
       case TOGGLE_AUDIO -> toggleAudio();
       case START_MILESTONE_ONE -> startMilestoneOneLevel();
@@ -644,12 +646,8 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return file handle resolved through the app's asset fallback rules
    */
-  private static FileHandle backgroundMusicFile() {
-    String path =
-        backgroundMusicPath(
-            System.getenv(AssetPaths.ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE),
-            System.getProperty("user.dir"));
-    return fileHandle(path);
+  private FileHandle backgroundMusicFile() {
+    return runtimeConfiguration.assetResolver().resolve(backgroundMusicPath());
   }
 
   /**
@@ -657,12 +655,27 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return file handle resolved through the app's asset fallback rules
    */
-  private static FileHandle spriteSheetFile() {
-    String path =
-        spriteSheetPath(
+  private FileHandle spriteSheetFile() {
+    return runtimeConfiguration.assetResolver().resolve(spriteSheetPath());
+  }
+
+  private static FileHandle resolveDefaultAsset(String assetPath) {
+    String resolvedPath =
+        AssetPaths.resolve(
+            assetPath,
             System.getenv(AssetPaths.ASSETS_DIRECTORY_ENVIRONMENT_VARIABLE),
             System.getProperty("user.dir"));
-    return fileHandle(path);
+    return fileHandle(resolvedPath);
+  }
+
+  /**
+   * Completes post-render work for one frame.
+   *
+   * @param deltaSeconds elapsed frame time in seconds
+   */
+  void completeFrame(float deltaSeconds) {
+    captureScreenshotIfRequested(deltaSeconds);
+    runtimeConfiguration.afterRenderHook().afterRender(deltaSeconds);
   }
 
   /**

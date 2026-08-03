@@ -13,13 +13,16 @@ import com.tngtech.archunit.lang.ArchRule;
     importOptions = ImportOption.DoNotIncludeTests.class)
 final class ArchitectureRulesTest {
   @ArchTest
-  static final ArchRule coreCodeDoesNotDependOnTheLwjglBackend =
+  static final ArchRule coreCodeDoesNotDependOnConcreteBackends =
       noClasses()
           .that()
-          .resideOutsideOfPackage("..lwjgl3..")
+          .resideOutsideOfPackages("..lwjgl3..", "..teavm..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("com.badlogic.gdx.backends.lwjgl3..", "org.lwjgl..");
+          .resideInAnyPackage(
+              "com.badlogic.gdx.backends.lwjgl3..",
+              "com.github.xpenatan.gdx.teavm.backends..",
+              "org.lwjgl..");
 
   @ArchTest
   static final ArchRule oldGeneratedSamplePackagesAreNotUsed =
