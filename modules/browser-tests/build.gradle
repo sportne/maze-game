@@ -57,8 +57,8 @@ tasks.register('safariReleaseTest', Test) {
         if (!releaseUrl.isPresent()) {
             throw new GradleException('mazeGame.safariReleaseUrl must be configured')
         }
+        systemProperty 'mazeGame.safariReleaseUrl', releaseUrl.get()
     }
-    systemProperty 'mazeGame.safariReleaseUrl', releaseUrl
     systemProperty 'mazeGame.safariReportDirectory',
             safariReportDirectory.get().asFile.absolutePath
 }

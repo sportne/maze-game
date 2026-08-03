@@ -42,7 +42,7 @@ The release matrix was run against the live Pages URL on 2026-08-03:
 | Microsoft Edge on Windows | 151.0.4129.59 | Full mouse game flow passed |
 | Firefox engine | 151.0 | Full mouse game flow passed |
 | WebKit compatibility | 26.5 | Full mouse game flow passed |
-| Safari on macOS | 26.5 | Automated branded Safari release flow passed |
+| Safari on macOS | 26.5.2 | Automated branded Safari release flow passed |
 | Chromium touch emulation | 149.0.7827.55 | Full touch game flow passed |
 
 Each passing flow covered cache-busted direct navigation, relative asset loading from
