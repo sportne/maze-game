@@ -29,8 +29,9 @@ WebAssembly output as a follow-on milestone.
 9. [WEB-09: Add continuous-integration web verification](teavm-09-ci-web-verification.md)
 10. [WEB-10: Deploy the JavaScript site to GitHub Pages](teavm-10-github-pages-deployment.md)
 11. [WEB-11: Validate and document the JavaScript release](teavm-11-javascript-release.md)
-12. [WEB-12: Add the WebAssembly build target](teavm-12-webassembly-target.md)
-13. [WEB-13: Evaluate and roll out WebAssembly](teavm-13-webassembly-rollout.md)
+12. [WEB-11A: Validate the JavaScript release in Safari](teavm-11a-safari-validation.md)
+13. [WEB-12: Add the WebAssembly build target](teavm-12-webassembly-target.md)
+14. [WEB-13: Evaluate and roll out WebAssembly](teavm-13-webassembly-rollout.md)
 
 ## Required Quality Gate
 

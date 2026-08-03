@@ -33,6 +33,9 @@ The assembled site retains `.nojekyll` for compatibility with branch-based Pages
 GitHub's Actions-based Pages artifact uploader omits dotfiles and deploys the static files directly
 without a Jekyll build.
 
+See [the JavaScript release guide](docs/javascript-release.md) for the browser support matrix,
+browser-storage limitations, JavaScript/WebAssembly strategy, and rollback procedure.
+
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
 `-DmazeGame.audio=false`, or `MAZE_GAME_AUDIO=false`.

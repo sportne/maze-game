@@ -2,7 +2,7 @@
 
 Status: pending
 
-Depends on: WEB-12
+Depends on: WEB-11A, WEB-12
 
 ## Goal
 
