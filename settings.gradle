@@ -18,4 +18,5 @@ rootProject.name = 'maze-game'
 
 include ':modules:core'
 include ':modules:lwjgl3'
+include ':modules:teavm'
 include ':modules:architecture-tests'

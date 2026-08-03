@@ -1,0 +1,42 @@
+plugins {
+    id 'mazegame.java-conventions'
+    id 'mazegame.quality-conventions'
+    alias(libs.plugins.gdx.teavm)
+}
+
+description = 'TeaVM browser launcher for Maze Game.'
+
+dependencies {
+    implementation libs.gdx.core
+    compileOnly libs.jetbrains.annotations
+}
+
+configurations.named('annotationProcessor') {
+    exclude group: 'org.teavm', module: 'teavm-extension-annotation-processor'
+}
+
+tasks.matching { task ->
+    task.name == 'generateJavaScript' || task.name.startsWith('gdx_teavm_web_')
+}.configureEach {
+    notCompatibleWithConfigurationCache(
+            'gdx-teavm 1.6.1 captures a Gradle task logger in its JavaScript generation task.'
+            )
+}
+
+gdxTeaVM {
+    js {
+        mainClass.set('io.github.sportne.mazegame.teavm.TeaVMToolchainProbeLauncher')
+        htmlTitle.set('Maze Game TeaVM Toolchain Probe')
+        htmlWidth.set(320)
+        htmlHeight.set(180)
+        targetFileName.set('app.js')
+        obfuscated.set(false)
+        debugInformation.set(true)
+        sourceMap.set(true)
+        devServer {
+            enabled.set(true)
+            autoBuild.set(true)
+            autoReload.set(true)
+        }
+    }
+}

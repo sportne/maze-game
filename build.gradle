@@ -9,6 +9,7 @@ version = providers.gradleProperty('mazeGame.version').getOrElse('0.1.0-SNAPSHOT
 def checkedProjects = [
     ':modules:core',
     ':modules:lwjgl3',
+    ':modules:teavm',
     ':modules:architecture-tests',
 ]
 

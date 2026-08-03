@@ -166,7 +166,8 @@ final class MazeGameRendererTest {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, null, null);
     MouseRunResult running =
-        new MouseRunResult(LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
+        new MouseRunResult(
+            LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
     MouseRunResult result =
         new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, MouseRunStatus.TIMED_OUT);
 

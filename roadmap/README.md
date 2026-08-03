@@ -29,6 +29,11 @@ The first milestone is intentionally small: one 5x5 level, normal wall placement
 
 ## Milestones
 
+### Web Deployment: TeaVM and GitHub Pages
+
+Planning is complete for a JavaScript-first static website deployed through GitHub Pages, followed
+by a committed WebAssembly milestone. See [TeaVM and GitHub Pages Roadmap](teavm-github-pages.md).
+
 ### Milestone 1: 5x5 Playable Prototype
 
 Deliver a fully playable desktop level with:

@@ -2,6 +2,12 @@
 
 Small Java/libGDX maze game.
 
+The supported build baseline is Gradle 9.5.1, Java 21, and libGDX 1.14.2. Browser work uses
+gdx-teavm 1.6.1, which embeds TeaVM 0.15.0. The initial browser module currently contains an
+isolated compatibility probe; it is not connected to the playable game yet. TeaVM JavaScript
+generation currently runs without Gradle's configuration cache because gdx-teavm 1.6.1 captures a
+non-serializable task logger.
+
 Milestone 1 is complete: the desktop app includes the first playable 5x5 level, menu navigation,
 level selection scaffold, retry/replay, and persistent best results for completed passing runs.
 
@@ -10,6 +16,8 @@ level selection scaffold, retry/replay, and persistent best results for complete
 - `./gradlew checkAll`
 - `./gradlew qualityGate`
 - `./gradlew :modules:lwjgl3:run`
+- `./gradlew :modules:teavm:gdx_teavm_web_js_build`
+- `./gradlew :modules:teavm:gdx_teavm_web_js_run`
 - `./gradlew nativeImage`
 - `./gradlew nativeRun`
 
