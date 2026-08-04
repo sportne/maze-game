@@ -39,6 +39,10 @@ import org.junit.jupiter.api.Timeout;
 final class BrowserSmokeTest {
   private static final int VIEWPORT_WIDTH = 1280;
   private static final int VIEWPORT_HEIGHT = 720;
+  private static final int PORTRAIT_WIDTH = 390;
+  private static final int PORTRAIT_HEIGHT = 844;
+  private static final int MOBILE_SAFARI_LANDSCAPE_WIDTH = 844;
+  private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
   private static final int STARTUP_SAMPLE_COUNT = 5;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
   private static final String SITE_PATH = "/maze-game/";
@@ -147,7 +151,7 @@ final class BrowserSmokeTest {
         firstFrameMillis,
         responseEndMillis,
         usedHeap);
-    assertResizeGuidance(page);
+    assertResponsiveViewportSupport(page);
 
     click(page, 640, 280);
     waitForRenderedControl(page, 404, 280);
@@ -213,11 +217,18 @@ final class BrowserSmokeTest {
     return Boolean.parseBoolean(requiredProperty("mazeGame.touchInput"));
   }
 
-  private static void assertResizeGuidance(Page page) {
-    page.setViewportSize(390, 844);
+  private static void assertResponsiveViewportSupport(Page page) throws IOException {
+    page.setViewportSize(PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
+    page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
+    waitForRenderedControl(page, 195, 398);
+    page.setViewportSize(MOBILE_SAFARI_LANDSCAPE_WIDTH, MOBILE_SAFARI_LANDSCAPE_HEIGHT);
+    page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
+    waitForRenderedControl(page, 422, 111);
+    page.setViewportSize(200, 400);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isVisible());
     page.setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
+    waitForRenderedControl(page, 640, 280);
   }
 
   private static void assertAudioResumed(Page page) {

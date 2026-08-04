@@ -7,16 +7,15 @@ import org.junit.jupiter.api.Test;
 
 final class BrowserViewportPolicyTest {
   @Test
-  void acceptsSupportedLandscapeViewports() {
-    assertFalse(BrowserViewportPolicy.requiresGuidance(640, 360));
-    assertFalse(BrowserViewportPolicy.requiresGuidance(1024, 768));
-    assertFalse(BrowserViewportPolicy.requiresGuidance(1280, 720));
+  void acceptsSupportedPortraitAndLandscapeViewports() {
+    assertFalse(BrowserViewportPolicy.requiresGuidance(568, 270));
+    assertFalse(BrowserViewportPolicy.requiresGuidance(390, 844));
+    assertFalse(BrowserViewportPolicy.requiresGuidance(844, 286));
   }
 
   @Test
-  void requestsMoreSpaceForSmallOrPortraitViewports() {
-    assertTrue(BrowserViewportPolicy.requiresGuidance(639, 360));
-    assertTrue(BrowserViewportPolicy.requiresGuidance(640, 359));
-    assertTrue(BrowserViewportPolicy.requiresGuidance(390, 844));
+  void requestsMoreSpaceOnlyForUnusableViewports() {
+    assertTrue(BrowserViewportPolicy.requiresGuidance(567, 270));
+    assertTrue(BrowserViewportPolicy.requiresGuidance(568, 269));
   }
 }

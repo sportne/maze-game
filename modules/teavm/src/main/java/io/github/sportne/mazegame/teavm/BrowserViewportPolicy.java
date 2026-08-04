@@ -1,14 +1,16 @@
 package io.github.sportne.mazegame.teavm;
 
-/** Defines the smallest landscape viewport where the game controls remain comfortably usable. */
+/** Defines the smallest viewport where the scaled game controls remain usable. */
 final class BrowserViewportPolicy {
-  static final int MINIMUM_WIDTH = 640;
-  static final int MINIMUM_HEIGHT = 360;
+  static final int MINIMUM_LONG_SIDE = 568;
+  static final int MINIMUM_SHORT_SIDE = 270;
 
   private BrowserViewportPolicy() {}
 
-  /** Returns whether the browser should ask the player to resize or rotate their device. */
+  /** Returns whether the browser should ask the player for more usable screen space. */
   static boolean requiresGuidance(int width, int height) {
-    return width < MINIMUM_WIDTH || height < MINIMUM_HEIGHT || height > width;
+    int longSide = Math.max(width, height);
+    int shortSide = Math.min(width, height);
+    return longSide < MINIMUM_LONG_SIDE || shortSide < MINIMUM_SHORT_SIDE;
   }
 }

@@ -32,8 +32,9 @@ the same atomic artifact from source and deploys only after that command passes.
 ## Browser Support
 
 The supported desktop baseline is the current stable Chrome, Edge, and Firefox releases with
-JavaScript, WebGL, Web Audio, and local storage enabled. Touch input is supported on a landscape
-viewport at least 640 by 360 CSS pixels. Smaller or portrait viewports receive resize guidance.
+JavaScript, WebGL, Web Audio, and local storage enabled. Touch input supports portrait and landscape
+viewports with at least 568 CSS pixels on the long side and 270 on the short side. Smaller viewports
+receive resize guidance.
 
 The release matrix was run against the live Pages URL on 2026-08-03:
 

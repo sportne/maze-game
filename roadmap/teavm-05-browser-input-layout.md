@@ -49,3 +49,6 @@ Completed on 2026-08-03.
   placement and both clear paths produced the expected pixels with no page, console, asset, or
   request errors.
 - Received approval from both general and simplicity-focused reviewers with no remaining findings.
+- Follow-up on 2026-08-03: replaced the landscape-only 640x360 guard with an orientation-neutral
+  long-side/short-side check so portrait phones and iPhone Safari with visible browser chrome can
+  use the existing scalable canvas.
