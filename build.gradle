@@ -121,6 +121,12 @@ tasks.register('webWasmRun') {
     dependsOn ':modules:teavm:gdx_teavm_web_wasm_run'
 }
 
+tasks.register('pagesBuild') {
+    group = 'build'
+    description = 'Builds the atomic GitHub Pages site with JavaScript default and Wasm preview.'
+    dependsOn ':modules:teavm:assemblePagesSite'
+}
+
 tasks.register('browserSmokeTest') {
     group = 'verification'
     description = 'Runs browser smoke tests against the optimized TeaVM web application.'

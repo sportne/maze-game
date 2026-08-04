@@ -7,6 +7,7 @@ description = 'Browser smoke tests for the optimized TeaVM web application.'
 
 def webApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/js/webapp')
 def wasmApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/wasm/webapp')
+def pagesApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/pages')
 def smokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke')
 def wasmSmokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke-wasm')
 def safariReportDirectory = layout.buildDirectory.dir('reports/safari-release')
@@ -25,6 +26,14 @@ def playwrightInstall = tasks.register('playwrightInstall', JavaExec) {
     args 'install', '--only-shell', 'chromium'
 }
 
+tasks.register('playwrightInstallAll', JavaExec) {
+    group = 'verification'
+    description = 'Installs the Chromium, Firefox, and WebKit browsers pinned by Playwright.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install', 'chromium', 'firefox', 'webkit'
+}
+
 tasks.register('playwrightInstallDependencies', JavaExec) {
     group = 'verification'
     description = 'Installs Linux system dependencies required by Playwright Chromium.'
@@ -33,15 +42,27 @@ tasks.register('playwrightInstallDependencies', JavaExec) {
     args 'install-deps', 'chromium'
 }
 
+tasks.register('playwrightInstallAllDependencies', JavaExec) {
+    group = 'verification'
+    description = 'Installs Linux system dependencies for the full Playwright browser matrix.'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+    args 'install-deps', 'chromium', 'firefox', 'webkit'
+}
+
 tasks.named('test') {
-    dependsOn rootProject.tasks.named('webBuild')
+    dependsOn rootProject.tasks.named('pagesBuild')
     dependsOn playwrightInstall
-    inputs.dir webApplicationDirectory
+    inputs.dir pagesApplicationDirectory
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
-    systemProperty 'mazeGame.webAppDirectory', webApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.webAppDirectory', pagesApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.artifactDirectory', webApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.applicationPath', '/maze-game/'
     systemProperty 'mazeGame.browserSmokeReportDirectory',
             smokeReportDirectory.get().asFile.absolutePath
     systemProperty 'mazeGame.browserProgramAssets', 'app.js'
+    systemProperty 'mazeGame.browserTarget', 'javascript'
+    systemProperty 'mazeGame.disableWebAssemblyGc', 'true'
 }
 
 def wasmSmokeTest = tasks.register('wasmSmokeTest', Test) {
@@ -49,18 +70,39 @@ def wasmSmokeTest = tasks.register('wasmSmokeTest', Test) {
     description = 'Runs browser smoke tests against the optimized TeaVM WebAssembly preview.'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
-    dependsOn rootProject.tasks.named('webWasmBuild')
+    dependsOn rootProject.tasks.named('pagesBuild')
     dependsOn playwrightInstall
-    inputs.dir wasmApplicationDirectory
+    inputs.dir pagesApplicationDirectory
     environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
-    systemProperty 'mazeGame.webAppDirectory', wasmApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.webAppDirectory', pagesApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.artifactDirectory', wasmApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.applicationPath', '/maze-game/wasm/'
     systemProperty 'mazeGame.browserSmokeReportDirectory',
             wasmSmokeReportDirectory.get().asFile.absolutePath
     systemProperty 'mazeGame.browserProgramAssets', 'app.wasm,app.wasm-runtime.js'
+    systemProperty 'mazeGame.browserTarget', 'webassembly'
+    systemProperty 'mazeGame.disableWebAssemblyGc', 'false'
     filter {
         includeTestsMatching 'io.github.sportne.mazegame.browser.BrowserSmokeTest'
     }
     shouldRunAfter tasks.named('test')
+}
+
+tasks.withType(Test).matching { testTask ->
+    testTask.name == 'test' || testTask.name == 'wasmSmokeTest'
+}.configureEach {
+    def browserEngine = providers.systemProperty('mazeGame.browserEngine')
+    def touchInput = providers.systemProperty('mazeGame.touchInput')
+    def headedBrowser = providers.systemProperty('mazeGame.headedBrowser')
+    def cdpEndpoint = providers.systemProperty('mazeGame.browserCdpEndpoint')
+    doFirst {
+        systemProperty 'mazeGame.browserEngine', browserEngine.getOrElse('chromium')
+        systemProperty 'mazeGame.touchInput', touchInput.getOrElse('false')
+        systemProperty 'mazeGame.headedBrowser', headedBrowser.getOrElse('false')
+        if (cdpEndpoint.isPresent()) {
+            systemProperty 'mazeGame.browserCdpEndpoint', cdpEndpoint.get()
+        }
+    }
 }
 
 tasks.named('check') {
@@ -76,6 +118,7 @@ tasks.register('safariReleaseTest', Test) {
         includeTestsMatching 'io.github.sportne.mazegame.browser.SafariReleaseTest'
     }
     def releaseUrl = providers.systemProperty('mazeGame.safariReleaseUrl')
+    def wasmReleaseUrl = providers.systemProperty('mazeGame.safariWasmReleaseUrl')
     onlyIf {
         System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('mac')
     }
@@ -84,6 +127,9 @@ tasks.register('safariReleaseTest', Test) {
             throw new GradleException('mazeGame.safariReleaseUrl must be configured')
         }
         systemProperty 'mazeGame.safariReleaseUrl', releaseUrl.get()
+        if (wasmReleaseUrl.isPresent()) {
+            systemProperty 'mazeGame.safariWasmReleaseUrl', wasmReleaseUrl.get()
+        }
     }
     systemProperty 'mazeGame.safariReportDirectory',
             safariReportDirectory.get().asFile.absolutePath

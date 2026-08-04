@@ -27,7 +27,8 @@ starts the development server with source maps and automatic reload enabled.
 
 `webWasmBuild` produces an independent WebAssembly preview in
 `modules/teavm/build/dist/wasm/webapp`; `webWasmRun` starts its development server. The JavaScript
-site remains the GitHub Pages release while the preview is evaluated.
+site remains the GitHub Pages default, and `pagesBuild` stages both targets atomically with the
+preview under `wasm/`.
 
 ## GitHub Pages
 
@@ -41,6 +42,8 @@ without a Jekyll build.
 
 See [the JavaScript release guide](docs/javascript-release.md) for the browser support matrix,
 browser-storage limitations, JavaScript/WebAssembly strategy, and rollback procedure.
+The [WebAssembly rollout decision](docs/webassembly-rollout.md) records the preview URL, comparison
+metrics, compatibility evidence, constraints, and regression baseline.
 
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,

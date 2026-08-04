@@ -37,9 +37,11 @@
           const teavm = await TeaVM.wasmGC.load("./app.wasm");
           teavm.exports.main([]);
         } catch (error) {
-          document.getElementById("loading-state").hidden = true;
-          document.getElementById("failure-state").hidden = false;
-          throw error;
+          console.warn(
+            "WebAssembly preview unavailable; loading the JavaScript version.",
+            error,
+          );
+          window.location.replace("../");
         }
       }
 

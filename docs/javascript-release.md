@@ -11,22 +11,23 @@ Use Java 21 and clone the PMD submodule with the repository:
 ```text
 git clone --recurse-submodules https://github.com/sportne/maze-game.git
 cd maze-game
-./gradlew webBuild
+./gradlew pagesBuild
 ```
 
 The full quality gate also requires Node.js with npm. On a clean Linux browser-test host, install
 Playwright's system libraries once with
 `./gradlew :modules:browser-tests:playwrightInstallDependencies`.
 
-The release artifact is `modules/teavm/build/dist/js/webapp`. Preview a development build with
-source maps and automatic reload at <http://localhost:8080>:
+The atomic release artifact is `modules/teavm/build/dist/pages`, with the JavaScript default at its
+root and the WebAssembly preview under `wasm/`. Preview a JavaScript development build with source
+maps and automatic reload at <http://localhost:8080>:
 
 ```text
 ./gradlew webRun
 ```
 
-Run `./gradlew qualityGate webBuild` before reviewing or publishing a release. GitHub Pages builds
-the same artifact from source and deploys only after that command passes.
+Run `./gradlew qualityGate pagesBuild` before reviewing or publishing a release. GitHub Pages builds
+the same atomic artifact from source and deploys only after that command passes.
 
 ## Browser Support
 
@@ -73,10 +74,11 @@ audible output.
 
 ## JavaScript and WebAssembly
 
-JavaScript remains the production default. `./gradlew webWasmBuild` builds the independently
-verified preview at `modules/teavm/build/dist/wasm/webapp`; CI uploads it as a separate artifact but
-does not deploy it to Pages. WEB-13 will compare its browser coverage and measured behavior before
-any rollout decision. Unsupported WebAssembly clients must retain the JavaScript experience.
+JavaScript remains the production default. The independently verified WebAssembly build is an
+opt-in preview at <https://sportne.github.io/maze-game/wasm/>. Both entry points deploy atomically,
+and unsupported WasmGC clients are redirected from the preview to the root JavaScript release. CI
+verifies that fallback with TeaVM's required WasmGC compilation feature deliberately disabled. See
+the [rollout decision and metrics](webassembly-rollout.md) for the recorded tradeoffs.
 
 ## Rollback
 

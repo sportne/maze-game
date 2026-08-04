@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.ConsoleMessage;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -38,29 +39,43 @@ import org.junit.jupiter.api.Timeout;
 final class BrowserSmokeTest {
   private static final int VIEWPORT_WIDTH = 1280;
   private static final int VIEWPORT_HEIGHT = 720;
+  private static final int STARTUP_SAMPLE_COUNT = 5;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
-  private static final String APPLICATION_PATH = "/maze-game/";
+  private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
       Set.of("styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
 
   @Test
-  @Timeout(45)
+  @Timeout(90)
   void completesGameFlowAndLoadsSavedResultAfterReload() throws IOException {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
+    Path artifactDirectory = requiredDirectory("mazeGame.artifactDirectory");
     Path reportDirectory = Path.of(requiredProperty("mazeGame.browserSmokeReportDirectory"));
     BrowserLog browserLog = new BrowserLog(requiredAssets());
     Page page = null;
 
-    try (StaticWebServer server = StaticWebServer.start(webApplication);
+    try (StaticWebServer server =
+            StaticWebServer.start(webApplication, requiredProperty("mazeGame.applicationPath"));
         Playwright playwright = Playwright.create();
-        Browser browser = playwright.chromium().launch();
+        Browser browser = launchBrowser(playwright);
         BrowserContext context =
             browser.newContext(
-                new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
+                new Browser.NewContextOptions()
+                    .setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
+                    .setHasTouch(touchInput()))) {
+      if (Boolean.parseBoolean(requiredProperty("mazeGame.disableWebAssemblyGc"))) {
+        context.addInitScript(
+            "const originalCompileStreaming = WebAssembly.compileStreaming.bind(WebAssembly);"
+                + "WebAssembly.compileStreaming = (source, options) => {"
+                + "if (options && options.builtins && options.builtins.includes('js-string')) {"
+                + "return Promise.reject(new WebAssembly.CompileError('WasmGC disabled by test'));"
+                + "} return originalCompileStreaming(source, options); };");
+        assertWasmFallback(context, server.siteUri("wasm/"), server.uri());
+      }
       page = context.newPage();
       browserLog.observe(page);
       try {
-        runGameFlow(page, server.uri(), browserLog);
+        runGameFlow(page, server.uri(), browserLog, artifactDirectory, reportDirectory, browser);
       } catch (Throwable failure) {
         captureFailure(page, browserLog, reportDirectory, failure);
         throw failure;
@@ -73,30 +88,82 @@ final class BrowserSmokeTest {
     }
   }
 
-  private static void runGameFlow(Page page, URI applicationUri, BrowserLog browserLog)
+  private static Browser launchBrowser(Playwright playwright) {
+    String cdpEndpoint = System.getProperty("mazeGame.browserCdpEndpoint");
+    if (cdpEndpoint != null) {
+      return playwright.chromium().connectOverCDP(cdpEndpoint);
+    }
+    BrowserType browserType =
+        switch (requiredProperty("mazeGame.browserEngine")) {
+          case "chromium" -> playwright.chromium();
+          case "firefox" -> playwright.firefox();
+          case "webkit" -> playwright.webkit();
+          default -> throw new IllegalArgumentException("unsupported browser engine");
+        };
+    return browserType.launch(
+        new BrowserType.LaunchOptions()
+            .setHeadless(!Boolean.parseBoolean(requiredProperty("mazeGame.headedBrowser"))));
+  }
+
+  private static void assertWasmFallback(
+      BrowserContext context, URI wasmApplicationUri, URI javascriptApplicationUri)
       throws IOException {
-    page.navigate(applicationUri.toString());
-    waitForRenderedControl(page, 640, 280);
+    try (Page fallbackPage = context.newPage()) {
+      fallbackPage.navigate(wasmApplicationUri.toString());
+      fallbackPage.waitForCondition(
+          () -> fallbackPage.url().equals(javascriptApplicationUri.toString()));
+      waitForRenderedControl(fallbackPage, 640, 280);
+    }
+  }
+
+  private static void runGameFlow(
+      Page page,
+      URI applicationUri,
+      BrowserLog browserLog,
+      Path artifactDirectory,
+      Path reportDirectory,
+      Browser browser)
+      throws IOException {
+    List<Long> firstFrameMillis = new ArrayList<>();
+    List<Double> responseEndMillis = new ArrayList<>();
+    firstFrameMillis.add(navigateAndWaitForFirstFrame(page, applicationUri));
+    responseEndMillis.add(navigationResponseEnd(page));
     assertCanvas(page);
     assertTrue(page.locator("#loading-state").isHidden());
     assertTrue(page.locator("#failure-state").isHidden());
+    Object usedHeap =
+        page.evaluate("() => performance.memory ? performance.memory.usedJSHeapSize : null");
+    for (int sample = 1; sample < STARTUP_SAMPLE_COUNT; sample++) {
+      firstFrameMillis.add(reloadAndWaitForFirstFrame(page));
+      responseEndMillis.add(navigationResponseEnd(page));
+    }
+    BrowserMetrics.capture(
+        page,
+        artifactDirectory,
+        reportDirectory,
+        requiredProperty("mazeGame.browserTarget"),
+        requiredProperty("mazeGame.browserEngine"),
+        browser.version(),
+        firstFrameMillis,
+        responseEndMillis,
+        usedHeap);
     assertResizeGuidance(page);
 
-    page.mouse().click(640, 280);
+    click(page, 640, 280);
     waitForRenderedControl(page, 404, 280);
     assertAudioResumed(page);
-    page.mouse().click(404, 280);
+    click(page, 404, 280);
     waitForRenderedControl(page, 738, 656);
 
     int emptyCellColor = screenshot(page).getRGB(551, 360);
-    page.mouse().click(551, 360);
+    click(page, 551, 360);
     waitForPixelChange(page, 551, 360, emptyCellColor);
     int wallColor = screenshot(page).getRGB(551, 360);
-    page.mouse().click(542, 656);
-    page.mouse().click(551, 360);
+    click(page, 542, 656);
+    click(page, 551, 360);
     waitForPixelChange(page, 551, 360, wallColor);
 
-    page.mouse().click(738, 656);
+    click(page, 738, 656);
     waitForSavedResult(page);
     String savedResult = readSavedResult(page);
 
@@ -111,6 +178,39 @@ final class BrowserSmokeTest {
     assertTrue(
         browserLog.errors().isEmpty(),
         () -> String.join(System.lineSeparator(), browserLog.errors()));
+  }
+
+  private static long navigateAndWaitForFirstFrame(Page page, URI applicationUri)
+      throws IOException {
+    long started = System.nanoTime();
+    page.navigate(applicationUri.toString());
+    waitForRenderedControl(page, 640, 280);
+    return Duration.ofNanos(System.nanoTime() - started).toMillis();
+  }
+
+  private static long reloadAndWaitForFirstFrame(Page page) throws IOException {
+    long started = System.nanoTime();
+    page.reload();
+    waitForRenderedControl(page, 640, 280);
+    return Duration.ofNanos(System.nanoTime() - started).toMillis();
+  }
+
+  private static double navigationResponseEnd(Page page) {
+    return ((Number)
+            page.evaluate("() => performance.getEntriesByType('navigation')[0].responseEnd"))
+        .doubleValue();
+  }
+
+  private static void click(Page page, double x, double y) {
+    if (touchInput()) {
+      page.touchscreen().tap(x, y);
+    } else {
+      page.mouse().click(x, y);
+    }
+  }
+
+  private static boolean touchInput() {
+    return Boolean.parseBoolean(requiredProperty("mazeGame.touchInput"));
   }
 
   private static void assertResizeGuidance(Page page) {
@@ -261,33 +361,49 @@ final class BrowserSmokeTest {
   }
 
   private static final class StaticWebServer implements AutoCloseable {
+    private final String applicationPath;
     private final Path root;
     private final HttpServer server;
 
-    private StaticWebServer(Path root, HttpServer server) {
+    private StaticWebServer(String applicationPath, Path root, HttpServer server) {
+      this.applicationPath = applicationPath;
       this.root = root;
       this.server = server;
     }
 
-    private static StaticWebServer start(Path root) throws IOException {
+    private static StaticWebServer start(Path root, String applicationPath) throws IOException {
+      if (!applicationPath.startsWith(SITE_PATH) || !applicationPath.endsWith("/")) {
+        throw new IllegalArgumentException("application path must be below " + SITE_PATH);
+      }
       HttpServer server =
           HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-      StaticWebServer staticWebServer = new StaticWebServer(root.toRealPath(), server);
+      StaticWebServer staticWebServer =
+          new StaticWebServer(applicationPath, root.toRealPath(), server);
       server.createContext("/", staticWebServer::serve);
       server.start();
       return staticWebServer;
     }
 
     private URI uri() {
-      return URI.create("http://127.0.0.1:" + server.getAddress().getPort() + APPLICATION_PATH);
+      return URI.create("http://127.0.0.1:" + server.getAddress().getPort() + applicationPath);
+    }
+
+    private URI siteUri(String relativePath) {
+      return URI.create(
+          "http://127.0.0.1:" + server.getAddress().getPort() + SITE_PATH + relativePath);
     }
 
     private void serve(HttpExchange exchange) throws IOException {
       String requestPath = exchange.getRequestURI().getPath();
-      String relativePath =
-          requestPath.equals(APPLICATION_PATH)
-              ? "index.html"
-              : requestPath.substring(APPLICATION_PATH.length());
+      if (!requestPath.startsWith(SITE_PATH)) {
+        exchange.sendResponseHeaders(404, -1);
+        exchange.close();
+        return;
+      }
+      String relativePath = requestPath.substring(SITE_PATH.length());
+      if (relativePath.isEmpty() || relativePath.endsWith("/")) {
+        relativePath += "index.html";
+      }
       Path requestedFile = root.resolve(relativePath).normalize();
       if (!requestedFile.startsWith(root) || !Files.isRegularFile(requestedFile)) {
         exchange.sendResponseHeaders(404, -1);

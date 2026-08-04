@@ -44,12 +44,12 @@ jobs:
         run: ./gradlew :modules:browser-tests:playwrightInstallDependencies
 
       - name: Build and verify static site
-        run: ./gradlew qualityGate webBuild
+        run: ./gradlew qualityGate pagesBuild
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: modules/teavm/build/dist/js/webapp
+          path: modules/teavm/build/dist/pages
 
   deploy:
     name: Deploy static site
@@ -97,6 +97,7 @@ jobs:
         run: >-
           ./gradlew :modules:browser-tests:safariReleaseTest
           -DmazeGame.safariReleaseUrl="${{ needs.deploy.outputs.page_url }}"
+          -DmazeGame.safariWasmReleaseUrl="${{ needs.deploy.outputs.page_url }}wasm/"
 
       - name: Upload Safari release evidence
         if: always()

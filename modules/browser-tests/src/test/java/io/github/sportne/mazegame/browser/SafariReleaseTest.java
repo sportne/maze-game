@@ -41,11 +41,18 @@ final class SafariReleaseTest {
   private static final int REFERENCE_WIDTH = 1280;
   private static final int REFERENCE_HEIGHT = 720;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
-  private static final Set<String> REQUIRED_ASSETS =
+  private static final Set<String> JAVASCRIPT_ASSETS =
       Set.of("app.js", "styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
+  private static final Set<String> WEBASSEMBLY_ASSETS =
+      Set.of(
+          "app.wasm",
+          "app.wasm-runtime.js",
+          "styles.css",
+          "mouse-sprites.png",
+          "exploreMaze_T1.mp3");
 
   @Test
-  @Timeout(90)
+  @Timeout(180)
   void completesLiveGameFlowAndPersistsResult() throws IOException {
     Path reportDirectory = Path.of(requiredProperty("mazeGame.safariReportDirectory"));
     List<String> evidence = new ArrayList<>();
@@ -54,7 +61,16 @@ final class SafariReleaseTest {
       driver = new SafariDriver(new SafariOptions());
       driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(15));
       recordBrowser(evidence, driver);
-      runGameFlow(driver, requiredProperty("mazeGame.safariReleaseUrl"), evidence);
+      runGameFlow(
+          driver,
+          requiredProperty("mazeGame.safariReleaseUrl"),
+          "JavaScript",
+          JAVASCRIPT_ASSETS,
+          evidence);
+      String wasmReleaseUrl = System.getProperty("mazeGame.safariWasmReleaseUrl");
+      if (wasmReleaseUrl != null) {
+        runGameFlow(driver, wasmReleaseUrl, "WebAssembly", WEBASSEMBLY_ASSETS, evidence);
+      }
       captureScreenshot(driver, reportDirectory.resolve("result.png"));
       evidence.add("Result: PASS");
     } catch (Throwable failure) {
@@ -73,11 +89,18 @@ final class SafariReleaseTest {
     }
   }
 
-  private static void runGameFlow(WebDriver driver, String releaseUrl, List<String> evidence)
+  private static void runGameFlow(
+      WebDriver driver,
+      String releaseUrl,
+      String target,
+      Set<String> requiredAssets,
+      List<String> evidence)
       throws IOException {
     driver.manage().window().setSize(new org.openqa.selenium.Dimension(1280, 800));
     String separator = releaseUrl.contains("?") ? "&" : "?";
     driver.get(releaseUrl + separator + "safari-release=" + System.nanoTime());
+    javascript(driver).executeScript("window.localStorage.removeItem(arguments[0]);", RESULT_KEY);
+    driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
     installRuntimeErrorCapture(driver);
@@ -105,7 +128,7 @@ final class SafariReleaseTest {
                         "return window.localStorage.getItem(arguments[0]);", RESULT_KEY)
                     != null);
     String savedResult = readSavedResult(driver);
-    assertRequiredAssetsReachable(driver);
+    assertRequiredAssetsReachable(driver, requiredAssets);
     assertRuntimeErrorsEmpty(driver);
 
     driver.navigate().refresh();
@@ -116,15 +139,15 @@ final class SafariReleaseTest {
     clickCanvas(driver, 640, 280);
     waitForRenderedControl(driver, 404, 280);
     assertAudioResumed(driver);
-    assertRequiredAssetsReachable(driver);
+    assertRequiredAssetsReachable(driver, requiredAssets);
     assertRuntimeErrorsEmpty(driver);
 
-    evidence.add("Release URL: " + releaseUrl);
-    evidence.add("Saved result: " + savedResult);
-    evidence.add("Required assets: HTTP 2xx with expected MIME types");
-    evidence.add("Audio context after interaction: running");
-    evidence.add("Refresh, interaction, and persistence: PASS");
-    evidence.add("Runtime errors after initialization: none");
+    evidence.add(target + " release URL: " + releaseUrl);
+    evidence.add(target + " saved result: " + savedResult);
+    evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
+    evidence.add(target + " audio context after interaction: running");
+    evidence.add(target + " refresh, interaction, and persistence: PASS");
+    evidence.add(target + " runtime errors after initialization: none");
   }
 
   private static void recordBrowser(List<String> evidence, WebDriver driver) {
@@ -170,7 +193,7 @@ final class SafariReleaseTest {
     assertEquals("running", audioState);
   }
 
-  private static void assertRequiredAssetsReachable(WebDriver driver) {
+  private static void assertRequiredAssetsReachable(WebDriver driver, Set<String> requiredAssets) {
     Object result =
         javascript(driver)
             .executeScript(
@@ -180,7 +203,7 @@ final class SafariReleaseTest {
     assertTrue(result instanceof List<?>);
     List<?> resources = (List<?>) result;
     List<String> requiredAssetUrls = new ArrayList<>();
-    for (String asset : REQUIRED_ASSETS) {
+    for (String asset : requiredAssets) {
       String assetUrl =
           resources.stream()
               .map(Object::toString)
@@ -226,6 +249,9 @@ final class SafariReleaseTest {
     }
     if (url.endsWith(".mp3")) {
       return Set.of("audio/mpeg", "audio/mp3");
+    }
+    if (url.endsWith(".wasm")) {
+      return Set.of("application/wasm");
     }
     return Set.of("application/javascript", "text/javascript");
   }

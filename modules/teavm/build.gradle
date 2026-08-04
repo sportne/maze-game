@@ -29,6 +29,7 @@ def cleanWasmOutput = tasks.register('cleanWasmOutput', Delete) {
 }
 def webApplicationDirectory = layout.buildDirectory.dir('dist/js/webapp')
 def wasmApplicationDirectory = layout.buildDirectory.dir('dist/wasm/webapp')
+def pagesApplicationDirectory = layout.buildDirectory.dir('dist/pages')
 def webShellDirectory = layout.projectDirectory.dir('src/main/webapp')
 def wasmShellDirectory = layout.projectDirectory.dir('src/main/wasm')
 def webArtifactReport = layout.buildDirectory.file('reports/web-artifact/manifest.txt')
@@ -152,6 +153,18 @@ tasks.register('assembleWasmSite') {
     group = 'build'
     description = 'Assembles and verifies the WebAssembly preview site.'
     dependsOn verifyWasmArtifact
+}
+
+tasks.register('assemblePagesSite', Sync) {
+    group = 'build'
+    description = 'Stages the JavaScript release and WebAssembly preview as one Pages artifact.'
+    dependsOn tasks.named('assembleWebSite')
+    dependsOn tasks.named('assembleWasmSite')
+    from webApplicationDirectory
+    from(wasmApplicationDirectory) {
+        into 'wasm'
+    }
+    into pagesApplicationDirectory
 }
 
 tasks.matching { task -> task.name == 'gdx_teavm_web_wasm_run' }.configureEach {
