@@ -17,11 +17,17 @@ level selection scaffold, retry/replay, and persistent best results for complete
 - `./gradlew :modules:lwjgl3:run`
 - `./gradlew webBuild`
 - `./gradlew webRun`
+- `./gradlew webWasmBuild`
+- `./gradlew webWasmRun`
 - `./gradlew nativeImage`
 - `./gradlew nativeRun`
 
 `webBuild` produces an optimized static site in `modules/teavm/build/dist/js/webapp`; `webRun`
 starts the development server with source maps and automatic reload enabled.
+
+`webWasmBuild` produces an independent WebAssembly preview in
+`modules/teavm/build/dist/wasm/webapp`; `webWasmRun` starts its development server. The JavaScript
+site remains the GitHub Pages release while the preview is evaluated.
 
 ## GitHub Pages
 

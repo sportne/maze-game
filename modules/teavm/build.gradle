@@ -24,8 +24,13 @@ def prepareWebAssets = tasks.register('prepareWebAssets', Sync) {
 def cleanWebOutput = tasks.register('cleanWebOutput', Delete) {
     delete layout.buildDirectory.dir('dist/js/webapp')
 }
+def cleanWasmOutput = tasks.register('cleanWasmOutput', Delete) {
+    delete layout.buildDirectory.dir('dist/wasm/webapp')
+}
 def webApplicationDirectory = layout.buildDirectory.dir('dist/js/webapp')
+def wasmApplicationDirectory = layout.buildDirectory.dir('dist/wasm/webapp')
 def webShellDirectory = layout.projectDirectory.dir('src/main/webapp')
+def wasmShellDirectory = layout.projectDirectory.dir('src/main/wasm')
 def webArtifactReport = layout.buildDirectory.file('reports/web-artifact/manifest.txt')
 def maximumUncompressedBytes = 6_500_000L
 def maximumCompressedBytes = 4_500_000L
@@ -68,6 +73,15 @@ tasks.named('generateJavaScript') {
     dependsOn prepareWebAssets
 }
 
+tasks.named('copyWasmGCRuntime') {
+    dependsOn cleanWasmOutput
+}
+
+tasks.named('generateWasmGC') {
+    dependsOn cleanWasmOutput
+    dependsOn prepareWebAssets
+}
+
 def installWebShell = tasks.register('installWebShell', Copy) {
     dependsOn tasks.named('generateJavaScript')
     from webShellDirectory
@@ -90,6 +104,58 @@ def pruneWebArtifact = tasks.register('pruneWebArtifact', Delete) {
 
 tasks.matching { task -> task.name == 'gdx_teavm_web_js_run' }.configureEach {
     dependsOn installWebShell
+}
+
+def installWasmShell = tasks.register('installWasmShell', Copy) {
+    dependsOn tasks.named('gdx_teavm_web_wasm_build')
+    from(webShellDirectory) {
+        exclude 'index.html'
+    }
+    from wasmShellDirectory
+    into wasmApplicationDirectory
+}
+
+def pruneWasmArtifact = tasks.register('pruneWasmArtifact', Delete) {
+    dependsOn installWasmShell
+    delete wasmApplicationDirectory.map { directory -> directory.dir('WEB-INF') }
+    delete fileTree(wasmApplicationDirectory) {
+        include '**/*.map'
+        include '**/*.java'
+        include '**/*.class'
+    }
+}
+
+def verifyWasmArtifact = tasks.register('verifyWasmArtifact') {
+    group = 'verification'
+    description = 'Verifies the WebAssembly preview and its required runtime files.'
+    dependsOn pruneWasmArtifact
+    inputs.dir wasmApplicationDirectory
+    doLast {
+        def requiredFiles = [
+            'index.html',
+            'app.wasm',
+            'app.wasm-runtime.js',
+            'styles.css',
+            'assets/mouse-sprites.png',
+            'assets/audio/exploreMaze_T1.mp3',
+        ]
+        def missingFiles = requiredFiles.findAll { relativePath ->
+            !wasmApplicationDirectory.get().file(relativePath).asFile.isFile()
+        }
+        if (!missingFiles.isEmpty()) {
+            throw new GradleException("WebAssembly artifact is missing: ${missingFiles.join(', ')}")
+        }
+    }
+}
+
+tasks.register('assembleWasmSite') {
+    group = 'build'
+    description = 'Assembles and verifies the WebAssembly preview site.'
+    dependsOn verifyWasmArtifact
+}
+
+tasks.matching { task -> task.name == 'gdx_teavm_web_wasm_run' }.configureEach {
+    dependsOn installWasmShell
 }
 
 def verifyWebArtifact = tasks.register('verifyWebArtifact') {
@@ -161,6 +227,33 @@ gdxTeaVM {
         def developmentRequested = gradle.startParameter.taskNames.any { taskName ->
             taskName == 'webRun' || taskName.endsWith(':webRun') ||
                     taskName.endsWith('gdx_teavm_web_js_run')
+        }
+        optimization.set(developmentRequested ? OptimizationLevel.NONE : OptimizationLevel.AGGRESSIVE)
+        obfuscated.set(!developmentRequested)
+        debugInformation.set(developmentRequested)
+        sourceMap.set(developmentRequested)
+        sourceFilePolicy.set(
+                developmentRequested ? SourceFilePolicy.COPY : SourceFilePolicy.DO_NOTHING
+                )
+        devServer {
+            enabled.set(true)
+            autoBuild.set(true)
+            autoReload.set(true)
+        }
+    }
+
+    wasm {
+        mainClass.set('io.github.sportne.mazegame.teavm.TeaVMLauncher')
+        htmlTitle.set('Maze Game WebAssembly Preview')
+        htmlWidth.set(1280)
+        htmlHeight.set(720)
+        targetFileName.set('app.wasm')
+        outputDir.set(layout.buildDirectory.dir('dist/wasm'))
+        copyRuntime.set(true)
+        modularRuntime.set(false)
+        def developmentRequested = gradle.startParameter.taskNames.any { taskName ->
+            taskName == 'webWasmRun' || taskName.endsWith(':webWasmRun') ||
+                    taskName.endsWith('gdx_teavm_web_wasm_run')
         }
         optimization.set(developmentRequested ? OptimizationLevel.NONE : OptimizationLevel.AGGRESSIVE)
         obfuscated.set(!developmentRequested)

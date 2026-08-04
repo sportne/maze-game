@@ -5,10 +5,10 @@
     "node": ">=18.19.0"
   },
   "scripts": {
-    "check:format:web": "prettier --check modules/teavm/src/main/webapp",
-    "format:web": "prettier --write modules/teavm/src/main/webapp",
+    "check:format:web": "prettier --check modules/teavm/src/main/webapp modules/teavm/src/main/wasm",
+    "format:web": "prettier --write modules/teavm/src/main/webapp modules/teavm/src/main/wasm",
     "lint:css": "stylelint modules/teavm/src/main/webapp/styles.css",
-    "lint:html": "html-validate modules/teavm/src/main/webapp/index.html"
+    "lint:html": "html-validate modules/teavm/src/main/webapp/index.html modules/teavm/src/main/wasm/index.html"
   },
   "devDependencies": {
     "html-validate": "9.7.1",

@@ -2,7 +2,7 @@
 
 The production browser release is the optimized TeaVM JavaScript site at
 <https://sportne.github.io/maze-game/>. JavaScript is the compatibility and behavior baseline for
-the planned WebAssembly work in WEB-12 and WEB-13.
+the separate WebAssembly preview and its rollout evaluation.
 
 ## Build and Serve
 
@@ -73,10 +73,10 @@ audible output.
 
 ## JavaScript and WebAssembly
 
-JavaScript remains the production default. The WebAssembly target will be built and verified in
-parallel before any rollout decision. It must match this release's game behavior and browser matrix
-and demonstrate a measured benefit; unsupported WebAssembly clients must retain the JavaScript
-experience.
+JavaScript remains the production default. `./gradlew webWasmBuild` builds the independently
+verified preview at `modules/teavm/build/dist/wasm/webapp`; CI uploads it as a separate artifact but
+does not deploy it to Pages. WEB-13 will compare its browser coverage and measured behavior before
+any rollout decision. Unsupported WebAssembly clients must retain the JavaScript experience.
 
 ## Rollback
 

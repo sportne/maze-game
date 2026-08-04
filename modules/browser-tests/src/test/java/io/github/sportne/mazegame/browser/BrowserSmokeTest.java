@@ -24,9 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -37,15 +40,15 @@ final class BrowserSmokeTest {
   private static final int VIEWPORT_HEIGHT = 720;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
   private static final String APPLICATION_PATH = "/maze-game/";
-  private static final Set<String> REQUIRED_ASSETS =
-      Set.of("app.js", "styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
+  private static final Set<String> COMMON_ASSETS =
+      Set.of("styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
 
   @Test
   @Timeout(45)
   void completesGameFlowAndLoadsSavedResultAfterReload() throws IOException {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
     Path reportDirectory = Path.of(requiredProperty("mazeGame.browserSmokeReportDirectory"));
-    BrowserLog browserLog = new BrowserLog();
+    BrowserLog browserLog = new BrowserLog(requiredAssets());
     Page page = null;
 
     try (StaticWebServer server = StaticWebServer.start(webApplication);
@@ -77,9 +80,11 @@ final class BrowserSmokeTest {
     assertCanvas(page);
     assertTrue(page.locator("#loading-state").isHidden());
     assertTrue(page.locator("#failure-state").isHidden());
+    assertResizeGuidance(page);
 
     page.mouse().click(640, 280);
     waitForRenderedControl(page, 404, 280);
+    assertAudioResumed(page);
     page.mouse().click(404, 280);
     waitForRenderedControl(page, 738, 656);
 
@@ -99,10 +104,37 @@ final class BrowserSmokeTest {
     waitForRenderedControl(page, 640, 280);
 
     assertEquals(savedResult, readSavedResult(page));
-    assertTrue(browserLog.observedAssets().containsAll(REQUIRED_ASSETS));
+    assertTrue(browserLog.observedAssets().containsAll(browserLog.requiredAssets()));
+    if (browserLog.requiredAssets().contains("app.wasm")) {
+      assertEquals("application/wasm", browserLog.contentType("app.wasm"));
+    }
     assertTrue(
         browserLog.errors().isEmpty(),
         () -> String.join(System.lineSeparator(), browserLog.errors()));
+  }
+
+  private static void assertResizeGuidance(Page page) {
+    page.setViewportSize(390, 844);
+    page.waitForCondition(() -> page.locator("#viewport-guidance").isVisible());
+    page.setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+    page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
+  }
+
+  private static void assertAudioResumed(Page page) {
+    Object audioState =
+        page.evaluate(
+            "window.Howler && window.Howler.ctx" + " ? window.Howler.ctx.state : 'unavailable'");
+    assertEquals("running", audioState);
+  }
+
+  private static Set<String> requiredAssets() {
+    Set<String> assets = new HashSet<>(COMMON_ASSETS);
+    StringTokenizer tokens =
+        new StringTokenizer(requiredProperty("mazeGame.browserProgramAssets"), ",");
+    while (tokens.hasMoreTokens()) {
+      assets.add(tokens.nextToken());
+    }
+    return Set.copyOf(assets);
   }
 
   private static void assertCanvas(Page page) {
@@ -179,6 +211,12 @@ final class BrowserSmokeTest {
   private static final class BrowserLog {
     private final List<String> errors = new ArrayList<>();
     private final Set<String> observedAssets = new HashSet<>();
+    private final Map<String, String> contentTypes = new HashMap<>();
+    private final Set<String> requiredAssets;
+
+    private BrowserLog(Set<String> requiredAssets) {
+      this.requiredAssets = requiredAssets;
+    }
 
     private void observe(Page page) {
       page.onPageError(message -> errors.add("page: " + message));
@@ -197,9 +235,10 @@ final class BrowserSmokeTest {
       if (response.status() >= 400) {
         errors.add("response " + response.status() + ": " + response.url());
       }
-      for (String asset : REQUIRED_ASSETS) {
+      for (String asset : requiredAssets) {
         if (response.ok() && response.url().endsWith(asset)) {
           observedAssets.add(asset);
+          contentTypes.put(asset, response.headers().get("content-type"));
         }
       }
     }
@@ -210,6 +249,14 @@ final class BrowserSmokeTest {
 
     private Set<String> observedAssets() {
       return Set.copyOf(observedAssets);
+    }
+
+    private Set<String> requiredAssets() {
+      return requiredAssets;
+    }
+
+    private String contentType(String asset) {
+      return contentTypes.get(asset);
     }
   }
 
@@ -263,6 +310,9 @@ final class BrowserSmokeTest {
       }
       if (name.endsWith(".js")) {
         return "text/javascript; charset=utf-8";
+      }
+      if (name.endsWith(".wasm")) {
+        return "application/wasm";
       }
       if (name.endsWith(".css")) {
         return "text/css; charset=utf-8";

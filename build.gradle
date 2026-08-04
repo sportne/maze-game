@@ -36,6 +36,7 @@ def webToolSources = files(
     'modules/teavm/src/main/webapp/index.html',
     'modules/teavm/src/main/webapp/styles.css',
     'modules/teavm/src/main/webapp/favicon.svg',
+    'modules/teavm/src/main/wasm/index.html',
 )
 def npmInstall = tasks.register('npmInstall', Exec) {
     group = 'build setup'
@@ -65,7 +66,8 @@ tasks.register('webMarkupCheck', Exec) {
     group = 'verification'
     description = 'Validates maintained HTML with pinned html-validate.'
     dependsOn npmInstall
-    inputs.files 'modules/teavm/src/main/webapp/index.html', '.htmlvalidate.json'
+    inputs.files 'modules/teavm/src/main/webapp/index.html',
+            'modules/teavm/src/main/wasm/index.html', '.htmlvalidate.json'
     commandLine 'npm', 'run', 'lint:html'
 }
 
@@ -105,6 +107,18 @@ tasks.register('webRun') {
     group = 'application'
     description = 'Runs the TeaVM JavaScript development server.'
     dependsOn ':modules:teavm:gdx_teavm_web_js_run'
+}
+
+tasks.register('webWasmBuild') {
+    group = 'build'
+    description = 'Builds the optimized TeaVM WebAssembly preview.'
+    dependsOn ':modules:teavm:assembleWasmSite'
+}
+
+tasks.register('webWasmRun') {
+    group = 'application'
+    description = 'Runs the TeaVM WebAssembly development server.'
+    dependsOn ':modules:teavm:gdx_teavm_web_wasm_run'
 }
 
 tasks.register('browserSmokeTest') {

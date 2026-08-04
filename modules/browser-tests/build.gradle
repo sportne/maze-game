@@ -6,7 +6,9 @@ plugins {
 description = 'Browser smoke tests for the optimized TeaVM web application.'
 
 def webApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/js/webapp')
+def wasmApplicationDirectory = project(':modules:teavm').layout.buildDirectory.dir('dist/wasm/webapp')
 def smokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke')
+def wasmSmokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke-wasm')
 def safariReportDirectory = layout.buildDirectory.dir('reports/safari-release')
 
 dependencies {
@@ -39,6 +41,30 @@ tasks.named('test') {
     systemProperty 'mazeGame.webAppDirectory', webApplicationDirectory.get().asFile.absolutePath
     systemProperty 'mazeGame.browserSmokeReportDirectory',
             smokeReportDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.browserProgramAssets', 'app.js'
+}
+
+def wasmSmokeTest = tasks.register('wasmSmokeTest', Test) {
+    group = 'verification'
+    description = 'Runs browser smoke tests against the optimized TeaVM WebAssembly preview.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    dependsOn rootProject.tasks.named('webWasmBuild')
+    dependsOn playwrightInstall
+    inputs.dir wasmApplicationDirectory
+    environment 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', '1'
+    systemProperty 'mazeGame.webAppDirectory', wasmApplicationDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.browserSmokeReportDirectory',
+            wasmSmokeReportDirectory.get().asFile.absolutePath
+    systemProperty 'mazeGame.browserProgramAssets', 'app.wasm,app.wasm-runtime.js'
+    filter {
+        includeTestsMatching 'io.github.sportne.mazegame.browser.BrowserSmokeTest'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+    dependsOn wasmSmokeTest
 }
 
 tasks.register('safariReleaseTest', Test) {
