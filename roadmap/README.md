@@ -2,18 +2,22 @@
 
 ## Product Shape
 
-Maze Game is a desktop Java/libGDX game where the player builds a maze under time pressure, then watches an AI mouse try to reach the cheese. The player wins a level by making the mouse exceed the target solve time while preserving a valid path from the mouse start to the cheese.
+Maze Game is a Java/libGDX desktop and browser game where the player builds a maze under time
+pressure, then watches an AI mouse try to reach the cheese. The player wins a level by making the
+mouse exceed the target solve time while preserving a valid path from the mouse start to the cheese.
 
 The first milestone is intentionally small: one 5x5 level, normal wall placement only, one deterministic random mouse, and a complete build-run-result loop.
 
 ## Current Project Context
 
-- Platform: desktop.
+- Platforms: desktop, JavaScript web release, and WebAssembly web preview.
 - Runtime stack: existing Java/libGDX project.
 - Shared game module: `modules/core`.
 - Desktop launcher module: `modules/lwjgl3`.
 - Primary local run command: `./gradlew :modules:lwjgl3:run`.
-- Quality command: `./gradlew checkAll`.
+- Browser module: `modules/teavm` with release validation in `modules/browser-tests`.
+- Quality command: `./gradlew qualityGate`.
+- Atomic Pages build: `./gradlew pagesBuild`.
 - Packaging command already exposed by the root build: `./gradlew nativeImage`.
 
 ## Core Loop
@@ -31,8 +35,8 @@ The first milestone is intentionally small: one 5x5 level, normal wall placement
 
 ### Web Deployment: TeaVM and GitHub Pages
 
-Planning is complete for a JavaScript-first static website deployed through GitHub Pages, followed
-by a committed WebAssembly milestone. See [TeaVM and GitHub Pages Roadmap](teavm-github-pages.md).
+The JavaScript-first static website and opt-in WebAssembly preview are deployed through GitHub Pages.
+See the completed [TeaVM and GitHub Pages Roadmap](teavm-github-pages.md).
 
 ### Milestone 1: 5x5 Playable Prototype
 
@@ -51,23 +55,48 @@ Deliver a fully playable desktop level with:
 - Retry and replay support.
 - Native desktop package/build included in the definition of done.
 
-See [Milestone 1 Backlog](milestone-1.md).
+See the archived [Milestone 1 Backlog](done/milestone-1.md).
 
 Status: complete. The desktop app also includes a startup menu, settings screen, and a level-select
 screen with Milestone 1 enabled and future level slots locked.
 
+### Milestone 2: Mobile-Playable Two-Level Progression
+
+Add a genuinely mobile-playable responsive layout, a harder second authored level, persistent unlock
+progression, data-driven level selection, and complete cross-platform release coverage while retaining
+the existing random mouse and normal walls.
+
+See [Milestone 2](milestone-2.md).
+
+Status: planned.
+
+### Milestone 3: New Mouse Behavior
+
+Define and add one meaningfully different mouse type after Milestone 2 establishes a stable two-level
+progression. The final Milestone 2 planning card defines this milestone and its task breakdown.
+
+Status: direction captured; detailed planning deferred to M2-09.
+
+### Milestone 4 Candidate: Inventory-Based Block Building
+
+Consider multiple block types with limited quantities, presented in a palette and dragged onto the
+grid. This changes both game rules and input behavior and should be evaluated only after the new mouse
+can be understood independently.
+
+Status: concept only.
+
 ## Deferred Ideas
 
-These are intentionally out of scope for milestone 1, but should remain visible for later planning:
+These remain outside the currently planned Milestone 2 scope:
 
-- Level selection screen.
-- Larger grid progression from 5x5 up to 25x25.
-- Additional block types.
-- Additional mouse types.
+- Grid progression beyond the two authored levels.
+- Additional block types beyond the Milestone 4 candidate.
+- Additional mouse types beyond the one planned for Milestone 3.
 - Multiple mice and multiple start locations.
-- Persistent best results between app launches for the current authored level.
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and mouse behaviors.
+
+Completed task cards are retained in the [done archive](done/README.md).
 
 ## Design Decisions Captured
 
