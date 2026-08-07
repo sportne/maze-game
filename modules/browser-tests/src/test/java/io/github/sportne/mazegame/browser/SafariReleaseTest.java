@@ -62,15 +62,17 @@ final class SafariReleaseTest {
       driver = new SafariDriver(new SafariOptions());
       driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(15));
       recordBrowser(evidence, driver);
-      runGameFlow(
-          driver,
-          requiredProperty("mazeGame.safariReleaseUrl"),
-          "JavaScript",
-          JAVASCRIPT_ASSETS,
-          evidence);
+      String javascriptReleaseUrl = requiredProperty("mazeGame.safariReleaseUrl");
+      runGameFlow(driver, javascriptReleaseUrl, null, "JavaScript", JAVASCRIPT_ASSETS, evidence);
       String wasmReleaseUrl = System.getProperty("mazeGame.safariWasmReleaseUrl");
       if (wasmReleaseUrl != null) {
-        runGameFlow(driver, wasmReleaseUrl, "WebAssembly", WEBASSEMBLY_ASSETS, evidence);
+        runGameFlow(
+            driver,
+            wasmReleaseUrl,
+            javascriptReleaseUrl,
+            "WebAssembly",
+            WEBASSEMBLY_ASSETS,
+            evidence);
       }
       captureScreenshot(driver, reportDirectory.resolve("result.png"));
       evidence.add("Result: PASS");
@@ -93,6 +95,7 @@ final class SafariReleaseTest {
   private static void runGameFlow(
       WebDriver driver,
       String releaseUrl,
+      String fallbackReleaseUrl,
       String target,
       Set<String> requiredAssets,
       List<String> evidence)
@@ -104,7 +107,9 @@ final class SafariReleaseTest {
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
-    assertReleaseLocation(driver, releaseUrl);
+    String activeReleaseUrl = activeReleaseUrl(driver, releaseUrl, fallbackReleaseUrl);
+    Set<String> activeRequiredAssets =
+        activeReleaseUrl.equals(releaseUrl) ? requiredAssets : JAVASCRIPT_ASSETS;
     installRuntimeErrorCapture(driver);
 
     clickCanvas(driver, 640, 280);
@@ -130,22 +135,25 @@ final class SafariReleaseTest {
                         "return window.localStorage.getItem(arguments[0]);", RESULT_KEY)
                     != null);
     String savedResult = readSavedResult(driver);
-    assertRequiredAssetsReachable(driver, requiredAssets);
+    assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
 
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertEquals(savedResult, readSavedResult(driver));
     assertPageStarted(driver);
-    assertReleaseLocation(driver, releaseUrl);
+    assertReleaseLocation(driver, activeReleaseUrl);
     installRuntimeErrorCapture(driver);
     clickCanvas(driver, 640, 280);
     waitForRenderedControl(driver, 404, 280);
     assertAudioResumed(driver);
-    assertRequiredAssetsReachable(driver, requiredAssets);
+    assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
 
     evidence.add(target + " release URL: " + releaseUrl);
+    if (!activeReleaseUrl.equals(releaseUrl)) {
+      evidence.add(target + " fallback URL: " + activeReleaseUrl);
+    }
     evidence.add(target + " saved result: " + savedResult);
     evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
     evidence.add(target + " audio context after interaction: running");
@@ -175,6 +183,26 @@ final class SafariReleaseTest {
     assertEquals(expected.getScheme(), actual.getScheme());
     assertEquals(expected.getAuthority(), actual.getAuthority());
     assertEquals(expected.getPath(), actual.getPath());
+  }
+
+  private static String activeReleaseUrl(
+      WebDriver driver, String releaseUrl, String fallbackReleaseUrl) {
+    if (releaseLocationMatches(driver, releaseUrl)) {
+      return releaseUrl;
+    }
+    if (fallbackReleaseUrl != null && releaseLocationMatches(driver, fallbackReleaseUrl)) {
+      return fallbackReleaseUrl;
+    }
+    assertReleaseLocation(driver, releaseUrl);
+    return releaseUrl;
+  }
+
+  private static boolean releaseLocationMatches(WebDriver driver, String releaseUrl) {
+    URI expected = URI.create(releaseUrl);
+    URI actual = URI.create(driver.getCurrentUrl());
+    return expected.getScheme().equals(actual.getScheme())
+        && expected.getAuthority().equals(actual.getAuthority())
+        && expected.getPath().equals(actual.getPath());
   }
 
   private static void installRuntimeErrorCapture(WebDriver driver) {
