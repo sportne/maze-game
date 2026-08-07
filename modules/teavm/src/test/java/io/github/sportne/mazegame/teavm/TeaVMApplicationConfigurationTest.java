@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.teavm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplicationConfiguration;
@@ -15,7 +16,7 @@ final class TeaVMApplicationConfigurationTest {
     assertEquals(0, configuration.width);
     assertEquals(0, configuration.height);
     assertTrue(configuration.isAutoSizeApplication());
-    assertTrue(configuration.usePhysicalPixels);
+    assertFalse(configuration.usePhysicalPixels);
     assertEquals("maze-game_", configuration.storagePrefix);
   }
 }

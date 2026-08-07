@@ -1,6 +1,6 @@
 # M2-01: Make Mobile Controls Genuinely Playable
 
-Status: pending
+Status: complete
 
 Depends on: none
 
@@ -49,3 +49,20 @@ portrait and landscape Safari.
   evidence artifact, and record the device, viewport measurements, and observations in this card's
   completion notes.
 - Run `./gradlew spotlessApply qualityGate pagesBuild nativeImage` with GraalVM 21.
+
+## Completion Notes
+
+- Added compact portrait and toolbar-constrained landscape layouts while retaining the existing
+  1280x720 desktop geometry.
+- Browser presentation now uses logical CSS pixels and dynamic viewport height while leaving Safari
+  to expose its safe viewport; rendering and hit testing share the same responsive rectangles after
+  resize or rotation without scaling a full-window canvas inside CSS safe-area padding.
+- Layout tests cover every phase at 390x844 and 844x286. Buttons are at least 44x44 CSS pixels and
+  the current 5x5 grid cells are at least 32x32 CSS pixels.
+- JavaScript and WebAssembly browser smoke tests complete touch flows in both orientations at a 3x
+  device-pixel ratio, rotate during menu, build, running, and result phases, and retain
+  `mobile-portrait.png`, `mobile-landscape.png`, and a 756x286 safe-content landscape capture in each
+  browser-smoke evidence artifact.
+- Automated evidence used Chromium's mobile viewport and touch emulation. A physical iPhone Safari
+  check remains part of the post-deployment verification after the milestone's single permitted
+  push; any issue found there will be staged without another commit or push.

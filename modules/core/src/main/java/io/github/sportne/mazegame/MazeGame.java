@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.assets.AssetPaths;
 import io.github.sportne.mazegame.assets.BackgroundMusicController;
@@ -54,12 +54,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
 
-  /** Width of the stable virtual coordinate system used for rendering and input. */
-  private static final int VIRTUAL_WIDTH = 1280;
-
-  /** Height of the stable virtual coordinate system used for rendering and input. */
-  private static final int VIRTUAL_HEIGHT = 720;
-
   /** Platform capabilities and services supplied by the active launcher. */
   private final MazeGameRuntimeConfiguration runtimeConfiguration;
 
@@ -78,7 +72,7 @@ public final class MazeGame extends ApplicationAdapter {
   /** Default libGDX bitmap font used by the simple UI. */
   private BitmapFont font;
 
-  /** Viewport that preserves the virtual 1280x720 game canvas during window resizes. */
+  /** Viewport that keeps one game unit aligned with one logical screen pixel. */
   private Viewport viewport;
 
   /** Texture loaded from the mouse/cheese sprite sheet asset. */
@@ -244,7 +238,7 @@ public final class MazeGame extends ApplicationAdapter {
     initializeMainMenu();
     spriteBatch = new SpriteBatch();
     shapeRenderer = new ShapeRenderer();
-    viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    viewport = new ScreenViewport();
     resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     font = new BitmapFont();
     font.setColor(TEXT);
@@ -269,7 +263,11 @@ public final class MazeGame extends ApplicationAdapter {
     ScreenUtils.clear(background());
     viewport.apply();
     updateProjectionMatrices();
-    ScreenLayout layout = screenLayout(gamePhase(), VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    ScreenLayout layout =
+        screenLayout(
+            gamePhase(),
+            Math.round(viewport.getWorldWidth()),
+            Math.round(viewport.getWorldHeight()));
     renderer.render(layout, renderSnapshot());
     completeFrame(deltaSeconds);
   }
@@ -685,12 +683,14 @@ public final class MazeGame extends ApplicationAdapter {
         return false;
       }
       Vector2 worldPosition = viewport.unproject(new Vector2(screenX, screenY));
+      int worldWidth = Math.round(viewport.getWorldWidth());
+      int worldHeight = Math.round(viewport.getWorldHeight());
       return handleScreenClick(
           Math.round(worldPosition.x),
-          Math.round(VIRTUAL_HEIGHT - worldPosition.y),
+          Math.round(worldHeight - worldPosition.y),
           button,
-          VIRTUAL_WIDTH,
-          VIRTUAL_HEIGHT);
+          worldWidth,
+          worldHeight);
     }
   }
 }

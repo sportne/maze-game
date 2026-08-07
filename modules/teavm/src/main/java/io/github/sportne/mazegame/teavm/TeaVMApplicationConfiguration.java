@@ -18,7 +18,7 @@ final class TeaVMApplicationConfiguration {
     WebApplicationConfiguration configuration = new WebApplicationConfiguration(CANVAS_ID);
     configuration.width = 0;
     configuration.height = 0;
-    configuration.usePhysicalPixels = true;
+    configuration.usePhysicalPixels = false;
     configuration.storagePrefix = STORAGE_PREFIX;
     return configuration;
   }

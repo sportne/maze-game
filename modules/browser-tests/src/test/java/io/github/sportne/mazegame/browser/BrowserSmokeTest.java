@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import javax.imageio.ImageIO;
@@ -43,6 +44,7 @@ final class BrowserSmokeTest {
   private static final int PORTRAIT_HEIGHT = 844;
   private static final int MOBILE_SAFARI_LANDSCAPE_WIDTH = 844;
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
+  private static final int MOBILE_SAFE_LANDSCAPE_WIDTH = 756;
   private static final int STARTUP_SAMPLE_COUNT = 5;
   private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
   private static final String SITE_PATH = "/maze-game/";
@@ -50,7 +52,7 @@ final class BrowserSmokeTest {
       Set.of("styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
 
   @Test
-  @Timeout(90)
+  @Timeout(150)
   void completesGameFlowAndLoadsSavedResultAfterReload() throws IOException {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
     Path artifactDirectory = requiredDirectory("mazeGame.artifactDirectory");
@@ -80,6 +82,7 @@ final class BrowserSmokeTest {
       browserLog.observe(page);
       try {
         runGameFlow(page, server.uri(), browserLog, artifactDirectory, reportDirectory, browser);
+        runMobileTouchFlows(browser, server.uri(), reportDirectory);
       } catch (Throwable failure) {
         captureFailure(page, browserLog, reportDirectory, failure);
         throw failure;
@@ -220,15 +223,164 @@ final class BrowserSmokeTest {
   private static void assertResponsiveViewportSupport(Page page) throws IOException {
     page.setViewportSize(PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
-    waitForRenderedControl(page, 195, 398);
+    waitForRenderedControl(page, 195, 342);
     page.setViewportSize(MOBILE_SAFARI_LANDSCAPE_WIDTH, MOBILE_SAFARI_LANDSCAPE_HEIGHT);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
-    waitForRenderedControl(page, 422, 111);
+    waitForRenderedControl(page, 326, 151);
     page.setViewportSize(200, 400);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isVisible());
     page.setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
     page.waitForCondition(() -> page.locator("#viewport-guidance").isHidden());
     waitForRenderedControl(page, 640, 280);
+  }
+
+  private static void runMobileTouchFlows(Browser browser, URI applicationUri, Path reportDirectory)
+      throws IOException {
+    MobileViewport portrait =
+        new MobileViewport(
+            PORTRAIT_WIDTH,
+            PORTRAIT_HEIGHT,
+            new Point(195, 342),
+            new Point(109, 290),
+            new Point(124, 422),
+            new Point(103, 806),
+            new Point(288, 806),
+            new Point(73, 806));
+    MobileViewport landscape =
+        new MobileViewport(
+            MOBILE_SAFARI_LANDSCAPE_WIDTH,
+            MOBILE_SAFARI_LANDSCAPE_HEIGHT,
+            new Point(326, 151),
+            new Point(250, 95),
+            new Point(88, 143),
+            new Point(414, 143),
+            new Point(694, 143),
+            new Point(369, 200));
+    MobileViewport safeLandscape =
+        new MobileViewport(
+            MOBILE_SAFE_LANDSCAPE_WIDTH,
+            MOBILE_SAFARI_LANDSCAPE_HEIGHT,
+            new Point(282, 151),
+            new Point(206, 95),
+            new Point(88, 143),
+            new Point(392, 143),
+            new Point(628, 143),
+            new Point(354, 200));
+    runMobileTouchFlow(
+        browser,
+        applicationUri,
+        reportDirectory.resolve("mobile-portrait.png"),
+        portrait,
+        landscape);
+    runMobileTouchFlow(
+        browser,
+        applicationUri,
+        reportDirectory.resolve("mobile-landscape.png"),
+        landscape,
+        portrait);
+    runMobileTouchFlow(
+        browser,
+        applicationUri,
+        reportDirectory.resolve("mobile-safe-landscape.png"),
+        safeLandscape,
+        portrait);
+  }
+
+  private static void runMobileTouchFlow(
+      Browser browser,
+      URI applicationUri,
+      Path screenshotPath,
+      MobileViewport primary,
+      MobileViewport rotated)
+      throws IOException {
+    try (BrowserContext context =
+            browser.newContext(
+                new Browser.NewContextOptions()
+                    .setViewportSize(primary.width(), primary.height())
+                    .setDeviceScaleFactor(3.0)
+                    .setHasTouch(true));
+        Page page = context.newPage()) {
+      page.navigate(applicationUri.toString());
+      assertLogicalCanvasSize(page, primary);
+      waitForRenderedControl(page, primary.menuStart().x(), primary.menuStart().y());
+
+      resizeAndAssert(page, rotated);
+      resizeAndAssert(page, primary);
+      waitForRenderedControl(page, primary.menuStart().x(), primary.menuStart().y());
+      tap(page, primary.menuStart());
+      waitForRenderedControl(page, primary.levelCard().x(), primary.levelCard().y());
+      tap(page, primary.levelCard());
+      waitForRenderedControl(page, primary.startRun().x(), primary.startRun().y());
+
+      tap(page, primary.editableCell());
+      assertWallCell(page, primary.editableCell());
+      resizeAndAssert(page, rotated);
+      waitForRenderedControl(page, rotated.wallMode().x(), rotated.wallMode().y());
+      assertWallCell(page, rotated.editableCell());
+      tap(page, rotated.wallMode());
+      tap(page, rotated.editableCell());
+      assertOpenCell(page, rotated.editableCell());
+      resizeAndAssert(page, primary);
+      waitForRenderedControl(page, primary.startRun().x(), primary.startRun().y());
+      assertOpenCell(page, primary.editableCell());
+
+      tap(page, primary.startRun());
+      resizeAndAssert(page, rotated);
+      waitForSavedResult(page);
+      waitForRenderedControl(page, rotated.retry().x(), rotated.retry().y());
+      resizeAndAssert(page, primary);
+      waitForRenderedControl(page, primary.retry().x(), primary.retry().y());
+      Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
+      page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
+
+      resizeAndAssert(page, rotated);
+      waitForRenderedControl(page, rotated.retry().x(), rotated.retry().y());
+      tap(page, rotated.retry());
+      waitForRenderedControl(page, rotated.startRun().x(), rotated.startRun().y());
+    }
+  }
+
+  private static void resizeAndAssert(Page page, MobileViewport viewport) {
+    page.setViewportSize(viewport.width(), viewport.height());
+    assertLogicalCanvasSize(page, viewport);
+    assertTrue(page.locator("#viewport-guidance").isHidden());
+  }
+
+  private static void assertLogicalCanvasSize(Page page, MobileViewport viewport) {
+    page.waitForCondition(
+        () ->
+            ((Number) page.locator("canvas").evaluate("canvas => canvas.width")).intValue()
+                    == viewport.width()
+                && ((Number) page.locator("canvas").evaluate("canvas => canvas.height")).intValue()
+                    == viewport.height());
+    assertEquals(viewport.width(), page.locator("canvas").boundingBox().width);
+    assertEquals(viewport.height(), page.locator("canvas").boundingBox().height);
+  }
+
+  private static void tap(Page page, Point point) {
+    page.touchscreen().tap(point.x(), point.y());
+  }
+
+  private static void assertWallCell(Page page, Point point) throws IOException {
+    int color = pixelColor(page, point.x(), point.y());
+    assertTrue(red(color) > 220 && green(color) > 220 && blue(color) > 220);
+  }
+
+  private static void assertOpenCell(Page page, Point point) throws IOException {
+    int color = pixelColor(page, point.x(), point.y());
+    assertTrue(red(color) < 80 && green(color) < 80 && blue(color) < 80);
+  }
+
+  private static int red(int color) {
+    return color >> 16 & 0xFF;
+  }
+
+  private static int green(int color) {
+    return color >> 8 & 0xFF;
+  }
+
+  private static int blue(int color) {
+    return color & 0xFF;
   }
 
   private static void assertAudioResumed(Page page) {
@@ -269,17 +421,24 @@ final class BrowserSmokeTest {
   }
 
   private static void waitForRenderedControl(Page page, int x, int y) throws IOException {
-    int backgroundColor = screenshot(page).getRGB(0, 0);
+    int backgroundColor = pixelColor(page, 0, 0);
     waitForPixelChange(page, x, y, backgroundColor);
   }
 
   private static void waitForPixelChange(Page page, int x, int y, int originalColor)
       throws IOException {
     long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
-    while (screenshot(page).getRGB(x, y) == originalColor && System.nanoTime() < deadline) {
+    while (pixelColor(page, x, y) == originalColor && System.nanoTime() < deadline) {
       page.waitForTimeout(100.0);
     }
-    assertFalse(screenshot(page).getRGB(x, y) == originalColor, "expected rendered pixel change");
+    assertFalse(pixelColor(page, x, y) == originalColor, "expected rendered pixel change");
+  }
+
+  private static int pixelColor(Page page, int cssX, int cssY) throws IOException {
+    double devicePixelRatio = ((Number) page.evaluate("window.devicePixelRatio")).doubleValue();
+    return screenshot(page)
+        .getRGB(
+            (int) Math.round(cssX * devicePixelRatio), (int) Math.round(cssY * devicePixelRatio));
   }
 
   private static BufferedImage screenshot(Page page) throws IOException {
@@ -370,6 +529,18 @@ final class BrowserSmokeTest {
       return contentTypes.get(asset);
     }
   }
+
+  private record Point(int x, int y) {}
+
+  private record MobileViewport(
+      int width,
+      int height,
+      Point menuStart,
+      Point levelCard,
+      Point editableCell,
+      Point wallMode,
+      Point startRun,
+      Point retry) {}
 
   private static final class StaticWebServer implements AutoCloseable {
     private final String applicationPath;

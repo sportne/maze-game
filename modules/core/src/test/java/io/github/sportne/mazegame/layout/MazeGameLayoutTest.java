@@ -55,10 +55,71 @@ final class MazeGameLayoutTest {
     assertTrue(LayoutValidator.validate(layout).isEmpty());
   }
 
+  @ParameterizedTest
+  @EnumSource(GamePhase.class)
+  void phonePortraitControlsAndGridRemainTouchable(GamePhase phase) {
+    assertMobileTargets(phase, 390, 844);
+  }
+
+  @ParameterizedTest
+  @EnumSource(GamePhase.class)
+  void constrainedLandscapeControlsAndGridRemainTouchable(GamePhase phase) {
+    assertMobileTargets(phase, 844, 286);
+  }
+
+  @ParameterizedTest
+  @EnumSource(GamePhase.class)
+  void supportedIntermediateViewportsUseCompactLayouts(GamePhase phase) {
+    assertMobileTargets(phase, 601, 844);
+    assertMobileTargets(phase, 600, 421);
+    assertMobileTargets(phase, 799, 600);
+  }
+
+  @Test
+  void desktopReferenceLayoutRemainsUnchanged() {
+    ScreenLayout layout = MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, GRID_SIZE);
+
+    assertEquals(
+        new ScreenRectangle(417.5F, 137.5F, 445.0F, 445.0F),
+        layout.bounds(MazeGameLayout.GAME_GRID));
+    assertEquals(
+        new ScreenRectangle(452.0F, 41.5F, 180.0F, 44.0F),
+        layout.bounds(MazeGameLayout.BUILD_WALL_MODE));
+    assertEquals(
+        new ScreenRectangle(648.0F, 41.5F, 180.0F, 44.0F),
+        layout.bounds(MazeGameLayout.BUILD_START));
+  }
+
+  private static void assertMobileTargets(GamePhase phase, int width, int height) {
+    ScreenLayout layout = MazeGameLayout.forPhase(phase, width, height, GRID_SIZE, false);
+
+    assertTrue(
+        LayoutValidator.validate(layout).isEmpty(),
+        () -> LayoutValidator.validate(layout).toString());
+    assertTrue(
+        layout.elements().stream()
+            .filter(element -> element.kind() == LayoutElementKind.BUTTON)
+            .allMatch(
+                element ->
+                    element.bounds().width() >= 44.0F && element.bounds().height() >= 44.0F));
+    layout
+        .element(MazeGameLayout.GAME_GRID)
+        .ifPresent(
+            grid ->
+                assertTrue(
+                    grid.bounds().width() / GRID_SIZE.columns() >= 32.0F,
+                    () -> "grid cell too small for " + phase + " at " + width + "x" + height));
+  }
+
   private static Stream<Arguments> phaseAndViewportArguments() {
     List<int[]> viewports =
         List.of(
             new int[] {1280, 720},
+            new int[] {390, 844},
+            new int[] {844, 286},
+            new int[] {601, 844},
+            new int[] {600, 421},
+            new int[] {799, 600},
             new int[] {900, 900},
             new int[] {800, 600},
             new int[] {1920, 1080});
