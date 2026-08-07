@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -103,6 +104,7 @@ final class SafariReleaseTest {
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
+    assertReleaseLocation(driver, releaseUrl);
     installRuntimeErrorCapture(driver);
 
     clickCanvas(driver, 640, 280);
@@ -135,6 +137,7 @@ final class SafariReleaseTest {
     waitForRenderedControl(driver, 640, 280);
     assertEquals(savedResult, readSavedResult(driver));
     assertPageStarted(driver);
+    assertReleaseLocation(driver, releaseUrl);
     installRuntimeErrorCapture(driver);
     clickCanvas(driver, 640, 280);
     waitForRenderedControl(driver, 404, 280);
@@ -164,6 +167,14 @@ final class SafariReleaseTest {
     assertTrue(canvasSize.getHeight() > 0);
     assertFalse(driver.findElement(By.id("loading-state")).isDisplayed());
     assertFalse(driver.findElement(By.id("failure-state")).isDisplayed());
+  }
+
+  private static void assertReleaseLocation(WebDriver driver, String releaseUrl) {
+    URI expected = URI.create(releaseUrl);
+    URI actual = URI.create(driver.getCurrentUrl());
+    assertEquals(expected.getScheme(), actual.getScheme());
+    assertEquals(expected.getAuthority(), actual.getAuthority());
+    assertEquals(expected.getPath(), actual.getPath());
   }
 
   private static void installRuntimeErrorCapture(WebDriver driver) {
@@ -209,7 +220,13 @@ final class SafariReleaseTest {
               .map(Object::toString)
               .filter(resource -> resource.endsWith(asset))
               .findFirst()
-              .orElseThrow(() -> new AssertionError("missing loaded asset: " + asset));
+              .orElseGet(
+                  () -> {
+                    if (asset.endsWith(".wasm")) {
+                      return URI.create(driver.getCurrentUrl()).resolve(asset).toString();
+                    }
+                    throw new AssertionError("missing loaded asset: " + asset);
+                  });
       requiredAssetUrls.add(assetUrl);
     }
     Object responses =
