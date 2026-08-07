@@ -17,8 +17,8 @@ public enum GameInputActionType {
   /** Return from a menu screen to the startup menu. */
   BACK_TO_MAIN_MENU,
 
-  /** Start the enabled milestone-one level. */
-  START_MILESTONE_ONE,
+  /** Start a selectable authored level by stable id. */
+  SELECT_LEVEL,
 
   /** Consume a click on a locked level placeholder. */
   SELECT_LOCKED_LEVEL,

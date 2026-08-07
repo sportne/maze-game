@@ -7,15 +7,35 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.LevelCatalog;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 final class GameSessionTest {
+  private static final LevelDefinition SECOND_LEVEL =
+      new LevelDefinition(
+          "test-level-2",
+          "Test Level 2",
+          GridSize.square(5),
+          new GridPosition(4, 2),
+          new GridPosition(0, 2),
+          Duration.ofSeconds(20),
+          Duration.ofSeconds(5),
+          Duration.ofSeconds(10),
+          Duration.ofMillis(250),
+          1L);
+
+  private static final LevelCatalog TEST_CATALOG =
+      new LevelCatalog(List.of(Levels.milestoneOne(), SECOND_LEVEL));
+
   @Test
   void startsAtMainMenuWithMilestoneOneDefaultsReady() {
     GameSession session = new GameSession();
@@ -123,7 +143,7 @@ final class GameSessionTest {
   void passingNormalRunSavesBestResult() {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
-    session.startMilestoneOneLevel();
+    session.startLevel(Levels.milestoneOne().id());
 
     session.startRun();
     session.updateMouseRun(10.0F);
@@ -138,7 +158,7 @@ final class GameSessionTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     store.savedBestResult = new BestResult(Duration.ofSeconds(11), 1);
     GameSession session = new GameSession(store);
-    session.startMilestoneOneLevel();
+    session.startLevel(Levels.milestoneOne().id());
 
     session.startRun();
     session.updateMouseRun(10.0F);
@@ -151,7 +171,7 @@ final class GameSessionTest {
   void failedRunDoesNotSaveBestResult() {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
-    session.startMilestoneOneLevel();
+    session.startLevel(Levels.milestoneOne().id());
     addVerticalCorridorWalls(session);
 
     session.startRun();
@@ -165,7 +185,7 @@ final class GameSessionTest {
   void replayDoesNotSaveBestResultAgain() {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
-    session.startMilestoneOneLevel();
+    session.startLevel(Levels.milestoneOne().id());
     session.startRun();
     session.updateMouseRun(10.0F);
 
@@ -205,6 +225,74 @@ final class GameSessionTest {
   }
 
   @Test
+  void startsAnyCatalogLevelByStableId() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+
+    assertTrue(session.startLevel(SECOND_LEVEL.id()));
+
+    assertEquals(SECOND_LEVEL, session.levelDefinition());
+    assertEquals(SECOND_LEVEL, session.mazeState().levelDefinition());
+    assertEquals(GamePhase.BUILDING, session.gamePhase());
+    assertEquals(SECOND_LEVEL.id(), store.loadedLevelId);
+  }
+
+  @Test
+  void unknownLevelCannotStartOrChangeTheSession() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+    LevelDefinition originalLevel = session.levelDefinition();
+    GamePhase originalPhase = session.gamePhase();
+
+    assertFalse(session.startLevel("missing-level"));
+
+    assertEquals(originalLevel, session.levelDefinition());
+    assertEquals(originalPhase, session.gamePhase());
+    assertEquals(Levels.milestoneOne().id(), store.loadedLevelId);
+  }
+
+  @Test
+  void retryAndReplayRetainTheSelectedLevel() {
+    GameSession session =
+        new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), BestResultStore.none());
+    session.startLevel(SECOND_LEVEL.id());
+    session.startRun();
+    session.updateMouseRun(10.0F);
+    MouseRunResult firstResult = session.mouseRunResult();
+
+    session.retryLevel();
+    assertEquals(SECOND_LEVEL, session.levelDefinition());
+    assertEquals(SECOND_LEVEL, session.mazeState().levelDefinition());
+
+    session.startRun();
+    session.updateMouseRun(10.0F);
+    session.replayRun();
+    session.updateMouseRun(10.0F);
+
+    assertEquals(SECOND_LEVEL, session.levelDefinition());
+    assertEquals(firstResult, session.mouseRunResult());
+  }
+
+  @Test
+  void savesBestResultUnderTheSelectedLevelId() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+    session.startLevel(SECOND_LEVEL.id());
+
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertEquals(SECOND_LEVEL.id(), store.savedLevelId);
+  }
+
+  @Test
+  void rejectsAnInitialLevelOutsideTheCatalog() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new GameSession(TEST_CATALOG, "missing-level", BestResultStore.none()));
+  }
+
+  @Test
   void wallMutationsRequirePositions() {
     GameSession session = startedSession();
 
@@ -214,7 +302,7 @@ final class GameSessionTest {
 
   private static GameSession startedSession() {
     GameSession session = new GameSession();
-    session.startMilestoneOneLevel();
+    session.startLevel(Levels.milestoneOne().id());
     return session;
   }
 
@@ -233,6 +321,7 @@ final class GameSessionTest {
 
   private static final class RecordingBestResultStore implements BestResultStore {
     private String loadedLevelId;
+    private String savedLevelId;
     private BestResult savedBestResult;
     private int saveCount;
 
@@ -244,6 +333,7 @@ final class GameSessionTest {
 
     @Override
     public void save(String levelId, BestResult bestResult) {
+      savedLevelId = levelId;
       savedBestResult = bestResult;
       saveCount++;
     }

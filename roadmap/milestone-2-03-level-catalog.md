@@ -1,6 +1,6 @@
 # M2-03: Generalize the Authored-Level Catalog and Selection Contract
 
-Status: pending
+Status: complete
 
 Depends on: M2-02
 
@@ -39,3 +39,14 @@ select levels by stable identity without introducing a general-purpose content s
 - Add input and session tests with multiple supplied definitions and reject unknown selection.
 - Add retry and replay tests that assert the selected level is retained.
 - Run architecture checks to confirm the generalized contract does not add platform dependencies.
+
+## Completion Notes
+
+- Added a small immutable `LevelCatalog` that preserves authored display order, rejects duplicate
+  stable IDs, and supports lookup without introducing external content loading.
+- Generalized level-select input to carry a stable level ID and route cards from the session's
+  ordered catalog instead of assuming the first production level.
+- Updated sessions to start, reset, retry, replay, and persist results against the selected
+  definition while preserving the Milestone 1 default and saved-result key.
+- Exercised the generalized contract with test-supplied levels; the production catalog intentionally
+  remains Milestone 1-only until M2-05 adds the accepted Level 2 definition.

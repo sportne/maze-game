@@ -6,7 +6,9 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.state.GamePhase;
+import java.util.List;
 import java.util.Optional;
 
 /** Converts raw mouse clicks into game input actions. */
@@ -23,6 +25,7 @@ public final class GameInputRouter {
    * @param screenY y coordinate from the top edge
    * @param button libGDX mouse button code
    * @param gridSize current level grid size
+   * @param selectableLevels levels currently selectable in display order
    * @return routed input action
    */
   public static GameInputAction route(
@@ -31,10 +34,13 @@ public final class GameInputRouter {
       int screenX,
       int screenY,
       int button,
-      GridSize gridSize) {
+      GridSize gridSize,
+      List<LevelDefinition> selectableLevels) {
+    List<LevelDefinition> levels = List.copyOf(selectableLevels);
     float screenYFromBottom = layout.viewport().height() - screenY;
     if (button == Input.Buttons.LEFT) {
-      GameInputAction controlAction = routeLeftClick(layout, phase, screenX, screenYFromBottom);
+      GameInputAction controlAction =
+          routeLeftClick(layout, phase, screenX, screenYFromBottom, levels);
       if (controlAction.consumed()) {
         return controlAction;
       }
@@ -46,10 +52,14 @@ public final class GameInputRouter {
   }
 
   private static GameInputAction routeLeftClick(
-      ScreenLayout layout, GamePhase phase, int screenX, float screenYFromBottom) {
+      ScreenLayout layout,
+      GamePhase phase,
+      int screenX,
+      float screenYFromBottom,
+      List<LevelDefinition> selectableLevels) {
     return switch (phase) {
       case MAIN_MENU -> routeMainMenu(layout, screenX, screenYFromBottom);
-      case LEVEL_SELECT -> routeLevelSelect(layout, screenX, screenYFromBottom);
+      case LEVEL_SELECT -> routeLevelSelect(layout, screenX, screenYFromBottom, selectableLevels);
       case SETTINGS -> routeSettings(layout, screenX, screenYFromBottom);
       case BUILDING -> routeBuildControls(layout, screenX, screenYFromBottom);
       case RESULT -> routeResult(layout, screenX, screenYFromBottom);
@@ -84,16 +94,19 @@ public final class GameInputRouter {
   }
 
   private static GameInputAction routeLevelSelect(
-      ScreenLayout layout, int screenX, float screenYFromBottom) {
+      ScreenLayout layout,
+      int screenX,
+      float screenYFromBottom,
+      List<LevelDefinition> selectableLevels) {
     if (contains(layout, MazeGameLayout.LEVEL_SELECT_BACK, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.BACK_TO_MAIN_MENU);
     }
     for (int index = 0; index < 6; index++) {
       if (contains(layout, MazeGameLayout.levelCardId(index + 1), screenX, screenYFromBottom)) {
-        return GameInputAction.of(
-            index == 0
-                ? GameInputActionType.START_MILESTONE_ONE
-                : GameInputActionType.SELECT_LOCKED_LEVEL);
+        if (index < selectableLevels.size()) {
+          return GameInputAction.selectLevel(selectableLevels.get(index).id());
+        }
+        return GameInputAction.of(GameInputActionType.SELECT_LOCKED_LEVEL);
       }
     }
     return GameInputAction.NONE;

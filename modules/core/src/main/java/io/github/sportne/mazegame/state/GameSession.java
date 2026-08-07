@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.state;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -10,12 +11,19 @@ import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 
 /** Mutable session state for one Maze Game play session. */
 public final class GameSession {
   /** Duration of rejected-placement visual feedback. */
   private static final float REJECTED_FLASH_SECONDS = 0.5F;
+
+  /** Authored levels available to this session. */
+  private final LevelCatalog levelCatalog;
+
+  /** Stable level id used before the player makes a selection. */
+  private final String initialLevelId;
 
   /** Current level definition. */
   private LevelDefinition levelDefinition;
@@ -61,8 +69,35 @@ public final class GameSession {
    * @param bestResultStore persistence boundary for best results
    */
   public GameSession(BestResultStore bestResultStore) {
+    this(Levels.catalog(), Levels.milestoneOne().id(), bestResultStore);
+  }
+
+  /**
+   * Creates a session with an authored catalog and explicit initial level.
+   *
+   * @param levelCatalog authored levels available to select
+   * @param initialLevelId stable level id used at startup
+   * @param bestResultStore persistence boundary for best results
+   */
+  public GameSession(
+      LevelCatalog levelCatalog, String initialLevelId, BestResultStore bestResultStore) {
+    this.levelCatalog = Objects.requireNonNull(levelCatalog, "levelCatalog");
+    this.initialLevelId = Objects.requireNonNull(initialLevelId, "initialLevelId");
     this.bestResultStore = Objects.requireNonNull(bestResultStore, "bestResultStore");
+    if (levelCatalog.findById(initialLevelId).isEmpty()) {
+      throw new IllegalArgumentException(
+          "initial level id is not in the catalog: ".concat(initialLevelId));
+    }
     initializeMainMenu();
+  }
+
+  /**
+   * Returns authored levels in stable display order.
+   *
+   * @return immutable ordered levels
+   */
+  public List<LevelDefinition> levels() {
+    return levelCatalog.levels();
   }
 
   /**
@@ -149,16 +184,33 @@ public final class GameSession {
   /**
    * Resets all model state and enters the startup menu.
    *
-   * <p>The level model is still initialized so menu rendering, debug snapshots, and tests can read
-   * stable milestone-one defaults before the player starts a level.
+   * <p>The selected level model remains initialized so menu rendering, debug snapshots, and tests
+   * can read stable defaults before another level starts.
    */
   public void initializeMainMenu() {
-    initializeLevelState(GamePhase.MAIN_MENU);
+    LevelDefinition selectedLevel =
+        levelDefinition == null
+            ? levelCatalog.findById(initialLevelId).orElseThrow()
+            : levelDefinition;
+    initializeLevelState(selectedLevel, GamePhase.MAIN_MENU);
   }
 
-  /** Resets all model and phase state for a fresh attempt of the first level. */
-  public void startMilestoneOneLevel() {
-    initializeLevelState(GamePhase.BUILDING);
+  /**
+   * Starts a fresh attempt of a known authored level.
+   *
+   * @param levelId stable level id
+   * @return true when the level exists and was started
+   */
+  public boolean startLevel(String levelId) {
+    Objects.requireNonNull(levelId, "levelId");
+    return levelCatalog
+        .findById(levelId)
+        .map(
+            selectedLevel -> {
+              initializeLevelState(selectedLevel, GamePhase.BUILDING);
+              return true;
+            })
+        .orElse(false);
   }
 
   /** Opens the level-select menu from the startup menu. */
@@ -260,7 +312,7 @@ public final class GameSession {
 
   /** Resets the current level to a fresh build phase attempt. */
   public void retryLevel() {
-    startMilestoneOneLevel();
+    initializeLevelState(levelDefinition, GamePhase.BUILDING);
   }
 
   /** Replays the completed maze from the same deterministic seed. */
@@ -286,7 +338,7 @@ public final class GameSession {
   /**
    * Returns whether another level can be selected after this result.
    *
-   * @return false for milestone 1 because only one level exists
+   * @return false until progression policy is implemented
    */
   public boolean hasNextLevel() {
     return false;
@@ -325,10 +377,11 @@ public final class GameSession {
   /**
    * Resets all model state and moves to the requested phase.
    *
+   * @param selectedLevel level definition to initialize
    * @param initialPhase phase to enter after resetting level state
    */
-  private void initializeLevelState(GamePhase initialPhase) {
-    levelDefinition = Levels.milestoneOne();
+  private void initializeLevelState(LevelDefinition selectedLevel, GamePhase initialPhase) {
+    levelDefinition = Objects.requireNonNull(selectedLevel, "selectedLevel");
     bestResult = bestResultStore.load(levelDefinition.id()).orElse(null);
     mazeState = MazeState.empty(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;

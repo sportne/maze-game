@@ -352,7 +352,7 @@ final class MazeGameTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     MazeGame game = new MazeGame(null, runtimeConfiguration(true, () -> {}), store);
 
-    game.startMilestoneOneLevel();
+    game.startLevel(Levels.milestoneOne().id());
     game.startRun();
     game.updateMouseRun(10.0F);
 
@@ -544,7 +544,7 @@ final class MazeGameTest {
 
   private static MazeGame startedGame() {
     MazeGame game = new MazeGame();
-    game.startMilestoneOneLevel();
+    game.startLevel(Levels.milestoneOne().id());
     return game;
   }
 

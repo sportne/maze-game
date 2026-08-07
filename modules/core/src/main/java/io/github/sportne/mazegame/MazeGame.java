@@ -221,9 +221,9 @@ public final class MazeGame extends ApplicationAdapter {
     clearWallMode = false;
   }
 
-  /** Resets all session state for a fresh attempt of the first level. */
-  void startMilestoneOneLevel() {
-    session.startMilestoneOneLevel();
+  /** Resets all session state for a fresh attempt of the selected level. */
+  void startLevel(String levelId) {
+    session.startLevel(levelId);
     clearWallMode = false;
   }
 
@@ -480,7 +480,13 @@ public final class MazeGame extends ApplicationAdapter {
     ScreenLayout layout = screenLayout(gamePhase(), screenWidth, screenHeight);
     GameInputAction action =
         GameInputRouter.route(
-            layout, gamePhase(), screenX, screenY, button, session.levelDefinition().gridSize());
+            layout,
+            gamePhase(),
+            screenX,
+            screenY,
+            button,
+            session.levelDefinition().gridSize(),
+            session.levels());
     applyInputAction(action);
     return action.consumed();
   }
@@ -510,7 +516,7 @@ public final class MazeGame extends ApplicationAdapter {
       case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
       case TOGGLE_AUDIO -> toggleAudio();
       case TOGGLE_WALL_MODE -> toggleWallMode();
-      case START_MILESTONE_ONE -> startMilestoneOneLevel();
+      case SELECT_LEVEL -> startLevel(action.levelId());
       case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {
         // Recognized but intentionally state-neutral actions.
       }

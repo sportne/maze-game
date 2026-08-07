@@ -3,6 +3,7 @@ package io.github.sportne.mazegame.model.level;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Catalog of authored levels.
@@ -25,6 +26,9 @@ public final class Levels {
           Duration.ofMillis(250),
           1L);
 
+  /** Authored levels in stable display order. */
+  private static final LevelCatalog CATALOG = new LevelCatalog(List.of(MILESTONE_ONE));
+
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
 
@@ -35,5 +39,14 @@ public final class Levels {
    */
   public static LevelDefinition milestoneOne() {
     return MILESTONE_ONE;
+  }
+
+  /**
+   * Returns the immutable authored-level catalog.
+   *
+   * @return production level catalog
+   */
+  public static LevelCatalog catalog() {
+    return CATALOG;
   }
 }
