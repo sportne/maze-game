@@ -1,6 +1,6 @@
 # M2-02: Design and Balance the Second Authored Level
 
-Status: pending
+Status: complete
 
 Depends on: M2-01
 
@@ -38,3 +38,14 @@ the existing deterministic random mouse.
   status in `docs/milestone-2-level-design.md` so balancing is reproducible.
 - Review the final parameter set against Level 1 and the Milestone 2 definition of done.
 - Record playtest observations that justify accepting the authored specification.
+
+## Completion Notes
+
+- Accepted the 7x7, seed-38 specification recorded in
+  [`docs/milestone-2-level-design.md`](../docs/milestone-2-level-design.md).
+- Added deterministic design fixtures for the empty-maze failure, two distinct path-preserving
+  passes, a path-preserving timeout, and repeatability of the accepted layouts.
+- Confirmed the 7x7 grid keeps cells at 51 CSS pixels in the supported portrait viewport and 34 CSS
+  pixels in both full and safe-content constrained landscape viewports.
+- Kept the definition test-only; the production catalog still contains only Milestone 1 until the
+  later content implementation task.
