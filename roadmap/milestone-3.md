@@ -54,7 +54,7 @@ The complete behavior specification is recorded in
 
 ## Task Order
 
-1. [M3-01: Validate Scout and balance the third level](milestone-3-01-scout-design.md)
+1. [M3-01: Validate Scout and balance the third level](done/milestone-3-01-scout-design.md)
 2. [M3-02: Add the minimal mouse-behavior contract](milestone-3-02-mouse-contract.md)
 3. [M3-03: Implement the deterministic Scout simulation](milestone-3-03-scout-simulation.md)
 4. [M3-04: Add the third authored level and progression](milestone-3-04-third-level.md)

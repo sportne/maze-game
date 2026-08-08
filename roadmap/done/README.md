@@ -19,6 +19,10 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M2-08: Playtest, tune, and release Milestone 2](milestone-2-08-playtest-release.md)
 - [M2-09: Define Milestone 3's new mouse type](milestone-2-09-define-milestone-3.md)
 
+## Milestone 3
+
+- [M3-01: Validate Scout and balance the third level](milestone-3-01-scout-design.md)
+
 ## TeaVM and GitHub Pages
 
 - [WEB-01: Align the TeaVM toolchain](teavm-01-toolchain-alignment.md)

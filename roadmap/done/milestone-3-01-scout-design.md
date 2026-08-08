@@ -1,6 +1,8 @@
 # M3-01: Validate Scout and Balance the Third Level
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M2-09
 

@@ -50,8 +50,8 @@ south, west, north, east. The remaining headings follow the same rotation:
 | West | South | West | North | East |
 
 Required deterministic examples include an open four-way intersection, left blocked, left and
-straight blocked, a dead end, a corridor after backtracking, a grid boundary, and a maze that causes
-Scout to loop until timeout despite retaining a separate viable path to the cheese.
+straight blocked, a dead end, a corridor after backtracking, a grid boundary, and a path-preserving
+maze whose deterministic detour reaches the authored timeout before Scout reaches the cheese.
 
 ## Minimal Runtime Contract
 
@@ -82,9 +82,55 @@ build interaction isolates the new mouse behavior as the source of difficulty.
 - Unlock: pass Milestone 2
 - Persistence: existing per-level best-result format under the new stable id
 
-Build time, target time, timeout, and any final geometry adjustment are balancing outputs of M3-01.
-They must be backed by reproducible empty, passing, failing, backtracking, and timeout fixtures before
-the level enters the production catalog.
+M3-01 accepted the following authored parameters:
+
+- Build time: 25 seconds.
+- Target solve time: 6 seconds.
+- Maximum solve time: 8 seconds.
+- Movement interval: 250 milliseconds.
+- Geometry: no authored starting walls; players begin from an empty 7x7 grid.
+
+The empty maze reaches the cheese in 12 moves (3 seconds), so doing nothing fails. Two deliberately
+small, path-preserving layouts pass without depending on a random seed:
+
+| Fixture | Wall coordinates `(row,column)` | Result |
+| --- | --- | --- |
+| Passing A | `(2,2)`, `(3,1)`, `(4,0)`, `(5,1)` | Cheese in 26 moves / 6.5 seconds |
+| Passing B | `(2,1)`, `(3,0)`, `(3,2)`, `(3,4)`, `(4,3)` | Cheese in 30 moves / 7.5 seconds |
+| Timeout | `(3,2)`, `(3,4)`, `(4,3)`, `(5,2)`, `(5,4)`, `(6,1)` | Timeout after 32 moves / 8 seconds |
+
+The timeout layout still has a viable start-to-cheese path; without the authored timeout Scout would
+reach the cheese after 34 moves. These fixtures exercise repeated corridors and reverse moves while
+keeping both cheese-reaching passes achievable with four or five well-chosen walls. The test-side
+reference model records the complete traces and proves that whole-duration and chunked updates
+agree.
+
+The accepted traces, including the starting cell, are:
+
+- Passing A: `(6,3) → (6,2) → (6,1) → (6,0) → (5,0) → (6,0) → (6,1) → (6,2) →
+  (5,2) → (4,2) → (4,1) → (4,2) → (3,2) → (3,3) → (2,3) → (1,3) → (1,2) →
+  (1,1) → (2,1) → (2,0) → (3,0) → (2,0) → (1,0) → (0,0) → (0,1) → (0,2) →
+  (0,3)`.
+- Passing B: `(6,3) → (6,2) → (6,1) → (6,0) → (5,0) → (4,0) → (4,1) → (3,1) →
+  (4,1) → (4,2) → (5,2) → (5,3) → (5,4) → (4,4) → (4,5) → (3,5) → (2,5) →
+  (2,4) → (2,3) → (3,3) → (2,3) → (2,2) → (1,2) → (1,1) → (1,0) → (2,0) →
+  (1,0) → (0,0) → (0,1) → (0,2) → (0,3)`.
+- Timeout: `(6,3) → (6,2) → (6,3) → (5,3) → (6,3) → (6,4) → (6,5) → (5,5) →
+  (4,5) → (4,4) → (4,5) → (3,5) → (2,5) → (2,4) → (2,3) → (3,3) → (2,3) →
+  (2,2) → (2,1) → (3,1) → (4,1) → (4,2) → (4,1) → (5,1) → (5,0) → (6,0) →
+  (5,0) → (4,0) → (3,0) → (2,0) → (1,0) → (0,0) → (0,1)`.
+
+For behavior comparison, the reference suite runs both mice over three accepted Milestone 2 mazes:
+
+| Milestone 2 fixture | Seeded Random | Scout |
+| --- | --- | --- |
+| Passing A | Cheese in 38 moves / 9.5 seconds | Cheese in 20 moves / 5 seconds |
+| Passing B | Cheese in 34 moves / 8.5 seconds | Cheese in 12 moves / 3 seconds |
+| Timeout | Timeout after 60 moves / 15 seconds | Cheese in 14 moves / 3.5 seconds |
+
+All three layouts pass Milestone 2 with Random but fail its six-second target with Scout. This shows
+that Scout changes the maze-building problem rather than merely renaming the existing random
+configuration.
 
 ## Visual Identity
 
