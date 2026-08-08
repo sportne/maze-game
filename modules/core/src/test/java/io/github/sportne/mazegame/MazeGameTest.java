@@ -228,6 +228,11 @@ final class MazeGameTest {
   }
 
   @Test
+  void scoutSpritePathPointsAtTheBundledScout() {
+    assertEquals("scout-mouse.png", MazeGame.scoutSpritePath());
+  }
+
+  @Test
   void backgroundMusicVolumeIsComfortableForStartup() {
     assertEquals(0.1F, MazeGame.backgroundMusicVolume());
   }

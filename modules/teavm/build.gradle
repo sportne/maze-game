@@ -16,6 +16,7 @@ def webAssetsDirectory = layout.buildDirectory.dir('generated/web-assets')
 def prepareWebAssets = tasks.register('prepareWebAssets', Sync) {
     from(rootProject.file('assets')) {
         include 'mouse-sprites.png'
+        include 'scout-mouse.png'
         include 'audio/exploreMaze_T1.mp3'
     }
     into webAssetsDirectory
@@ -138,6 +139,7 @@ def verifyWasmArtifact = tasks.register('verifyWasmArtifact') {
             'app.wasm-runtime.js',
             'styles.css',
             'assets/mouse-sprites.png',
+            'assets/scout-mouse.png',
             'assets/audio/exploreMaze_T1.mp3',
         ]
         def missingFiles = requiredFiles.findAll { relativePath ->

@@ -78,11 +78,17 @@ public final class MazeGame extends ApplicationAdapter {
   /** Texture loaded from the mouse/cheese sprite sheet asset. */
   private Texture spriteSheet;
 
+  /** Texture loaded from Scout's distinct sprite asset. */
+  private Texture scoutTexture;
+
   /** Cropped cheese sprite drawn over the endpoint cell. */
   private TextureRegion cheeseSprite;
 
   /** Cropped mouse sprite drawn at the current mouse position. */
   private TextureRegion mouseSprite;
+
+  /** Scout sprite drawn when the active level selects Scout's behavior. */
+  private TextureRegion scoutSprite;
 
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
@@ -189,6 +195,15 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
+   * Returns the asset-relative Scout sprite path.
+   *
+   * @return Scout sprite asset path
+   */
+  static String scoutSpritePath() {
+    return AssetPaths.scoutSpritePath();
+  }
+
+  /**
    * Returns the configured startup music volume.
    *
    * @return volume from 0.0 to 1.0
@@ -241,7 +256,12 @@ public final class MazeGame extends ApplicationAdapter {
     spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
     cheeseSprite = MouseSpriteSheet.cheese(spriteSheet);
     mouseSprite = MouseSpriteSheet.mouse(spriteSheet);
-    renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite);
+    scoutTexture = new Texture(scoutSpriteFile());
+    scoutTexture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+    scoutSprite = new TextureRegion(scoutTexture);
+    renderer =
+        new MazeGameRenderer(
+            spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite, scoutSprite);
     if (!runtimeConfiguration.audioRequiresUserGesture()) {
       startBackgroundMusic();
     }
@@ -312,6 +332,11 @@ public final class MazeGame extends ApplicationAdapter {
       spriteSheet = null;
       cheeseSprite = null;
       mouseSprite = null;
+    }
+    if (scoutTexture != null) {
+      scoutTexture.dispose();
+      scoutTexture = null;
+      scoutSprite = null;
     }
     renderer = null;
     if (shapeRenderer != null) {
@@ -637,6 +662,15 @@ public final class MazeGame extends ApplicationAdapter {
    */
   private FileHandle spriteSheetFile() {
     return runtimeConfiguration.assetResolver().resolve(spriteSheetPath());
+  }
+
+  /**
+   * Returns a libGDX handle for Scout's sprite asset.
+   *
+   * @return file handle resolved through the app's asset fallback rules
+   */
+  private FileHandle scoutSpriteFile() {
+    return runtimeConfiguration.assetResolver().resolve(scoutSpritePath());
   }
 
   private static FileHandle resolveDefaultAsset(String assetPath) {

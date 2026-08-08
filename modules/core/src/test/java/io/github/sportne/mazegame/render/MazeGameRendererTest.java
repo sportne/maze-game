@@ -2,12 +2,12 @@ package io.github.sportne.mazegame.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -20,6 +20,7 @@ import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.MouseBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
@@ -142,7 +143,7 @@ final class MazeGameRendererTest {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
     RecordingFont font = recordingFont();
-    MazeGameRenderer renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, null, null);
+    MazeGameRenderer renderer = renderer(spriteBatch, shapeRenderer, font);
 
     renderer.render(layout(GamePhase.MAIN_MENU), snapshot(GamePhase.MAIN_MENU, null));
     renderer.render(layout(GamePhase.LEVEL_SELECT), snapshot(GamePhase.LEVEL_SELECT, null));
@@ -168,12 +169,8 @@ final class MazeGameRendererTest {
   void rendersMainMenuWithoutQuitWhenUnavailable() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =
-        new MazeGameRenderer(
-            allocate(RecordingSpriteBatch.class),
-            allocate(RecordingShapeRenderer.class),
-            font,
-            null,
-            null);
+        renderer(
+            allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     ScreenLayout layout =
         MazeGameLayout.forPhase(GamePhase.MAIN_MENU, 1280, 720, LEVEL.gridSize(), false);
 
@@ -188,12 +185,8 @@ final class MazeGameRendererTest {
   void rendersCatalogBackedCardsWithIndependentBestResults() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =
-        new MazeGameRenderer(
-            allocate(RecordingSpriteBatch.class),
-            allocate(RecordingShapeRenderer.class),
-            font,
-            null,
-            null);
+        renderer(
+            allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
     BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
     GameRenderSnapshot snapshot =
@@ -224,12 +217,8 @@ final class MazeGameRendererTest {
   void rendersNextLevelOnlyWhenAdvancementIsAvailable() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =
-        new MazeGameRenderer(
-            allocate(RecordingSpriteBatch.class),
-            allocate(RecordingShapeRenderer.class),
-            font,
-            null,
-            null);
+        renderer(
+            allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     MouseRunResult result =
         new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
     GameRenderSnapshot snapshot =
@@ -263,7 +252,7 @@ final class MazeGameRendererTest {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
     RecordingFont font = recordingFont();
-    MazeGameRenderer renderer = new MazeGameRenderer(spriteBatch, shapeRenderer, font, null, null);
+    MazeGameRenderer renderer = renderer(spriteBatch, shapeRenderer, font);
     MouseRunResult running =
         new MouseRunResult(
             LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
@@ -299,18 +288,15 @@ final class MazeGameRendererTest {
   void compactPresentationUsesLabelsThatFitNarrowCardsAndActions() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =
-        new MazeGameRenderer(
-            allocate(RecordingSpriteBatch.class),
-            allocate(RecordingShapeRenderer.class),
-            font,
-            null,
-            null);
+        renderer(
+            allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
     BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
     List<LevelProgress> progress =
         List.of(
             new LevelProgress(Levels.milestoneOne(), true, firstBest),
-            new LevelProgress(Levels.milestoneTwo(), true, secondBest));
+            new LevelProgress(Levels.milestoneTwo(), true, secondBest),
+            new LevelProgress(Levels.milestoneThree(), false, null));
     GameRenderSnapshot selectSnapshot =
         new GameRenderSnapshot(
             GamePhase.LEVEL_SELECT,
@@ -327,9 +313,31 @@ final class MazeGameRendererTest {
             false);
     ScreenLayout selectLayout =
         MazeGameLayout.forPhase(
-            GamePhase.LEVEL_SELECT, 390, 844, LEVEL.gridSize(), false, 2, false);
+            GamePhase.LEVEL_SELECT, 390, 844, LEVEL.gridSize(), false, 3, false);
 
     renderer.render(selectLayout, selectSnapshot);
+
+    BestResult scoutBest = new BestResult(Duration.ofMillis(6500), 26);
+    List<LevelProgress> completedProgress =
+        List.of(
+            new LevelProgress(Levels.milestoneOne(), true, firstBest),
+            new LevelProgress(Levels.milestoneTwo(), true, secondBest),
+            new LevelProgress(Levels.milestoneThree(), true, scoutBest));
+    renderer.render(
+        selectLayout,
+        new GameRenderSnapshot(
+            GamePhase.LEVEL_SELECT,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            30.0F,
+            null,
+            0.0F,
+            null,
+            firstBest,
+            completedProgress,
+            true,
+            false,
+            false));
 
     MouseRunResult result =
         new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
@@ -353,6 +361,11 @@ final class MazeGameRendererTest {
 
     assertTrue(font.capturedText().contains("Best 10.0s / 40"));
     assertTrue(font.capturedText().contains("Best 15.0s / 60"));
+    assertTrue(font.capturedText().contains("Scout follows a"));
+    assertTrue(font.capturedText().contains("consistent search"));
+    assertTrue(font.capturedText().contains("pattern"));
+    assertTrue(font.capturedText().contains("Locked"));
+    assertTrue(font.capturedText().contains("Best 6.5s / 26"));
     assertTrue(font.capturedText().contains("Menu"));
     assertTrue(font.capturedText().contains("Next"));
     assertEquals("Menu", MazeGameRenderer.resultActionLabel(83.5F, "Main Menu", "Menu"));
@@ -360,20 +373,163 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void rendererAcceptsNullSpriteRegions() {
-    MazeGameRenderer renderer =
-        new MazeGameRenderer(
-            allocate(RecordingSpriteBatch.class),
-            allocate(RecordingShapeRenderer.class),
-            recordingFont(),
-            null,
-            null);
+  void scoutPresentationFollowsTheLevelThroughEveryGameplayPhase() {
+    LevelDefinition scoutLevel = Levels.milestoneThree();
+    RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
+    MouseRunResult running =
+        new MouseRunResult(
+            scoutLevel.mouseStart(), Duration.ofSeconds(1), 4, MouseRunStatus.RUNNING);
+    MouseRunResult result =
+        new MouseRunResult(
+            scoutLevel.cheese(), Duration.ofMillis(6500), 26, MouseRunStatus.REACHED_CHEESE);
+    List<LevelProgress> progress =
+        List.of(
+            new LevelProgress(Levels.milestoneOne(), true, null),
+            new LevelProgress(Levels.milestoneTwo(), true, null),
+            new LevelProgress(scoutLevel, true, new BestResult(Duration.ofMillis(6500), 26)));
 
-    assertNotNull(renderer);
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.LEVEL_SELECT, 1280, 720, scoutLevel.gridSize(), true, 3, false),
+        new GameRenderSnapshot(
+            GamePhase.LEVEL_SELECT,
+            scoutLevel,
+            MazeState.empty(scoutLevel),
+            25.0F,
+            null,
+            0.0F,
+            null,
+            null,
+            progress,
+            true,
+            false,
+            false));
+    renderer.render(
+        scoutLayout(GamePhase.BUILDING), scoutSnapshot(GamePhase.BUILDING, null, progress));
+    renderer.render(
+        scoutLayout(GamePhase.MOUSE_RUNNING),
+        scoutSnapshot(GamePhase.MOUSE_RUNNING, running, progress));
+    renderer.render(
+        scoutLayout(GamePhase.RESULT), scoutSnapshot(GamePhase.RESULT, result, progress));
+
+    assertTrue(font.capturedText().contains("Scout follows a"));
+    assertTrue(font.capturedText().contains("consistent search pattern"));
+    assertTrue(font.capturedText().contains("Scout follows a consistent search pattern"));
+    assertTrue(font.capturedText().contains("Scout | 7.0s | >6.0s"));
+    assertTrue(font.capturedText().contains("Scout | Success | >6.0s"));
+    assertTrue(spriteBatch.drawnRegionXs().contains(20));
+  }
+
+  @Test
+  void mouseSpriteSelectionUsesBehaviorInsteadOfLevelIdentity() {
+    RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
+    MazeGameRenderer renderer =
+        renderer(spriteBatch, allocate(RecordingShapeRenderer.class), recordingFont());
+    MouseRunResult randomResult =
+        new MouseRunResult(LEVEL.mouseStart(), Duration.ZERO, 0, MouseRunStatus.RUNNING);
+
+    renderer.render(
+        layout(GamePhase.MOUSE_RUNNING), snapshot(GamePhase.MOUSE_RUNNING, randomResult));
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(10));
+    assertFalse(spriteBatch.drawnRegionXs().contains(20));
+
+    LevelDefinition scoutBehaviorOnFirstLevelIdentity =
+        new LevelDefinition(
+            LEVEL.id(),
+            LEVEL.name(),
+            LEVEL.gridSize(),
+            LEVEL.mouseStart(),
+            LEVEL.cheese(),
+            LEVEL.buildTime(),
+            LEVEL.targetSolveTime(),
+            LEVEL.maximumSolveTime(),
+            LEVEL.mouseMoveInterval(),
+            MouseBehavior.LEFT_PRIORITY,
+            LEVEL.randomSeed());
+    MouseRunResult scoutResult =
+        new MouseRunResult(
+            scoutBehaviorOnFirstLevelIdentity.mouseStart(),
+            Duration.ZERO,
+            0,
+            MouseRunStatus.RUNNING);
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.MOUSE_RUNNING,
+            1280,
+            720,
+            scoutBehaviorOnFirstLevelIdentity.gridSize(),
+            true,
+            3,
+            false),
+        new GameRenderSnapshot(
+            GamePhase.MOUSE_RUNNING,
+            scoutBehaviorOnFirstLevelIdentity,
+            MazeState.empty(scoutBehaviorOnFirstLevelIdentity),
+            30.0F,
+            null,
+            0.0F,
+            scoutResult,
+            null,
+            List.of(),
+            true,
+            false,
+            false));
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(20));
+  }
+
+  @Test
+  void rendererRejectsMissingSpriteRegions() {
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            new MazeGameRenderer(
+                allocate(RecordingSpriteBatch.class),
+                allocate(RecordingShapeRenderer.class),
+                recordingFont(),
+                null,
+                sprite(10),
+                sprite(20)));
+  }
+
+  private static MazeGameRenderer renderer(
+      RecordingSpriteBatch spriteBatch, RecordingShapeRenderer shapeRenderer, RecordingFont font) {
+    return new MazeGameRenderer(
+        spriteBatch, shapeRenderer, font, sprite(1), sprite(10), sprite(20));
+  }
+
+  private static TextureRegion sprite(int regionX) {
+    return new TextureRegion(new TestTexture(), regionX, 0, 100, 100);
   }
 
   private static ScreenLayout layout(GamePhase phase) {
     return MazeGameLayout.forPhase(phase, 1280, 720, LEVEL.gridSize(), true, 2, false);
+  }
+
+  private static ScreenLayout scoutLayout(GamePhase phase) {
+    return MazeGameLayout.forPhase(
+        phase, 1280, 720, Levels.milestoneThree().gridSize(), true, 3, false);
+  }
+
+  private static GameRenderSnapshot scoutSnapshot(
+      GamePhase phase, MouseRunResult result, List<LevelProgress> progress) {
+    LevelDefinition level = Levels.milestoneThree();
+    return new GameRenderSnapshot(
+        phase,
+        level,
+        MazeState.empty(level),
+        25.0F,
+        null,
+        0.0F,
+        result,
+        result == null ? null : new BestResult(Duration.ofMillis(6500), 26),
+        progress,
+        true,
+        result != null && result.status() == MouseRunStatus.REACHED_CHEESE,
+        false);
   }
 
   private static GameRenderSnapshot snapshot(GamePhase phase, MouseRunResult mouseRunResult) {
@@ -421,6 +577,7 @@ final class MazeGameRendererTest {
   private static final class RecordingSpriteBatch extends SpriteBatch {
     private int beginCount;
     private int endCount;
+    private List<Integer> drawnRegionXs = new ArrayList<>();
 
     @Override
     public void begin() {
@@ -434,7 +591,30 @@ final class MazeGameRendererTest {
 
     @Override
     public void draw(TextureRegion region, float x, float y, float width, float height) {
-      // Sprites are intentionally not asserted in these primitive renderer tests.
+      drawnRegionXs().add(region.getRegionX());
+    }
+
+    private List<Integer> drawnRegionXs() {
+      if (drawnRegionXs == null) {
+        drawnRegionXs = new ArrayList<>();
+      }
+      return drawnRegionXs;
+    }
+  }
+
+  private static final class TestTexture extends Texture {
+    private TestTexture() {
+      super();
+    }
+
+    @Override
+    public int getWidth() {
+      return 1000;
+    }
+
+    @Override
+    public int getHeight() {
+      return 1000;
     }
   }
 

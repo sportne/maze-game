@@ -1,6 +1,8 @@
 # M3-05: Give Scout a Unique Visual and UI Identity
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-04
 

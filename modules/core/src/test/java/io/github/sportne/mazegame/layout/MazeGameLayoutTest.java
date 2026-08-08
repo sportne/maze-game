@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +24,12 @@ final class MazeGameLayoutTest {
   @ParameterizedTest
   @MethodSource("phaseAndViewportArguments")
   void layoutsAreValidForRepresentativeViewports(
-      GamePhase phase, int screenWidth, int screenHeight, GridSize gridSize, boolean hasNextLevel) {
-    ScreenLayout layout = layout(phase, screenWidth, screenHeight, gridSize, hasNextLevel);
+      GamePhase phase,
+      int screenWidth,
+      int screenHeight,
+      LevelDefinition level,
+      boolean hasNextLevel) {
+    ScreenLayout layout = layout(phase, screenWidth, screenHeight, level.gridSize(), hasNextLevel);
 
     assertTrue(
         LayoutValidator.validate(layout).isEmpty(),
@@ -70,6 +76,12 @@ final class MazeGameLayoutTest {
 
   @ParameterizedTest
   @EnumSource(GamePhase.class)
+  void safeContentLandscapeControlsAndGridRemainTouchable(GamePhase phase) {
+    assertMobileTargets(phase, 756, 286);
+  }
+
+  @ParameterizedTest
+  @EnumSource(GamePhase.class)
   void supportedIntermediateViewportsUseCompactLayouts(GamePhase phase) {
     assertMobileTargets(phase, 601, 844);
     assertMobileTargets(phase, 600, 421);
@@ -89,10 +101,11 @@ final class MazeGameLayoutTest {
   }
 
   private static void assertMobileTargets(GamePhase phase, int width, int height) {
-    for (GridSize gridSize : authoredGridSizes()) {
+    for (LevelDefinition level : Levels.catalog().levels()) {
+      GridSize gridSize = level.gridSize();
       for (boolean hasNextLevel : List.of(false, true)) {
         ScreenLayout layout =
-            MazeGameLayout.forPhase(phase, width, height, gridSize, false, 2, hasNextLevel);
+            MazeGameLayout.forPhase(phase, width, height, gridSize, false, 3, hasNextLevel);
 
         assertTrue(
             LayoutValidator.validate(layout).isEmpty(),
@@ -133,7 +146,8 @@ final class MazeGameLayoutTest {
   void resultLayoutShowsOnlyTheValidProgressionAlternative() {
     for (int[] viewport :
         List.of(new int[] {390, 844}, new int[] {844, 286}, new int[] {1280, 720})) {
-      for (GridSize gridSize : authoredGridSizes()) {
+      for (LevelDefinition level : Levels.catalog().levels()) {
+        GridSize gridSize = level.gridSize();
         ScreenLayout withNext = layout(GamePhase.RESULT, viewport[0], viewport[1], gridSize, true);
         ScreenLayout withoutNext =
             layout(GamePhase.RESULT, viewport[0], viewport[1], gridSize, false);
@@ -156,7 +170,7 @@ final class MazeGameLayoutTest {
   private static ScreenLayout layout(
       GamePhase phase, int screenWidth, int screenHeight, GridSize gridSize, boolean hasNextLevel) {
     return MazeGameLayout.forPhase(
-        phase, screenWidth, screenHeight, gridSize, true, 2, hasNextLevel);
+        phase, screenWidth, screenHeight, gridSize, true, 3, hasNextLevel);
   }
 
   private static Stream<Arguments> phaseAndViewportArguments() {
@@ -165,6 +179,7 @@ final class MazeGameLayoutTest {
             new int[] {1280, 720},
             new int[] {390, 844},
             new int[] {844, 286},
+            new int[] {756, 286},
             new int[] {601, 844},
             new int[] {600, 421},
             new int[] {799, 600},
@@ -177,9 +192,9 @@ final class MazeGameLayoutTest {
                 viewports.stream()
                     .flatMap(
                         viewport ->
-                            authoredGridSizes().stream()
+                            Levels.catalog().levels().stream()
                                 .flatMap(
-                                    gridSize ->
+                                    level ->
                                         Stream.of(false, true)
                                             .map(
                                                 hasNextLevel ->
@@ -187,12 +202,8 @@ final class MazeGameLayoutTest {
                                                         phase,
                                                         viewport[0],
                                                         viewport[1],
-                                                        gridSize,
+                                                        level,
                                                         hasNextLevel)))));
-  }
-
-  private static List<GridSize> authoredGridSizes() {
-    return List.of(GridSize.square(5), GridSize.square(7));
   }
 
   private static Stream<Arguments> expectedElementArguments() {
@@ -210,6 +221,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.LEVEL_SELECT_TITLE,
                 MazeGameLayout.levelCardId(1),
                 MazeGameLayout.levelCardId(2),
+                MazeGameLayout.levelCardId(3),
                 MazeGameLayout.LEVEL_SELECT_BACK)),
         Arguments.of(
             GamePhase.SETTINGS,

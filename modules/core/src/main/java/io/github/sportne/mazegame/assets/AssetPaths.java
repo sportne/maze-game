@@ -8,6 +8,9 @@ public final class AssetPaths {
   /** Asset-relative path for the mouse and cheese sprite sheet. */
   private static final String SPRITE_SHEET_PATH = "mouse-sprites.png";
 
+  /** Asset-relative path for Scout's distinct mouse sprite. */
+  private static final String SCOUT_SPRITE_PATH = "scout-mouse.png";
+
   /** Prevents instantiation of this static path helper. */
   private AssetPaths() {}
 
@@ -27,5 +30,14 @@ public final class AssetPaths {
    */
   public static String spriteSheetPath() {
     return SPRITE_SHEET_PATH;
+  }
+
+  /**
+   * Returns the asset-relative Scout sprite path.
+   *
+   * @return Scout sprite asset path
+   */
+  public static String scoutSpritePath() {
+    return SCOUT_SPRITE_PATH;
   }
 }

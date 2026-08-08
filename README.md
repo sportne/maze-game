@@ -52,6 +52,10 @@ playtest evidence, mobile behavior, and known constraints.
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
 `-DmazeGame.audio=false`, or `MAZE_GAME_AUDIO=false`.
 
+`assets/scout-mouse.png` is a project-local derivative of the mouse artwork in
+`assets/mouse-sprites.png`. The original sprite-sheet PNG and editable XCF remain unchanged; the
+Scout derivative adds only its blue cap and high-contrast star identity.
+
 When run under WSLg, the Gradle JVM and native-image run tasks default OpenAL to WSLg's
 PulseAudio socket at `/mnt/wslg/PulseServer`. Gradle also passes `MAZE_GAME_ASSETS_DIR`
 so JVM and native runs find the shared `assets` directory from any launch working directory.

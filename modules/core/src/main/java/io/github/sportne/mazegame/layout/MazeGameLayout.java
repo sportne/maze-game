@@ -524,7 +524,7 @@ public final class MazeGameLayout {
     float gap = 12.0F;
     float buttonWidth =
         Math.min(160.0F, (screenWidth - 2.0F * COMPACT_MARGIN - gap * (columns - 1)) / columns);
-    float buttonHeight = 64.0F;
+    float buttonHeight = 80.0F;
     float totalWidth = columns * buttonWidth + (columns - 1) * gap;
     float left = (screenWidth - totalWidth) / 2.0F;
     float topRowY = landscape ? screenHeight / 2.0F + 16.0F : screenHeight / 2.0F + 100.0F;

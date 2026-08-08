@@ -14,4 +14,9 @@ final class AssetPathsTest {
   void spriteSheetPathPointsAtTheBundledSheet() {
     assertEquals("mouse-sprites.png", AssetPaths.spriteSheetPath());
   }
+
+  @Test
+  void scoutSpritePathPointsAtTheDistinctBundledSprite() {
+    assertEquals("scout-mouse.png", AssetPaths.scoutSpritePath());
+  }
 }

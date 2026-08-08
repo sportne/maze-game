@@ -57,7 +57,7 @@ final class BrowserSmokeTest {
   private static final int STARTUP_SAMPLE_COUNT = 5;
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
-      Set.of("styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
+      Set.of("styles.css", "mouse-sprites.png", "scout-mouse.png", "exploreMaze_T1.mp3");
 
   @Test
   @Timeout(240)

@@ -74,6 +74,9 @@ public final class MazeGameRenderer {
   /** Cropped mouse sprite drawn at the current mouse position. */
   private final TextureRegion mouseSprite;
 
+  /** Distinct Scout sprite drawn for left-priority levels. */
+  private final TextureRegion scoutSprite;
+
   /**
    * Creates a renderer around libGDX drawing resources.
    *
@@ -82,18 +85,21 @@ public final class MazeGameRenderer {
    * @param font bitmap font
    * @param cheeseSprite cheese sprite region
    * @param mouseSprite mouse sprite region
+   * @param scoutSprite Scout sprite region
    */
   public MazeGameRenderer(
       SpriteBatch spriteBatch,
       ShapeRenderer shapeRenderer,
       BitmapFont font,
       TextureRegion cheeseSprite,
-      TextureRegion mouseSprite) {
+      TextureRegion mouseSprite,
+      TextureRegion scoutSprite) {
     this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
     this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
     this.font = Objects.requireNonNull(font, "font");
-    this.cheeseSprite = cheeseSprite == null ? null : new TextureRegion(cheeseSprite);
-    this.mouseSprite = mouseSprite == null ? null : new TextureRegion(mouseSprite);
+    this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
+    this.mouseSprite = new TextureRegion(Objects.requireNonNull(mouseSprite, "mouseSprite"));
+    this.scoutSprite = new TextureRegion(Objects.requireNonNull(scoutSprite, "scoutSprite"));
   }
 
   /**
@@ -188,9 +194,7 @@ public final class MazeGameRenderer {
       LevelProgress progress = levelProgress.get(index);
       ScreenRectangle levelButton = layout.bounds(MazeGameLayout.levelCardId(index + 1));
       font.setColor(progress.unlocked() ? TEXT : PANEL_TEXT);
-      String subtitle = levelSubtitle(progress, levelButton.width());
-      drawCenteredText(progress.levelDefinition().name(), levelButton, levelButton.y() + 56.0F);
-      drawCenteredText(subtitle, levelButton, levelButton.y() + 32.0F);
+      drawLevelCardText(progress, levelButton);
     }
     font.setColor(TEXT);
     drawTextInRegion("Back", backButton, 52.0F);
@@ -248,7 +252,17 @@ public final class MazeGameRenderer {
       return;
     }
     drawSpriteInCell(
-        grid, snapshot.levelDefinition(), snapshot.mouseRunResult().position(), mouseSprite);
+        grid,
+        snapshot.levelDefinition(),
+        snapshot.mouseRunResult().position(),
+        mouseSprite(snapshot));
+  }
+
+  private TextureRegion mouseSprite(GameRenderSnapshot snapshot) {
+    return switch (snapshot.levelDefinition().mouseBehavior()) {
+      case RANDOM -> mouseSprite;
+      case LEFT_PRIORITY -> scoutSprite;
+    };
   }
 
   private void drawCellSprites(ScreenRectangle grid, LevelDefinition levelDefinition) {
@@ -260,9 +274,6 @@ public final class MazeGameRenderer {
       LevelDefinition levelDefinition,
       GridPosition position,
       TextureRegion spriteRegion) {
-    if (spriteRegion == null) {
-      return;
-    }
     ScreenRectangle destination =
         spriteDestination(
             grid,
@@ -353,9 +364,13 @@ public final class MazeGameRenderer {
   }
 
   private void drawBuildText(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    MousePresentation presentation =
+        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior());
     font.setColor(TEXT);
     drawTextInRegion(
-        snapshot.levelDefinition().name(), layout.bounds(MazeGameLayout.BUILD_TITLE), 0.0F);
+        presentation.levelTitle(snapshot.levelDefinition().name()),
+        layout.bounds(MazeGameLayout.BUILD_TITLE),
+        0.0F);
     font.draw(
         spriteBatch,
         "Build: " + String.format(Locale.ROOT, "%.1fs", snapshot.buildTimeRemainingSeconds()),
@@ -364,9 +379,11 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        "Delay past "
-            + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
-            + "; keep a path to the cheese",
+        presentation.initialDescription().isEmpty()
+            ? "Delay past "
+                + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
+                + "; keep a path to the cheese"
+            : presentation.initialDescription(),
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
@@ -374,27 +391,31 @@ public final class MazeGameRenderer {
   }
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    ScreenRectangle status = layout.bounds(MazeGameLayout.RUN_STATUS);
+    String levelTitle =
+        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior())
+            .statusTitle(snapshot.levelDefinition().name(), status.width());
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
-        snapshot.levelDefinition().name()
+        levelTitle
             + " | "
             + formatSeconds(runTimeRemaining(snapshot))
             + " | >"
             + targetText(snapshot),
-        layout.bounds(MazeGameLayout.RUN_STATUS).x(),
-        textBaseline(layout.bounds(MazeGameLayout.RUN_STATUS)));
+        status.x(),
+        textBaseline(status));
   }
 
   private void drawResultText(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    ScreenRectangle status = layout.bounds(MazeGameLayout.RESULT_STATUS);
+    String levelTitle =
+        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior())
+            .statusTitle(snapshot.levelDefinition().name(), status.width());
+    String outcome = snapshot.resultPassed() ? " | Success | >" : " | Failed | >";
     font.setColor(TEXT);
     font.draw(
-        spriteBatch,
-        snapshot.levelDefinition().name()
-            + (snapshot.resultPassed() ? " | Success | >" : " | Failed | >")
-            + targetText(snapshot),
-        layout.bounds(MazeGameLayout.RESULT_STATUS).x(),
-        textBaseline(layout.bounds(MazeGameLayout.RESULT_STATUS)));
+        spriteBatch, levelTitle + outcome + targetText(snapshot), status.x(), textBaseline(status));
     font.draw(
         spriteBatch,
         "Time: "
@@ -486,6 +507,30 @@ public final class MazeGameRenderer {
           progress.bestResult().moveCount());
     }
     return levelSelectBestText(progress.bestResult());
+  }
+
+  private void drawLevelCardText(LevelProgress progress, ScreenRectangle card) {
+    MousePresentation presentation =
+        MousePresentation.forBehavior(progress.levelDefinition().mouseBehavior());
+    if (presentation.initialDescription().isEmpty()) {
+      drawCenteredText(progress.levelDefinition().name(), card, card.y() + 56.0F);
+      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 32.0F);
+      return;
+    }
+    if (card.width() < 180.0F) {
+      drawCenteredText(progress.levelDefinition().name(), card, card.y() + card.height() - 10.0F);
+      drawCenteredText("Scout follows a", card, card.y() + card.height() - 25.0F);
+      drawCenteredText("consistent search", card, card.y() + card.height() - 40.0F);
+      drawCenteredText("pattern", card, card.y() + card.height() - 55.0F);
+      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 10.0F);
+      return;
+    }
+    drawCenteredText(progress.levelDefinition().name(), card, card.y() + card.height() - 12.0F);
+    drawCenteredText("Scout follows a", card, card.y() + card.height() - 30.0F);
+    drawCenteredText("consistent search pattern", card, card.y() + card.height() - 48.0F);
+    if (card.height() >= 80.0F) {
+      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 16.0F);
+    }
   }
 
   private static String targetText(GameRenderSnapshot snapshot) {
