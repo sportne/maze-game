@@ -73,26 +73,30 @@ Status: complete.
 
 ### Milestone 3: New Mouse Behavior
 
-Define and add one meaningfully different mouse type after Milestone 2 establishes a stable two-level
-progression. The final Milestone 2 planning card defines this milestone and its task breakdown.
+Add Scout, a visually distinct deterministic mouse with a discoverable direction preference, and a
+third 7x7 level that isolates its behavior from new building mechanics.
 
-Status: direction captured; detailed planning deferred to M2-09.
+See [Milestone 3](milestone-3.md) and the accepted
+[mouse design](../docs/milestone-3-mouse-design.md).
+
+Status: planned.
 
 ### Milestone 4 Candidate: Inventory-Based Block Building
 
-Consider multiple block types with limited quantities, presented in a palette and dragged onto the
-grid. This changes both game rules and input behavior and should be evaluated only after the new mouse
-can be understood independently.
+Add authored grid-cell types with finite or infinite per-level supplies. Players can drag types from
+a bottom palette or select and place them, then drag placed cells around the grid before the mouse
+starts. This changes both game rules and input behavior and should be evaluated only after Scout can
+be understood independently.
 
-Status: concept only.
+Status: direction captured; detailed planning deferred to M3-08.
 
 ## Deferred Ideas
 
-These remain outside the currently planned Milestone 2 scope:
+These remain outside the currently planned Milestone 3 work and captured Milestone 4 direction:
 
-- Grid progression beyond the two authored levels.
-- Additional block types beyond the Milestone 4 candidate.
-- Additional mouse types beyond the one planned for Milestone 3.
+- Grid progression beyond the three authored levels.
+- Cell types beyond the initial set to be accepted during M3-08 planning.
+- Additional mouse types beyond Random and Scout.
 - Multiple mice and multiple start locations.
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and mouse behaviors.
@@ -110,5 +114,7 @@ Completed task cards are retained in the [done archive](done/README.md).
 - Mouse-only interaction is enough for milestone 1.
 - The first mouse may move in any free direction, including immediately moving backward.
 - Replay re-runs the same seeded AI from the beginning, producing the same path.
+- Scout begins facing north and deterministically prefers left, straight, right, then back, while the
+  initial player-facing UI reveals only that its search pattern is consistent.
 - A level is passed when the mouse exceeds the target time, whether it eventually reaches the cheese or times out.
 - The next level option only appears when a next level exists.

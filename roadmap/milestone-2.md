@@ -54,7 +54,7 @@ block mechanic is introduced.
 
 M2-09 is non-gating follow-up planning for the next milestone:
 
-- [M2-09: Define Milestone 3's new mouse type](milestone-2-09-define-milestone-3.md)
+- [M2-09: Define Milestone 3's new mouse type](done/milestone-2-09-define-milestone-3.md)
 
 ## Future Direction
 

@@ -1,6 +1,6 @@
 # M2-09: Define Milestone 3's New Mouse Type
 
-Status: pending
+Status: complete
 
 Depends on: M2-08
 
@@ -49,3 +49,22 @@ implementing the mouse prematurely or mixing it with the proposed block-inventor
 - Review the milestone and every generated card for testability, sequencing, simplicity, and explicit
   separation from Milestone 4.
 - Confirm all generated links resolve and the parent roadmap presents Milestone 3 consistently.
+
+## Completion Evidence
+
+- Defined Scout's internal north-facing left, straight, right, back priority, backtracking, timing,
+  terminal, seed, and replay semantics in
+  [`docs/milestone-3-mouse-design.md`](../../docs/milestone-3-mouse-design.md).
+- Kept the exact preference out of initial player-facing presentation. Scout's name, blue cap, and
+  neutral star badge are distinctive without revealing the rule; initial text says only that the
+  search pattern is consistent.
+- Chose a third 7x7 normal-wall level as the baseline so behavior, rather than another grid or build
+  mechanic, creates the new challenge.
+- Defined a closed two-value behavior choice and minimal simulation boundary, explicitly excluding a
+  behavior registry or hypothetical extension framework.
+- Created [`roadmap/milestone-3.md`](../milestone-3.md) and eight ordered cards covering behavior and
+  level validation, the runtime contract, simulation, progression, visual/UI identity, release
+  coverage, playtesting, and release.
+- Made M3-08 the non-gating planning card that must define Milestone 4 and generate its reviewed task
+  cards for finite/infinite cell inventories, bottom-palette selection, drag placement, click
+  placement, and pre-run repositioning.
