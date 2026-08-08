@@ -22,6 +22,7 @@ and planned cards remain in the parent `roadmap/` directory.
 ## Milestone 3
 
 - [M3-01: Validate Scout and balance the third level](milestone-3-01-scout-design.md)
+- [M3-02: Add the minimal mouse-behavior contract](milestone-3-02-mouse-contract.md)
 
 ## TeaVM and GitHub Pages
 

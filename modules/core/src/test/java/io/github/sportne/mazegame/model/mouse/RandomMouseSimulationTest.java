@@ -51,6 +51,17 @@ final class RandomMouseSimulationTest {
   }
 
   @Test
+  void preservesResultsThroughTheSharedSimulationContract() {
+    MazeState maze = MazeState.empty(Levels.milestoneOne());
+    MouseSimulation simulation = new RandomMouseSimulation(maze);
+
+    assertEquals(
+        new RandomMouseSimulation(maze).update(Duration.ofSeconds(1)),
+        simulation.update(Duration.ofSeconds(1)));
+    assertEquals(simulation.result(), simulation.update(Duration.ZERO));
+  }
+
+  @Test
   void onlyMovesToOpenNeighboringCells() {
     MazeState maze =
         new MazeState(

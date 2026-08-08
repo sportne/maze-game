@@ -16,7 +16,7 @@ import java.util.Random;
  * cell is open, so backtracking is allowed. The random generator is seeded from the level so replay
  * can reproduce the same path from the same maze.
  */
-public final class RandomMouseSimulation {
+public final class RandomMouseSimulation implements MouseSimulation {
   /** Maze whose walls and level timing control this run. */
   private final MazeState mazeState;
 
@@ -55,6 +55,7 @@ public final class RandomMouseSimulation {
    * @param deltaTime amount of time to add to the run
    * @return the updated run snapshot
    */
+  @Override
   public MouseRunResult update(Duration deltaTime) {
     Objects.requireNonNull(deltaTime, "deltaTime");
     if (deltaTime.isNegative()) {
@@ -84,6 +85,7 @@ public final class RandomMouseSimulation {
    *
    * @return immutable snapshot of position, time, move count, and status
    */
+  @Override
   public MouseRunResult result() {
     return new MouseRunResult(position, elapsedTime, moveCount, status);
   }

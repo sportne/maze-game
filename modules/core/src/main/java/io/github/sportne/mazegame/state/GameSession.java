@@ -8,6 +8,7 @@ import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.maze.WallPlacementResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.mouse.MouseSimulation;
 import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
@@ -57,7 +58,7 @@ public final class GameSession {
   private boolean runRequested;
 
   /** Active deterministic mouse simulation, or null before a run starts. */
-  private RandomMouseSimulation mouseSimulation;
+  private MouseSimulation mouseSimulation;
 
   /** Latest mouse simulation snapshot, or null before a run starts. */
   private MouseRunResult mouseRunResult;

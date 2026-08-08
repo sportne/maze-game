@@ -1,6 +1,8 @@
 # M3-02: Extract the Minimal Mouse-Simulation Contract
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-01
 
