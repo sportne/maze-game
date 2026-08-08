@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.browser;
 
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_ONE_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_THREE_RESULT_KEY;
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_RESULT_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -60,7 +61,7 @@ final class SafariReleaseTest {
 
   @Test
   @Timeout(300)
-  void completesLiveTwoLevelFlowAndPersistsResults() throws IOException {
+  void completesLiveThreeLevelFlowAndPersistsResults() throws IOException {
     Path reportDirectory = Path.of(requiredProperty("mazeGame.safariReportDirectory"));
     List<String> evidence = new ArrayList<>();
     WebDriver driver = null;
@@ -179,7 +180,8 @@ final class SafariReleaseTest {
     javascript(driver)
         .executeScript(
             "arguments[0].forEach(function(key) { window.localStorage.removeItem(key); });",
-            List.of(MILESTONE_ONE_RESULT_KEY, MILESTONE_TWO_RESULT_KEY));
+            List.of(
+                MILESTONE_ONE_RESULT_KEY, MILESTONE_TWO_RESULT_KEY, MILESTONE_THREE_RESULT_KEY));
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
@@ -193,11 +195,30 @@ final class SafariReleaseTest {
     assertAudioResumed(driver);
     waitForSavedResult(driver, MILESTONE_ONE_RESULT_KEY);
     String milestoneOneResult = readSavedResult(driver, MILESTONE_ONE_RESULT_KEY);
+    assertEquals("10000:40", milestoneOneResult);
 
     BrowserGameScenario.startMilestoneTwo(controls);
     waitForSavedResult(driver, MILESTONE_TWO_RESULT_KEY);
     String milestoneTwoResult = readSavedResult(driver, MILESTONE_TWO_RESULT_KEY);
+    assertEquals("15000:60", milestoneTwoResult);
     assertFalse(milestoneOneResult.equals(milestoneTwoResult));
+
+    BrowserGameScenario.openMilestoneThree(controls);
+    driver.navigate().refresh();
+    waitForRenderedControl(driver, 640, 280);
+    assertEquals(milestoneOneResult, readSavedResult(driver, MILESTONE_ONE_RESULT_KEY));
+    assertEquals(milestoneTwoResult, readSavedResult(driver, MILESTONE_TWO_RESULT_KEY));
+    assertEquals(
+        null,
+        javascript(driver)
+            .executeScript(
+                "return window.localStorage.getItem(arguments[0]);", MILESTONE_THREE_RESULT_KEY));
+    installRuntimeErrorCapture(driver);
+    BrowserGameScenario.startMilestoneThreeFromMainMenu(controls);
+    waitForSavedResult(driver, MILESTONE_THREE_RESULT_KEY);
+    String milestoneThreeResult = readSavedResult(driver, MILESTONE_THREE_RESULT_KEY);
+    assertEquals("6500:26", milestoneThreeResult);
+    assertFalse(milestoneTwoResult.equals(milestoneThreeResult));
     assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
     recordResponsiveLayouts(driver, target, evidence);
@@ -207,6 +228,7 @@ final class SafariReleaseTest {
     waitForRenderedControl(driver, 640, 280);
     assertEquals(milestoneOneResult, readSavedResult(driver, MILESTONE_ONE_RESULT_KEY));
     assertEquals(milestoneTwoResult, readSavedResult(driver, MILESTONE_TWO_RESULT_KEY));
+    assertEquals(milestoneThreeResult, readSavedResult(driver, MILESTONE_THREE_RESULT_KEY));
     assertPageStarted(driver);
     assertReleaseLocation(driver, activeReleaseUrl);
     installRuntimeErrorCapture(driver);
@@ -222,9 +244,10 @@ final class SafariReleaseTest {
     }
     evidence.add(target + " Milestone 1 saved result: " + milestoneOneResult);
     evidence.add(target + " Milestone 2 saved result: " + milestoneTwoResult);
+    evidence.add(target + " Milestone 3 Scout saved result: " + milestoneThreeResult);
     evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
     evidence.add(target + " audio context after interaction: running");
-    evidence.add(target + " two-level progression, refresh, interaction, and persistence: PASS");
+    evidence.add(target + " three-level progression, refresh, interaction, and persistence: PASS");
     evidence.add(target + " runtime errors after initialization: none");
   }
 

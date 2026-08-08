@@ -14,6 +14,7 @@ import java.util.List;
 final class BrowserGameScenario {
   static final String MILESTONE_ONE_RESULT_KEY = "maze-game.best-result.milestone-1";
   static final String MILESTONE_TWO_RESULT_KEY = "maze-game.best-result.milestone-2";
+  static final String MILESTONE_THREE_RESULT_KEY = "maze-game.best-result.milestone-3";
   static final GridPosition EDITED_CELL = new GridPosition(2, 1);
   static final List<GridPosition> MILESTONE_TWO_WALLS =
       List.of(
@@ -26,6 +27,12 @@ final class BrowserGameScenario {
           new GridPosition(4, 0),
           new GridPosition(5, 0),
           new GridPosition(5, 2));
+  static final List<GridPosition> MILESTONE_THREE_WALLS =
+      List.of(
+          new GridPosition(2, 2),
+          new GridPosition(3, 1),
+          new GridPosition(4, 0),
+          new GridPosition(5, 1));
 
   private BrowserGameScenario() {}
 
@@ -36,6 +43,8 @@ final class BrowserGameScenario {
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
@@ -53,6 +62,36 @@ final class BrowserGameScenario {
     controls.placeWalls(Levels.milestoneTwo(), MILESTONE_TWO_WALLS);
     controls.clickButton(
         GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+  }
+
+  static void startMilestoneThree(Controls controls) throws IOException {
+    openMilestoneThree(controls);
+    startPreparedMilestoneThree(controls);
+  }
+
+  static void openMilestoneThree(Controls controls) throws IOException {
+    controls.clickButton(
+        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+  }
+
+  static void startMilestoneThreeFromMainMenu(Controls controls) throws IOException {
+    controls.clickButton(
+        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+    controls.waitForButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+    startPreparedMilestoneThree(controls);
+  }
+
+  private static void startPreparedMilestoneThree(Controls controls) throws IOException {
+    controls.placeWalls(Levels.milestoneThree(), MILESTONE_THREE_WALLS);
+    controls.clickButton(
+        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
   }
 
   static ScreenPoint buttonCenter(
@@ -81,7 +120,7 @@ final class BrowserGameScenario {
 
   private static ScreenLayout layout(
       int width, int height, GamePhase phase, LevelDefinition level, boolean hasNextLevel) {
-    return MazeGameLayout.forPhase(phase, width, height, level.gridSize(), false, 2, hasNextLevel);
+    return MazeGameLayout.forPhase(phase, width, height, level.gridSize(), false, 3, hasNextLevel);
   }
 
   interface Controls {

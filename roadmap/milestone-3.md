@@ -59,7 +59,7 @@ The complete behavior specification is recorded in
 3. [M3-03: Implement the deterministic Scout simulation](done/milestone-3-03-scout-simulation.md)
 4. [M3-04: Add the third authored level and progression](done/milestone-3-04-third-level.md)
 5. [M3-05: Give Scout a unique visual and UI identity](done/milestone-3-05-scout-presentation.md)
-6. [M3-06: Extend cross-platform release coverage](milestone-3-06-release-coverage.md)
+6. [M3-06: Extend cross-platform release coverage](done/milestone-3-06-release-coverage.md)
 7. [M3-07: Playtest, tune, and release Milestone 3](milestone-3-07-playtest-release.md)
 8. [M3-08: Define Milestone 4](milestone-3-08-define-milestone-4.md)
 

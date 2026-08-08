@@ -1,6 +1,8 @@
 # M3-06: Extend Cross-Platform Release Coverage
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-04, M3-05
 

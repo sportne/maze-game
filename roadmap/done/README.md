@@ -26,6 +26,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M3-03: Implement the deterministic Scout simulation](milestone-3-03-scout-simulation.md)
 - [M3-04: Add the third authored level and progression](milestone-3-04-third-level.md)
 - [M3-05: Give Scout a unique visual and UI identity](milestone-3-05-scout-presentation.md)
+- [M3-06: Extend cross-platform release coverage](milestone-3-06-release-coverage.md)
 
 ## TeaVM and GitHub Pages
 

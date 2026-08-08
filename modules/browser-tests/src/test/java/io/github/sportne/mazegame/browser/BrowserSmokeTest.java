@@ -2,6 +2,8 @@ package io.github.sportne.mazegame.browser;
 
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.EDITED_CELL;
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_ONE_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_THREE_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_THREE_WALLS;
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_RESULT_KEY;
 import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_WALLS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +22,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
@@ -42,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.function.IntConsumer;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -55,13 +60,15 @@ final class BrowserSmokeTest {
   private static final int MOBILE_SAFARI_LANDSCAPE_WIDTH = 844;
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
   private static final int STARTUP_SAMPLE_COUNT = 5;
+  private static final long MOUSE_STATUS_SIGNATURE = 5_167_671_159_018_708_644L;
+  private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
       Set.of("styles.css", "mouse-sprites.png", "scout-mouse.png", "exploreMaze_T1.mp3");
 
   @Test
   @Timeout(240)
-  void completesTwoLevelFlowAndLoadsIndependentResultsAfterReload() throws IOException {
+  void completesThreeLevelFlowAndLoadsIndependentResultsAfterReload() throws IOException {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
     Path artifactDirectory = requiredDirectory("mazeGame.artifactDirectory");
     Path reportDirectory = Path.of(requiredProperty("mazeGame.browserSmokeReportDirectory"));
@@ -171,6 +178,7 @@ final class BrowserSmokeTest {
     BrowserGameScenario.startMilestoneOne(controls);
     assertAudioResumed(page);
     waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
+    assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
 
     controls.clickButtonAndWaitForChange(
         GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_REPLAY);
@@ -178,30 +186,59 @@ final class BrowserSmokeTest {
         GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_RETRY);
     BrowserGameScenario.startMilestoneTwo(controls);
     waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
+    assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
 
     String milestoneOneResult = readSavedResult(page, MILESTONE_ONE_RESULT_KEY);
     String milestoneTwoResult = readSavedResult(page, MILESTONE_TWO_RESULT_KEY);
     assertFalse(milestoneOneResult.equals(milestoneTwoResult));
+    Files.createDirectories(reportDirectory);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-mouse-result.png")));
+    assertRenderedMousePresentation(
+        page, Levels.milestoneTwo(), new GridPosition(3, 0), true, MOUSE_STATUS_SIGNATURE, false);
+    BrowserGameScenario.openMilestoneThree(controls);
+    page.reload();
+    waitForRenderedControl(page, 640, 280);
+    assertEquals(milestoneOneResult, readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
+    assertEquals(milestoneTwoResult, readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+    assertEquals(
+        null, page.evaluate("key => window.localStorage.getItem(key)", MILESTONE_THREE_RESULT_KEY));
+    BrowserGameScenario.startMilestoneThreeFromMainMenu(controls);
+    waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
+    assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
+
+    String milestoneThreeResult = readSavedResult(page, MILESTONE_THREE_RESULT_KEY);
+    assertFalse(milestoneTwoResult.equals(milestoneThreeResult));
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-scout-result.png")));
+    assertRenderedMousePresentation(
+        page,
+        Levels.milestoneThree(),
+        Levels.milestoneThree().cheese(),
+        false,
+        SCOUT_STATUS_SIGNATURE,
+        true);
     controls.clickButtonAndWaitForChange(
-        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
+        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
     controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
 
     assertEquals(milestoneOneResult, readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
     assertEquals(milestoneTwoResult, readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+    assertEquals(milestoneThreeResult, readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
     controls.clickButton(
         GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
     assertTrue(browserLog.observedAssets().containsAll(browserLog.requiredAssets()));
     if (browserLog.requiredAssets().contains("app.wasm")) {
       assertEquals("application/wasm", browserLog.contentType("app.wasm"));
@@ -325,6 +362,7 @@ final class BrowserSmokeTest {
             GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
         resizeAndAssert(page, rotated);
         waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
+        assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
         rotatedControls.waitForButton(
             GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         rotatedControls.clickButton(
@@ -338,19 +376,36 @@ final class BrowserSmokeTest {
         primaryControls.clickButton(
             GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
+        assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+
+        resizeAndAssert(page, rotated);
+        rotatedControls.clickButton(
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        rotatedControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        rotatedControls.placeWalls(Levels.milestoneThree(), MILESTONE_THREE_WALLS);
+        resizeAndAssert(page, primary);
+        primaryControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        primaryControls.clickButton(
+            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
+        assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
+        primaryControls.waitForButton(
+            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
 
         primaryControls.clickButtonAndWaitForChange(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
         primaryControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
         assertTrue(
             mobileLog.errors().isEmpty(),
             () -> String.join(System.lineSeparator(), mobileLog.errors()));
@@ -412,6 +467,81 @@ final class BrowserSmokeTest {
         page.evaluate(
             "window.Howler && window.Howler.ctx" + " ? window.Howler.ctx.state : 'unavailable'");
     assertEquals("running", audioState);
+  }
+
+  private static void assertRenderedMousePresentation(
+      Page page,
+      LevelDefinition level,
+      GridPosition finalMousePosition,
+      boolean hasNextLevel,
+      long expectedStatusSignature,
+      boolean expectScoutMarker)
+      throws IOException {
+    BufferedImage image = screenshot(page);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(
+            GamePhase.RESULT,
+            VIEWPORT_WIDTH,
+            VIEWPORT_HEIGHT,
+            level.gridSize(),
+            false,
+            3,
+            hasNextLevel);
+    assertEquals(
+        expectedStatusSignature,
+        lightPixelSignature(image, layout.bounds(MazeGameLayout.RESULT_STATUS)));
+
+    ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
+    int cellSize = Math.round(grid.width() / level.gridSize().columns());
+    ScreenRectangle mouseCell =
+        new ScreenRectangle(
+            grid.x() + finalMousePosition.column() * cellSize,
+            grid.y() + (level.gridSize().rows() - 1 - finalMousePosition.row()) * cellSize,
+            cellSize,
+            cellSize);
+    int scoutMarkerPixels = blueMarkerPixelCount(image, mouseCell);
+    assertEquals(expectScoutMarker, scoutMarkerPixels >= 20);
+  }
+
+  private static long lightPixelSignature(BufferedImage image, ScreenRectangle region) {
+    long[] signature = {0xcbf29ce484222325L};
+    forEachPixel(
+        image,
+        region,
+        color -> {
+          boolean light = red(color) >= 120 && green(color) >= 120 && blue(color) >= 120;
+          signature[0] ^= light ? 1L : 0L;
+          signature[0] *= 0x100000001b3L;
+        });
+    return signature[0];
+  }
+
+  private static int blueMarkerPixelCount(BufferedImage image, ScreenRectangle region) {
+    int[] count = {0};
+    forEachPixel(
+        image,
+        region,
+        color -> {
+          if (blue(color) >= 150
+              && blue(color) >= red(color) + 40
+              && blue(color) >= green(color) + 30) {
+            count[0]++;
+          }
+        });
+    return count[0];
+  }
+
+  private static void forEachPixel(
+      BufferedImage image, ScreenRectangle region, IntConsumer consumer) {
+    int left = Math.round(region.x());
+    int top = image.getHeight() - Math.round(region.top());
+    int right = Math.round(region.right());
+    int bottom = image.getHeight() - Math.round(region.y());
+    for (int y = top; y < bottom; y++) {
+      for (int x = left; x < right; x++) {
+        consumer.accept(image.getRGB(x, y));
+      }
+    }
   }
 
   private static Set<String> requiredAssets() {
