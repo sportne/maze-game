@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.Align;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
@@ -14,7 +15,9 @@ import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
+import io.github.sportne.mazegame.state.LevelProgress;
 import java.time.Duration;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -25,6 +28,9 @@ public final class MazeGameRenderer {
 
   /** Border color for simple rectangle buttons. */
   private static final Color BUTTON_BORDER = new Color(0.70F, 0.76F, 0.84F, 1.0F);
+
+  /** Muted fill for unavailable level cards. */
+  private static final Color LOCKED_BUTTON = new Color(0.10F, 0.11F, 0.13F, 1.0F);
 
   /** Fill color for empty walkable cells. */
   private static final Color CELL_OPEN = new Color(Color.BLACK);
@@ -130,7 +136,7 @@ public final class MazeGameRenderer {
       return;
     }
     if (snapshot.phase() == GamePhase.LEVEL_SELECT) {
-      drawLevelSelect(layout, snapshot.bestResult());
+      drawLevelSelect(layout, snapshot.levelProgress());
       return;
     }
     if (snapshot.phase() == GamePhase.SETTINGS) {
@@ -141,7 +147,7 @@ public final class MazeGameRenderer {
     drawGrid(grid, snapshot);
     drawCellSprites(grid, snapshot.levelDefinition());
     drawMouse(grid, snapshot);
-    drawControls(layout, snapshot.phase());
+    drawControls(layout, snapshot);
     drawGameplayText(layout, snapshot);
   }
 
@@ -166,9 +172,11 @@ public final class MazeGameRenderer {
     spriteBatch.end();
   }
 
-  private void drawLevelSelect(ScreenLayout layout, BestResult bestResult) {
-    for (int index = 0; index < 6; index++) {
-      drawButton(layout.bounds(MazeGameLayout.levelCardId(index + 1)));
+  private void drawLevelSelect(ScreenLayout layout, List<LevelProgress> levelProgress) {
+    for (int index = 0; index < levelProgress.size(); index++) {
+      drawLevelCard(
+          layout.bounds(MazeGameLayout.levelCardId(index + 1)),
+          levelProgress.get(index).unlocked());
     }
     ScreenRectangle backButton = layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK);
     drawButton(backButton);
@@ -176,13 +184,13 @@ public final class MazeGameRenderer {
     spriteBatch.begin();
     font.setColor(TEXT);
     drawTextInRegion("Select Level", layout.bounds(MazeGameLayout.LEVEL_SELECT_TITLE), 72.0F);
-    for (int index = 0; index < 6; index++) {
+    for (int index = 0; index < levelProgress.size(); index++) {
+      LevelProgress progress = levelProgress.get(index);
       ScreenRectangle levelButton = layout.bounds(MazeGameLayout.levelCardId(index + 1));
-      font.setColor(index == 0 ? TEXT : PANEL_TEXT);
-      String title = index == 0 ? "Milestone 1" : "Level " + (index + 1);
-      String subtitle = index == 0 ? levelSelectBestText(bestResult) : "Locked";
-      font.draw(spriteBatch, title, levelButton.x() + 24.0F, levelButton.y() + 56.0F);
-      font.draw(spriteBatch, subtitle, levelButton.x() + 24.0F, levelButton.y() + 32.0F);
+      font.setColor(progress.unlocked() ? TEXT : PANEL_TEXT);
+      String subtitle = levelSubtitle(progress, levelButton.width());
+      drawCenteredText(progress.levelDefinition().name(), levelButton, levelButton.y() + 56.0F);
+      drawCenteredText(subtitle, levelButton, levelButton.y() + 32.0F);
     }
     font.setColor(TEXT);
     drawTextInRegion("Back", backButton, 52.0F);
@@ -297,20 +305,31 @@ public final class MazeGameRenderer {
         height);
   }
 
-  private void drawControls(ScreenLayout layout, GamePhase phase) {
-    if (phase == GamePhase.BUILDING) {
+  private void drawControls(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    if (snapshot.phase() == GamePhase.BUILDING) {
       drawButton(layout.bounds(MazeGameLayout.BUILD_WALL_MODE));
       drawButton(layout.bounds(MazeGameLayout.BUILD_START));
-    } else if (phase == GamePhase.RESULT) {
+    } else if (snapshot.phase() == GamePhase.RESULT) {
       drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
       drawButton(layout.bounds(MazeGameLayout.RESULT_REPLAY));
       drawButton(layout.bounds(MazeGameLayout.RESULT_MAIN_MENU));
+      if (snapshot.hasNextLevel()) {
+        drawButton(layout.bounds(MazeGameLayout.RESULT_NEXT_LEVEL));
+      }
     }
   }
 
   private void drawButton(ScreenRectangle bounds) {
+    drawButton(bounds, BUTTON);
+  }
+
+  private void drawLevelCard(ScreenRectangle bounds, boolean unlocked) {
+    drawButton(bounds, unlocked ? BUTTON : LOCKED_BUTTON);
+  }
+
+  private void drawButton(ScreenRectangle bounds, Color fill) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-    shapeRenderer.setColor(BUTTON);
+    shapeRenderer.setColor(fill);
     shapeRenderer.rect(bounds.x(), bounds.y(), bounds.width(), bounds.height());
     shapeRenderer.setColor(BUTTON_BORDER);
     shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.right(), bounds.y(), 2.0F);
@@ -336,7 +355,8 @@ public final class MazeGameRenderer {
 
   private void drawBuildText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     font.setColor(TEXT);
-    drawTextInRegion("Maze Game", layout.bounds(MazeGameLayout.BUILD_TITLE), 0.0F);
+    drawTextInRegion(
+        snapshot.levelDefinition().name(), layout.bounds(MazeGameLayout.BUILD_TITLE), 0.0F);
     font.draw(
         spriteBatch,
         "Build: " + String.format(Locale.ROOT, "%.1fs", snapshot.buildTimeRemainingSeconds()),
@@ -345,7 +365,9 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        "Delay the mouse 5s; keep a path to the cheese",
+        "Delay past "
+            + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
+            + "; keep a path to the cheese",
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
@@ -360,7 +382,11 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
-        "Run: " + formatSeconds(runTimeRemaining(snapshot)),
+        snapshot.levelDefinition().name()
+            + " | "
+            + formatSeconds(runTimeRemaining(snapshot))
+            + " | >"
+            + targetText(snapshot),
         layout.bounds(MazeGameLayout.RUN_STATUS).x(),
         textBaseline(layout.bounds(MazeGameLayout.RUN_STATUS)));
   }
@@ -369,7 +395,9 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
-        snapshot.resultPassed() ? "Success: mouse delayed" : "Failed: cheese reached too soon",
+        snapshot.levelDefinition().name()
+            + (snapshot.resultPassed() ? " | Success | >" : " | Failed | >")
+            + targetText(snapshot),
         layout.bounds(MazeGameLayout.RESULT_STATUS).x(),
         textBaseline(layout.bounds(MazeGameLayout.RESULT_STATUS)));
     font.draw(
@@ -388,25 +416,85 @@ public final class MazeGameRenderer {
         layout.bounds(MazeGameLayout.RESULT_BEST).x(),
         textBaseline(layout.bounds(MazeGameLayout.RESULT_BEST)));
     font.setColor(TEXT);
-    drawTextInRegion("Retry", layout.bounds(MazeGameLayout.RESULT_RETRY), 46.0F);
-    drawTextInRegion("Replay", layout.bounds(MazeGameLayout.RESULT_REPLAY), 42.0F);
-    drawTextInRegion("Main Menu", layout.bounds(MazeGameLayout.RESULT_MAIN_MENU), 38.0F);
-    if (!snapshot.hasNextLevel()) {
+    drawResultAction(layout, MazeGameLayout.RESULT_RETRY, "Retry", "Retry");
+    drawResultAction(layout, MazeGameLayout.RESULT_REPLAY, "Replay", "Replay");
+    drawResultAction(layout, MazeGameLayout.RESULT_MAIN_MENU, "Main Menu", "Menu");
+    if (snapshot.hasNextLevel()) {
+      drawResultAction(layout, MazeGameLayout.RESULT_NEXT_LEVEL, "Next Level", "Next");
+    } else {
       font.setColor(PANEL_TEXT);
       font.draw(
           spriteBatch,
-          "No next level in this milestone",
+          noNextLevelText(snapshot),
           layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL).x(),
           textBaseline(layout.bounds(MazeGameLayout.RESULT_NO_NEXT_LEVEL)));
     }
+  }
+
+  private void drawResultAction(
+      ScreenLayout layout, String elementId, String fullLabel, String compactLabel) {
+    ScreenRectangle bounds = layout.bounds(elementId);
+    drawCenteredText(resultActionLabel(bounds.width(), fullLabel, compactLabel), bounds);
+  }
+
+  static String resultActionLabel(float width, String fullLabel, String compactLabel) {
+    return width < 110.0F ? compactLabel : fullLabel;
+  }
+
+  private static String noNextLevelText(GameRenderSnapshot snapshot) {
+    List<LevelProgress> progress = snapshot.levelProgress();
+    for (int index = 0; index < progress.size(); index++) {
+      if (progress.get(index).levelDefinition().id().equals(snapshot.levelDefinition().id())) {
+        return index == progress.size() - 1
+            ? "Final level in this milestone"
+            : "Pass this level to unlock the next";
+      }
+    }
+    return "No next level available";
   }
 
   private void drawTextInRegion(String text, ScreenRectangle region, float xOffset) {
     font.draw(spriteBatch, text, region.x() + xOffset, textBaseline(region));
   }
 
+  private void drawCenteredText(String text, ScreenRectangle region) {
+    drawCenteredText(text, region, textBaseline(region));
+  }
+
+  private void drawCenteredText(String text, ScreenRectangle region, float baseline) {
+    font.draw(
+        spriteBatch,
+        text,
+        region.x(),
+        baseline,
+        0,
+        text.length(),
+        region.width(),
+        Align.center,
+        false,
+        "…");
+  }
+
   private static String levelSelectBestText(BestResult bestResult) {
     return "Best: " + bestResultValueText(bestResult);
+  }
+
+  private static String levelSubtitle(LevelProgress progress, float width) {
+    if (!progress.unlocked()) {
+      return "Locked";
+    }
+    if (progress.bestResult() != null && width < 200.0F) {
+      return String.format(
+          Locale.ROOT,
+          "Best %.1fs / %d",
+          progress.bestResult().elapsedTime().toMillis() / 1000.0F,
+          progress.bestResult().moveCount());
+    }
+    return levelSelectBestText(progress.bestResult());
+  }
+
+  private static String targetText(GameRenderSnapshot snapshot) {
+    return formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F);
   }
 
   private static String bestResultValueText(BestResult bestResult) {

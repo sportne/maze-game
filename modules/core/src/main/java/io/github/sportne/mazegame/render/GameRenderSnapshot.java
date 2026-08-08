@@ -6,6 +6,8 @@ import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
+import io.github.sportne.mazegame.state.LevelProgress;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -19,6 +21,7 @@ import java.util.Objects;
  * @param rejectedFlashRemainingSeconds rejected flash time remaining
  * @param mouseRunResult latest mouse result, or null before a run starts
  * @param bestResult best saved result for the current level, or null when none exists
+ * @param levelProgress authored level presentation state in catalog order
  * @param audioEnabled whether session audio is enabled
  * @param clearWallMode whether a primary pointer clears walls during the build phase
  * @param resultPassed whether the latest result passed
@@ -33,6 +36,7 @@ public record GameRenderSnapshot(
     float rejectedFlashRemainingSeconds,
     MouseRunResult mouseRunResult,
     BestResult bestResult,
+    List<LevelProgress> levelProgress,
     boolean audioEnabled,
     boolean clearWallMode,
     boolean resultPassed,
@@ -42,5 +46,6 @@ public record GameRenderSnapshot(
     Objects.requireNonNull(phase, "phase");
     Objects.requireNonNull(levelDefinition, "levelDefinition");
     Objects.requireNonNull(mazeState, "mazeState");
+    levelProgress = List.copyOf(levelProgress);
   }
 }

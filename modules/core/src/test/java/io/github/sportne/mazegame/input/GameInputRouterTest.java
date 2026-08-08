@@ -11,16 +11,18 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
-import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.state.GamePhase;
+import io.github.sportne.mazegame.state.LevelProgress;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class GameInputRouterTest {
   private static final GridSize GRID_SIZE = Levels.milestoneOne().gridSize();
-  private static final List<LevelDefinition> SELECTABLE_LEVELS = Levels.catalog().levels();
-  private static final LevelDefinition SECOND_LEVEL = secondLevel();
+  private static final List<LevelProgress> LEVEL_PROGRESS =
+      List.of(
+          new LevelProgress(Levels.milestoneOne(), true, null),
+          new LevelProgress(Levels.milestoneTwo(), false, null));
   private static final int SCREEN_WIDTH = 1280;
   private static final int SCREEN_HEIGHT = 720;
 
@@ -49,7 +51,7 @@ final class GameInputRouterTest {
             432,
             Input.Buttons.LEFT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
 
     assertEquals(GameInputAction.NONE, action);
   }
@@ -60,14 +62,8 @@ final class GameInputRouterTest {
     assertEquals(GameInputActionType.SELECT_LEVEL, selection.type());
     assertEquals(Levels.milestoneOne().id(), selection.levelId());
     assertEquals(
-        GameInputActionType.SELECT_LEVEL,
-        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).type());
-    assertEquals(
-        Levels.milestoneTwo().id(),
-        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).levelId());
-    assertEquals(
         GameInputActionType.SELECT_LOCKED_LEVEL,
-        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(3)).type());
+        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).type());
     assertEquals(
         GameInputActionType.BACK_TO_MAIN_MENU,
         click(GamePhase.LEVEL_SELECT, MazeGameLayout.LEVEL_SELECT_BACK).type());
@@ -79,10 +75,12 @@ final class GameInputRouterTest {
         click(
             GamePhase.LEVEL_SELECT,
             MazeGameLayout.levelCardId(2),
-            List.of(Levels.milestoneOne(), SECOND_LEVEL));
+            List.of(
+                new LevelProgress(Levels.milestoneOne(), true, null),
+                new LevelProgress(Levels.milestoneTwo(), true, null)));
 
     assertEquals(GameInputActionType.SELECT_LEVEL, selection.type());
-    assertEquals(SECOND_LEVEL.id(), selection.levelId());
+    assertEquals(Levels.milestoneTwo().id(), selection.levelId());
   }
 
   @Test
@@ -112,7 +110,7 @@ final class GameInputRouterTest {
             360,
             Input.Buttons.LEFT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
     GameInputAction clear =
         GameInputRouter.route(
             layout(GamePhase.BUILDING),
@@ -121,7 +119,7 @@ final class GameInputRouterTest {
             360,
             Input.Buttons.RIGHT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
 
     assertEquals(GameInputActionType.PLACE_WALL, place.type());
     assertEquals(new GridPosition(2, 2), place.position());
@@ -142,7 +140,7 @@ final class GameInputRouterTest {
             Math.round(SCREEN_HEIGHT - grid.top() + 1.0F),
             Input.Buttons.LEFT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
     GameInputAction bottomRight =
         GameInputRouter.route(
             layout,
@@ -151,7 +149,7 @@ final class GameInputRouterTest {
             Math.round(SCREEN_HEIGHT - grid.y() - 1.0F),
             Input.Buttons.LEFT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
 
     assertEquals(new GridPosition(0, 0), topLeft.position());
     assertEquals(new GridPosition(4, 4), bottomRight.position());
@@ -170,7 +168,7 @@ final class GameInputRouterTest {
             Math.round(SCREEN_HEIGHT - grid.top() + 1.0F),
             Input.Buttons.RIGHT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
 
     assertEquals(GameInputAction.NONE, action);
   }
@@ -179,13 +177,7 @@ final class GameInputRouterTest {
   void consumesUnsupportedMouseButtonsInsideTheBuildGrid() {
     GameInputAction action =
         GameInputRouter.route(
-            layout(GamePhase.BUILDING),
-            GamePhase.BUILDING,
-            640,
-            360,
-            7,
-            GRID_SIZE,
-            SELECTABLE_LEVELS);
+            layout(GamePhase.BUILDING), GamePhase.BUILDING, 640, 360, 7, GRID_SIZE, LEVEL_PROGRESS);
 
     assertEquals(GameInputActionType.IGNORED_GRID_CLICK, action.type());
     assertTrue(action.consumed());
@@ -200,6 +192,9 @@ final class GameInputRouterTest {
     assertEquals(
         GameInputActionType.RESULT_MAIN_MENU,
         click(GamePhase.RESULT, MazeGameLayout.RESULT_MAIN_MENU).type());
+    assertEquals(
+        GameInputActionType.NEXT_LEVEL,
+        click(GamePhase.RESULT, MazeGameLayout.RESULT_NEXT_LEVEL, LEVEL_PROGRESS, true).type());
   }
 
   @Test
@@ -212,7 +207,7 @@ final class GameInputRouterTest {
             360,
             Input.Buttons.LEFT,
             GRID_SIZE,
-            SELECTABLE_LEVELS);
+            LEVEL_PROGRESS);
 
     assertEquals(GameInputAction.NONE, action);
     assertFalse(action.consumed());
@@ -242,9 +237,11 @@ final class GameInputRouterTest {
         () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, " "));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.RETRY, null, SECOND_LEVEL.id()));
+        () -> new GameInputAction(GameInputActionType.RETRY, null, Levels.milestoneTwo().id()));
 
-    assertEquals(SECOND_LEVEL.id(), GameInputAction.selectLevel(SECOND_LEVEL.id()).levelId());
+    assertEquals(
+        Levels.milestoneTwo().id(),
+        GameInputAction.selectLevel(Levels.milestoneTwo().id()).levelId());
   }
 
   @Test
@@ -254,12 +251,17 @@ final class GameInputRouterTest {
   }
 
   private static GameInputAction click(GamePhase phase, String elementId) {
-    return click(phase, elementId, SELECTABLE_LEVELS);
+    return click(phase, elementId, LEVEL_PROGRESS, false);
   }
 
   private static GameInputAction click(
-      GamePhase phase, String elementId, List<LevelDefinition> selectableLevels) {
-    ScreenLayout layout = layout(phase);
+      GamePhase phase, String elementId, List<LevelProgress> levelProgress) {
+    return click(phase, elementId, levelProgress, false);
+  }
+
+  private static GameInputAction click(
+      GamePhase phase, String elementId, List<LevelProgress> levelProgress, boolean hasNextLevel) {
+    ScreenLayout layout = layout(phase, levelProgress.size(), hasNextLevel);
     ScreenRectangle bounds = layout.bounds(elementId);
     return GameInputRouter.route(
         layout,
@@ -268,25 +270,15 @@ final class GameInputRouterTest {
         Math.round(SCREEN_HEIGHT - bounds.y() - bounds.height() / 2.0F),
         Input.Buttons.LEFT,
         GRID_SIZE,
-        selectableLevels);
+        levelProgress);
   }
 
   private static ScreenLayout layout(GamePhase phase) {
-    return MazeGameLayout.forPhase(phase, SCREEN_WIDTH, SCREEN_HEIGHT, GRID_SIZE);
+    return layout(phase, LEVEL_PROGRESS.size(), false);
   }
 
-  private static LevelDefinition secondLevel() {
-    LevelDefinition first = Levels.milestoneOne();
-    return new LevelDefinition(
-        "test-level-2",
-        "Test Level 2",
-        first.gridSize(),
-        first.mouseStart(),
-        first.cheese(),
-        first.buildTime(),
-        first.targetSolveTime(),
-        first.maximumSolveTime(),
-        first.mouseMoveInterval(),
-        2L);
+  private static ScreenLayout layout(GamePhase phase, int levelCount, boolean hasNextLevel) {
+    return MazeGameLayout.forPhase(
+        phase, SCREEN_WIDTH, SCREEN_HEIGHT, GRID_SIZE, true, levelCount, hasNextLevel);
   }
 }

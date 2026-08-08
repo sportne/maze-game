@@ -47,6 +47,9 @@ public enum GameInputActionType {
   /** Replay the completed mouse run. */
   REPLAY,
 
+  /** Start the next unlocked authored level after a passing result. */
+  NEXT_LEVEL,
+
   /** Return from the result screen to the startup menu and reset level state. */
   RESULT_MAIN_MENU
 }

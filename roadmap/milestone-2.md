@@ -48,7 +48,7 @@ block mechanic is introduced.
 3. [M2-03: Generalize the authored-level catalog and selection contract](done/milestone-2-03-level-catalog.md)
 4. [M2-04: Add progression, unlocking, and per-level persistence](done/milestone-2-04-progression.md)
 5. [M2-05: Implement the second authored level](done/milestone-2-05-level-implementation.md)
-6. [M2-06: Make level-selection and game UI data-driven](milestone-2-06-multi-level-ui.md)
+6. [M2-06: Make level-selection and game UI data-driven](done/milestone-2-06-multi-level-ui.md)
 7. [M2-07: Add multi-level end-to-end and release coverage](milestone-2-07-release-coverage.md)
 8. [M2-08: Playtest, tune, and release Milestone 2](milestone-2-08-playtest-release.md)
 9. [M2-09: Define Milestone 3's new mouse type](milestone-2-09-define-milestone-3.md)

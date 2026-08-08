@@ -418,8 +418,7 @@ final class MazeGameTest {
     game.startRun();
     game.updateMouseRun(10.0F);
 
-    ScreenLayout layout =
-        MazeGameLayout.forPhase(GamePhase.RESULT, 1280, 720, Levels.milestoneOne().gridSize());
+    ScreenLayout layout = game.debugScreenLayout(GamePhase.RESULT, 1280, 720);
     ScreenRectangle mainMenuButton = layout.bounds(MazeGameLayout.RESULT_MAIN_MENU);
     game.handleScreenClick(
         Math.round(mainMenuButton.x() + mainMenuButton.width() / 2.0F),
@@ -480,8 +479,27 @@ final class MazeGameTest {
   }
 
   @Test
-  void milestoneOneHasNoNextLevel() {
+  void noNextLevelIsAvailableBeforeAPassingResult() {
     assertFalse(new MazeGame().hasNextLevel());
+  }
+
+  @Test
+  void nextLevelResultActionStartsTheUnlockedCatalogEntry() {
+    MazeGame game = startedGame();
+    game.startRun();
+    game.updateMouseRun(10.0F);
+    ScreenLayout layout = game.debugScreenLayout(GamePhase.RESULT, 1280, 720);
+    ScreenRectangle nextLevel = layout.bounds(MazeGameLayout.RESULT_NEXT_LEVEL);
+
+    game.handleScreenClick(
+        Math.round(nextLevel.x() + nextLevel.width() / 2.0F),
+        Math.round(720.0F - nextLevel.y() - nextLevel.height() / 2.0F),
+        Input.Buttons.LEFT,
+        1280,
+        720);
+
+    assertEquals(GamePhase.BUILDING, game.gamePhase());
+    assertEquals(Levels.milestoneTwo(), game.mazeState().levelDefinition());
   }
 
   @Test

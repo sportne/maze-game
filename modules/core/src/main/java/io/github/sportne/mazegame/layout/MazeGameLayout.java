@@ -70,6 +70,9 @@ public final class MazeGameLayout {
   /** Result no-next-level region id. */
   public static final String RESULT_NO_NEXT_LEVEL = "result.no-next-level";
 
+  /** Result Next Level button id. */
+  public static final String RESULT_NEXT_LEVEL = "result.next-level";
+
   /** Result Retry button id. */
   public static final String RESULT_RETRY = "result.retry";
 
@@ -153,7 +156,7 @@ public final class MazeGameLayout {
    */
   public static ScreenLayout forPhase(
       GamePhase phase, int screenWidth, int screenHeight, GridSize gridSize) {
-    return forPhase(phase, screenWidth, screenHeight, gridSize, true);
+    return forPhase(phase, screenWidth, screenHeight, gridSize, true, 0, false);
   }
 
   /**
@@ -172,13 +175,39 @@ public final class MazeGameLayout {
       int screenHeight,
       GridSize gridSize,
       boolean quitAvailable) {
+    return forPhase(phase, screenWidth, screenHeight, gridSize, quitAvailable, 0, false);
+  }
+
+  /**
+   * Creates a layout with presentation-dependent controls.
+   *
+   * @param phase game phase to describe
+   * @param screenWidth viewport width in pixels
+   * @param screenHeight viewport height in pixels
+   * @param gridSize current level grid size
+   * @param quitAvailable whether the platform offers a Quit command
+   * @param levelCount number of authored level cards to show
+   * @param hasNextLevel whether the result screen offers advancement
+   * @return declared screen layout
+   */
+  public static ScreenLayout forPhase(
+      GamePhase phase,
+      int screenWidth,
+      int screenHeight,
+      GridSize gridSize,
+      boolean quitAvailable,
+      int levelCount,
+      boolean hasNextLevel) {
+    if (levelCount < 0) {
+      throw new IllegalArgumentException("level count must not be negative");
+    }
     return switch (phase) {
       case MAIN_MENU -> mainMenu(screenWidth, screenHeight, quitAvailable);
-      case LEVEL_SELECT -> levelSelect(screenWidth, screenHeight);
+      case LEVEL_SELECT -> levelSelect(screenWidth, screenHeight, levelCount);
       case SETTINGS -> settings(screenWidth, screenHeight);
       case BUILDING -> building(screenWidth, screenHeight, gridSize);
       case MOUSE_RUNNING, REPLAY -> running(phase, screenWidth, screenHeight, gridSize);
-      case RESULT -> result(screenWidth, screenHeight, gridSize);
+      case RESULT -> result(screenWidth, screenHeight, gridSize, hasNextLevel);
     };
   }
 
@@ -207,16 +236,16 @@ public final class MazeGameLayout {
     return screen(GamePhase.MAIN_MENU, screenWidth, screenHeight, elements);
   }
 
-  private static ScreenLayout levelSelect(int screenWidth, int screenHeight) {
+  private static ScreenLayout levelSelect(int screenWidth, int screenHeight, int levelCount) {
     if (isCompact(screenWidth, screenHeight)) {
-      return compactLevelSelect(screenWidth, screenHeight);
+      return compactLevelSelect(screenWidth, screenHeight, levelCount);
     }
     List<LayoutElement> elements = new ArrayList<>();
     elements.add(
         text(
             LEVEL_SELECT_TITLE,
             centered(screenWidth, screenHeight / 2.0F + 180.0F, 260.0F, 32.0F)));
-    for (int index = 0; index < 6; index++) {
+    for (int index = 0; index < levelCount; index++) {
       elements.add(button(levelCardId(index + 1), levelButton(screenWidth, screenHeight, index)));
     }
     elements.add(button(LEVEL_SELECT_BACK, backButton()));
@@ -309,11 +338,12 @@ public final class MazeGameLayout {
     return screen(phase, screenWidth, screenHeight, elements);
   }
 
-  private static ScreenLayout result(int screenWidth, int screenHeight, GridSize gridSize) {
+  private static ScreenLayout result(
+      int screenWidth, int screenHeight, GridSize gridSize, boolean hasNextLevel) {
     List<LayoutElement> elements = gameplayBase(screenWidth, screenHeight, gridSize);
     ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
     if (isCompactLandscape(screenWidth, screenHeight)) {
-      return compactLandscapeResult(screenWidth, screenHeight, grid, elements);
+      return compactLandscapeResult(screenWidth, screenHeight, grid, elements, hasNextLevel);
     }
     elements.add(
         text(
@@ -327,14 +357,14 @@ public final class MazeGameLayout {
         text(
             RESULT_BEST,
             new ScreenRectangle(grid.x(), grid.top() + 2.0F, 360.0F, TEXT_REGION_HEIGHT)));
-    elements.add(
-        text(
-            RESULT_NO_NEXT_LEVEL,
-            new ScreenRectangle(grid.x(), grid.y() - 34.0F, 320.0F, TEXT_REGION_HEIGHT)));
-    ScreenRectangle retry =
-        isCompactPortrait(screenWidth, screenHeight)
-            ? compactPortraitResultButton(screenWidth, 0)
-            : resultRetryButton(screenWidth, screenHeight, gridSize);
+    if (!hasNextLevel) {
+      elements.add(
+          text(
+              RESULT_NO_NEXT_LEVEL,
+              new ScreenRectangle(grid.x(), grid.y() - 34.0F, 320.0F, TEXT_REGION_HEIGHT)));
+    }
+    int buttonCount = hasNextLevel ? 4 : 3;
+    ScreenRectangle retry = resultButton(screenWidth, screenHeight, gridSize, buttonCount, 0);
     float resultButtonWidth = retry.width();
     float resultButtonGap = isCompactPortrait(screenWidth, screenHeight) ? 8.0F : RESULT_BUTTON_GAP;
     ScreenRectangle replay =
@@ -346,6 +376,16 @@ public final class MazeGameLayout {
     elements.add(button(RESULT_RETRY, retry));
     elements.add(button(RESULT_REPLAY, replay));
     elements.add(button(RESULT_MAIN_MENU, mainMenu));
+    if (hasNextLevel) {
+      elements.add(
+          button(
+              RESULT_NEXT_LEVEL,
+              new ScreenRectangle(
+                  mainMenu.right() + resultButtonGap,
+                  retry.y(),
+                  resultButtonWidth,
+                  RESULT_BUTTON_HEIGHT)));
+    }
     return screen(GamePhase.RESULT, screenWidth, screenHeight, elements);
   }
 
@@ -444,13 +484,20 @@ public final class MazeGameLayout {
         BUILD_BUTTON_HEIGHT);
   }
 
-  private static ScreenRectangle resultRetryButton(
-      int screenWidth, int screenHeight, GridSize gridSize) {
+  private static ScreenRectangle resultButton(
+      int screenWidth, int screenHeight, GridSize gridSize, int buttonCount, int index) {
     ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
     ScreenRectangle startButton = buildStartButton(screenWidth, screenHeight, gridSize);
-    float totalButtonWidth = 3.0F * RESULT_BUTTON_WIDTH + 2.0F * RESULT_BUTTON_GAP;
+    float gap = isCompactPortrait(screenWidth, screenHeight) ? 8.0F : RESULT_BUTTON_GAP;
+    float buttonWidth =
+        isCompactPortrait(screenWidth, screenHeight)
+            ? (screenWidth - 2.0F * COMPACT_MARGIN - (buttonCount - 1) * gap) / buttonCount
+            : RESULT_BUTTON_WIDTH;
+    float totalButtonWidth = buttonCount * buttonWidth + (buttonCount - 1) * gap;
     float left = grid.x() + grid.width() / 2.0F - totalButtonWidth / 2.0F;
-    return new ScreenRectangle(left, startButton.y(), RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT);
+    float buttonY = isCompactPortrait(screenWidth, screenHeight) ? COMPACT_MARGIN : startButton.y();
+    return new ScreenRectangle(
+        left + index * (buttonWidth + gap), buttonY, buttonWidth, RESULT_BUTTON_HEIGHT);
   }
 
   private static ScreenLayout compactLandscapeMainMenu(
@@ -484,7 +531,8 @@ public final class MazeGameLayout {
     return screen(GamePhase.MAIN_MENU, screenWidth, screenHeight, elements);
   }
 
-  private static ScreenLayout compactLevelSelect(int screenWidth, int screenHeight) {
+  private static ScreenLayout compactLevelSelect(
+      int screenWidth, int screenHeight, int levelCount) {
     List<LayoutElement> elements = new ArrayList<>();
     boolean landscape = isCompactLandscape(screenWidth, screenHeight);
     int columns = landscape ? 3 : 2;
@@ -499,7 +547,7 @@ public final class MazeGameLayout {
         text(
             LEVEL_SELECT_TITLE,
             centered(screenWidth, screenHeight - 44.0F, 260.0F, TEXT_REGION_HEIGHT)));
-    for (int index = 0; index < 6; index++) {
+    for (int index = 0; index < levelCount; index++) {
       int row = index / columns;
       int column = index % columns;
       elements.add(
@@ -534,7 +582,11 @@ public final class MazeGameLayout {
   }
 
   private static ScreenLayout compactLandscapeResult(
-      int screenWidth, int screenHeight, ScreenRectangle grid, List<LayoutElement> elements) {
+      int screenWidth,
+      int screenHeight,
+      ScreenRectangle grid,
+      List<LayoutElement> elements,
+      boolean hasNextLevel) {
     float panelX = compactPanelX(grid);
     float panelWidth = screenWidth - panelX - COMPACT_MARGIN;
     elements.add(
@@ -549,12 +601,15 @@ public final class MazeGameLayout {
         text(
             RESULT_BEST,
             new ScreenRectangle(panelX, screenHeight - 108.0F, panelWidth, TEXT_REGION_HEIGHT)));
-    elements.add(
-        text(
-            RESULT_NO_NEXT_LEVEL,
-            new ScreenRectangle(panelX, COMPACT_MARGIN, panelWidth, TEXT_REGION_HEIGHT)));
+    if (!hasNextLevel) {
+      elements.add(
+          text(
+              RESULT_NO_NEXT_LEVEL,
+              new ScreenRectangle(panelX, COMPACT_MARGIN, panelWidth, TEXT_REGION_HEIGHT)));
+    }
     float gap = 8.0F;
-    float buttonWidth = (panelWidth - 2.0F * gap) / 3.0F;
+    int buttonCount = hasNextLevel ? 4 : 3;
+    float buttonWidth = (panelWidth - (buttonCount - 1) * gap) / buttonCount;
     float buttonY = 64.0F;
     elements.add(
         button(
@@ -569,6 +624,16 @@ public final class MazeGameLayout {
             RESULT_MAIN_MENU,
             new ScreenRectangle(
                 panelX + 2.0F * (buttonWidth + gap), buttonY, buttonWidth, RESULT_BUTTON_HEIGHT)));
+    if (hasNextLevel) {
+      elements.add(
+          button(
+              RESULT_NEXT_LEVEL,
+              new ScreenRectangle(
+                  panelX + 3.0F * (buttonWidth + gap),
+                  buttonY,
+                  buttonWidth,
+                  RESULT_BUTTON_HEIGHT)));
+    }
     return screen(GamePhase.RESULT, screenWidth, screenHeight, elements);
   }
 
@@ -590,13 +655,6 @@ public final class MazeGameLayout {
     float width = (screenWidth - 2.0F * COMPACT_MARGIN - gap) / 2.0F;
     return new ScreenRectangle(
         COMPACT_MARGIN + index * (width + gap), COMPACT_MARGIN, width, BUILD_BUTTON_HEIGHT);
-  }
-
-  private static ScreenRectangle compactPortraitResultButton(int screenWidth, int index) {
-    float gap = 8.0F;
-    float width = (screenWidth - 2.0F * COMPACT_MARGIN - 2.0F * gap) / 3.0F;
-    return new ScreenRectangle(
-        COMPACT_MARGIN + index * (width + gap), COMPACT_MARGIN, width, RESULT_BUTTON_HEIGHT);
   }
 
   private static ScreenRectangle compactBackButton() {

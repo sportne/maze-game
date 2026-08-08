@@ -25,6 +25,7 @@ import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
+import io.github.sportne.mazegame.state.LevelProgress;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -107,6 +108,7 @@ final class MazeGameRendererTest {
             0.4F,
             runResult,
             bestResult,
+            levelProgress(bestResult),
             true,
             false,
             false,
@@ -120,6 +122,7 @@ final class MazeGameRendererTest {
     assertEquals(0.4F, snapshot.rejectedFlashRemainingSeconds());
     assertEquals(runResult, snapshot.mouseRunResult());
     assertEquals(bestResult, snapshot.bestResult());
+    assertEquals(levelProgress(bestResult), snapshot.levelProgress());
     assertTrue(snapshot.audioEnabled());
     assertTrue(snapshot.hasNextLevel());
   }
@@ -132,7 +135,8 @@ final class MazeGameRendererTest {
         NullPointerException.class,
         () ->
             new GameRenderSnapshot(
-                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, true, false, false, false));
+                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, List.of(), true, false, false,
+                false));
   }
 
   @Test
@@ -152,11 +156,12 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Quit"));
     assertTrue(font.capturedText().contains("Select Level"));
     assertTrue(font.capturedText().contains("Milestone 1"));
+    assertTrue(font.capturedText().contains("Milestone 2"));
     assertTrue(font.capturedText().contains("Best: --"));
     assertTrue(font.capturedText().contains("Locked"));
     assertTrue(font.capturedText().contains("Audio: On"));
-    assertTrue(shapeRenderer.rects >= 12);
-    assertTrue(shapeRenderer.rectLines >= 48);
+    assertTrue(shapeRenderer.rects >= 8);
+    assertTrue(shapeRenderer.rectLines >= 32);
     assertEquals(spriteBatch.beginCount, spriteBatch.endCount);
     assertEquals(shapeRenderer.beginCount, shapeRenderer.endCount);
   }
@@ -182,6 +187,82 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void rendersCatalogBackedCardsWithIndependentBestResults() {
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer =
+        new MazeGameRenderer(
+            allocate(RecordingSpriteBatch.class),
+            allocate(RecordingShapeRenderer.class),
+            font,
+            null,
+            null);
+    BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
+    BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.LEVEL_SELECT,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            30.0F,
+            null,
+            0.0F,
+            null,
+            firstBest,
+            List.of(
+                new LevelProgress(Levels.milestoneOne(), true, firstBest),
+                new LevelProgress(Levels.milestoneTwo(), true, secondBest)),
+            true,
+            false,
+            false,
+            false);
+
+    renderer.render(layout(GamePhase.LEVEL_SELECT), snapshot);
+
+    assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));
+    assertTrue(font.capturedText().contains("Best: 15.00s  Moves: 60"));
+    assertFalse(font.capturedText().contains("Locked"));
+  }
+
+  @Test
+  void rendersNextLevelOnlyWhenAdvancementIsAvailable() {
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer =
+        new MazeGameRenderer(
+            allocate(RecordingSpriteBatch.class),
+            allocate(RecordingShapeRenderer.class),
+            font,
+            null,
+            null);
+    MouseRunResult result =
+        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.RESULT,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            0.0F,
+            null,
+            0.0F,
+            result,
+            new BestResult(Duration.ofSeconds(10), 40),
+            List.of(
+                new LevelProgress(
+                    Levels.milestoneOne(), true, new BestResult(Duration.ofSeconds(10), 40)),
+                new LevelProgress(Levels.milestoneTwo(), true, null)),
+            true,
+            false,
+            true,
+            true);
+    ScreenLayout resultLayout =
+        MazeGameLayout.forPhase(GamePhase.RESULT, 1280, 720, LEVEL.gridSize(), true, 2, true);
+
+    renderer.render(resultLayout, snapshot);
+
+    assertTrue(font.capturedText().contains("Next Level"));
+    assertFalse(font.capturedText().contains("Pass this level to unlock the next"));
+  }
+
+  @Test
   void rendersBuildAndResultScreensWithExpectedLabels() {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
@@ -201,22 +282,88 @@ final class MazeGameRendererTest {
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, result));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, failedResult));
 
-    assertTrue(font.capturedText().contains("Maze Game"));
+    assertTrue(font.capturedText().contains("Milestone 1"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
-    assertTrue(font.capturedText().contains("Delay the mouse 5s; keep a path to the cheese"));
+    assertTrue(font.capturedText().contains("Delay past 5.0s; keep a path to the cheese"));
     assertTrue(font.capturedText().contains("Mode: Place"));
     assertTrue(font.capturedText().contains("Start Mouse"));
-    assertTrue(font.capturedText().contains("Run: 7.5s"));
-    assertTrue(font.capturedText().contains("Success: mouse delayed"));
-    assertTrue(font.capturedText().contains("Failed: cheese reached too soon"));
+    assertTrue(font.capturedText().contains("Milestone 1 | 7.5s | >5.0s"));
+    assertTrue(font.capturedText().contains("Milestone 1 | Success | >5.0s"));
+    assertTrue(font.capturedText().contains("Milestone 1 | Failed | >5.0s"));
     assertTrue(font.capturedText().contains("Time: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Retry"));
     assertTrue(font.capturedText().contains("Replay"));
     assertTrue(font.capturedText().contains("Main Menu"));
-    assertTrue(font.capturedText().contains("No next level in this milestone"));
+    assertTrue(font.capturedText().contains("Pass this level to unlock the next"));
     assertTrue(shapeRenderer.rects >= 50);
     assertTrue(shapeRenderer.rectLines >= 20);
+  }
+
+  @Test
+  void compactPresentationUsesLabelsThatFitNarrowCardsAndActions() {
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer =
+        new MazeGameRenderer(
+            allocate(RecordingSpriteBatch.class),
+            allocate(RecordingShapeRenderer.class),
+            font,
+            null,
+            null);
+    BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
+    BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
+    List<LevelProgress> progress =
+        List.of(
+            new LevelProgress(Levels.milestoneOne(), true, firstBest),
+            new LevelProgress(Levels.milestoneTwo(), true, secondBest));
+    GameRenderSnapshot selectSnapshot =
+        new GameRenderSnapshot(
+            GamePhase.LEVEL_SELECT,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            30.0F,
+            null,
+            0.0F,
+            null,
+            firstBest,
+            progress,
+            true,
+            false,
+            false,
+            false);
+    ScreenLayout selectLayout =
+        MazeGameLayout.forPhase(
+            GamePhase.LEVEL_SELECT, 390, 844, LEVEL.gridSize(), false, 2, false);
+
+    renderer.render(selectLayout, selectSnapshot);
+
+    MouseRunResult result =
+        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    GameRenderSnapshot resultSnapshot =
+        new GameRenderSnapshot(
+            GamePhase.RESULT,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            0.0F,
+            null,
+            0.0F,
+            result,
+            firstBest,
+            progress,
+            true,
+            false,
+            true,
+            true);
+    ScreenLayout resultLayout =
+        MazeGameLayout.forPhase(GamePhase.RESULT, 390, 844, LEVEL.gridSize(), false, 2, true);
+    renderer.render(resultLayout, resultSnapshot);
+
+    assertTrue(font.capturedText().contains("Best 10.0s / 40"));
+    assertTrue(font.capturedText().contains("Best 15.0s / 60"));
+    assertTrue(font.capturedText().contains("Menu"));
+    assertTrue(font.capturedText().contains("Next"));
+    assertEquals("Menu", MazeGameRenderer.resultActionLabel(83.5F, "Main Menu", "Menu"));
+    assertEquals("Next", MazeGameRenderer.resultActionLabel(83.5F, "Next Level", "Next"));
   }
 
   @Test
@@ -233,7 +380,7 @@ final class MazeGameRendererTest {
   }
 
   private static ScreenLayout layout(GamePhase phase) {
-    return MazeGameLayout.forPhase(phase, 1280, 720, LEVEL.gridSize());
+    return MazeGameLayout.forPhase(phase, 1280, 720, LEVEL.gridSize(), true, 2, false);
   }
 
   private static GameRenderSnapshot snapshot(GamePhase phase, MouseRunResult mouseRunResult) {
@@ -249,10 +396,17 @@ final class MazeGameRendererTest {
         0.0F,
         mouseRunResult,
         mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
+        levelProgress(mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40)),
         true,
         false,
         resultPassed,
         false);
+  }
+
+  private static List<LevelProgress> levelProgress(BestResult firstBestResult) {
+    return List.of(
+        new LevelProgress(Levels.milestoneOne(), true, firstBestResult),
+        new LevelProgress(Levels.milestoneTwo(), false, null));
   }
 
   private static <T> T allocate(Class<T> type) {
@@ -330,6 +484,22 @@ final class MazeGameRendererTest {
 
     @Override
     public GlyphLayout draw(Batch batch, CharSequence str, float x, float y) {
+      capturedText().add(str.toString());
+      return null;
+    }
+
+    @Override
+    public GlyphLayout draw(
+        Batch batch,
+        CharSequence str,
+        float x,
+        float y,
+        int start,
+        int end,
+        float targetWidth,
+        int horizontalAlignment,
+        boolean wrap,
+        String truncate) {
       capturedText().add(str.toString());
       return null;
     }

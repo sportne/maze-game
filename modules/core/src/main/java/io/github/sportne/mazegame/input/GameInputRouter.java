@@ -6,8 +6,8 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
-import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.state.GamePhase;
+import io.github.sportne.mazegame.state.LevelProgress;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public final class GameInputRouter {
    * @param screenY y coordinate from the top edge
    * @param button libGDX mouse button code
    * @param gridSize current level grid size
-   * @param selectableLevels levels currently selectable in display order
+   * @param levelProgress authored level progression in display order
    * @return routed input action
    */
   public static GameInputAction route(
@@ -35,8 +35,8 @@ public final class GameInputRouter {
       int screenY,
       int button,
       GridSize gridSize,
-      List<LevelDefinition> selectableLevels) {
-    List<LevelDefinition> levels = List.copyOf(selectableLevels);
+      List<LevelProgress> levelProgress) {
+    List<LevelProgress> levels = List.copyOf(levelProgress);
     float screenYFromBottom = layout.viewport().height() - screenY;
     if (button == Input.Buttons.LEFT) {
       GameInputAction controlAction =
@@ -56,7 +56,7 @@ public final class GameInputRouter {
       GamePhase phase,
       int screenX,
       float screenYFromBottom,
-      List<LevelDefinition> selectableLevels) {
+      List<LevelProgress> selectableLevels) {
     return switch (phase) {
       case MAIN_MENU -> routeMainMenu(layout, screenX, screenYFromBottom);
       case LEVEL_SELECT -> routeLevelSelect(layout, screenX, screenYFromBottom, selectableLevels);
@@ -97,14 +97,15 @@ public final class GameInputRouter {
       ScreenLayout layout,
       int screenX,
       float screenYFromBottom,
-      List<LevelDefinition> selectableLevels) {
+      List<LevelProgress> selectableLevels) {
     if (contains(layout, MazeGameLayout.LEVEL_SELECT_BACK, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.BACK_TO_MAIN_MENU);
     }
-    for (int index = 0; index < 6; index++) {
+    for (int index = 0; index < selectableLevels.size(); index++) {
       if (contains(layout, MazeGameLayout.levelCardId(index + 1), screenX, screenYFromBottom)) {
-        if (index < selectableLevels.size()) {
-          return GameInputAction.selectLevel(selectableLevels.get(index).id());
+        LevelProgress progress = selectableLevels.get(index);
+        if (progress.unlocked()) {
+          return GameInputAction.selectLevel(progress.levelDefinition().id());
         }
         return GameInputAction.of(GameInputActionType.SELECT_LOCKED_LEVEL);
       }
@@ -125,6 +126,10 @@ public final class GameInputRouter {
 
   private static GameInputAction routeResult(
       ScreenLayout layout, int screenX, float screenYFromBottom) {
+    if (layout.element(MazeGameLayout.RESULT_NEXT_LEVEL).isPresent()
+        && contains(layout, MazeGameLayout.RESULT_NEXT_LEVEL, screenX, screenYFromBottom)) {
+      return GameInputAction.of(GameInputActionType.NEXT_LEVEL);
+    }
     if (contains(layout, MazeGameLayout.RESULT_RETRY, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.RETRY);
     }

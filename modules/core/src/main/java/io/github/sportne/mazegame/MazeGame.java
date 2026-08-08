@@ -486,7 +486,7 @@ public final class MazeGame extends ApplicationAdapter {
             screenY,
             button,
             session.levelDefinition().gridSize(),
-            session.levels());
+            session.levelProgress());
     applyInputAction(action);
     return action.consumed();
   }
@@ -527,6 +527,7 @@ public final class MazeGame extends ApplicationAdapter {
       case CLEAR_WALL -> handleGridClick(action.position(), Input.Buttons.RIGHT);
       case RETRY -> retryLevel();
       case REPLAY -> replayRun();
+      case NEXT_LEVEL -> session.nextLevelId().ifPresent(this::startLevel);
       case RESULT_MAIN_MENU -> returnToMainMenu();
     }
   }
@@ -554,7 +555,7 @@ public final class MazeGame extends ApplicationAdapter {
   /**
    * Returns whether another level can be selected after this result.
    *
-   * @return false for milestone 1 because only one level exists
+   * @return true when a passing result unlocked the next catalog entry
    */
   public boolean hasNextLevel() {
     return session.hasNextLevel();
@@ -589,6 +590,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.rejectedFlashRemainingSeconds(),
         session.mouseRunResult(),
         session.bestResult(),
+        session.levelProgress(),
         audioEnabled(),
         clearWallMode,
         resultPassed(),
@@ -609,7 +611,9 @@ public final class MazeGame extends ApplicationAdapter {
         screenWidth,
         screenHeight,
         session.levelDefinition().gridSize(),
-        runtimeConfiguration.quitAvailable());
+        runtimeConfiguration.quitAvailable(),
+        session.levelProgress().size(),
+        session.hasNextLevel());
   }
 
   private void activateAudioFromGesture() {

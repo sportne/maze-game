@@ -1,6 +1,8 @@
 # M2-06: Make Level-Selection and Game UI Data-Driven
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M2-01, M2-03, M2-04, M2-05
 
