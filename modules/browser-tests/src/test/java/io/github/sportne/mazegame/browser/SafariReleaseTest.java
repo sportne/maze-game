@@ -1,10 +1,17 @@
 package io.github.sportne.mazegame.browser;
 
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_ONE_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_RESULT_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,7 +48,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 final class SafariReleaseTest {
   private static final int REFERENCE_WIDTH = 1280;
   private static final int REFERENCE_HEIGHT = 720;
-  private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
   private static final Set<String> JAVASCRIPT_ASSETS =
       Set.of("app.js", "styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
   private static final Set<String> WEBASSEMBLY_ASSETS =
@@ -53,13 +59,14 @@ final class SafariReleaseTest {
           "exploreMaze_T1.mp3");
 
   @Test
-  @Timeout(180)
-  void completesLiveGameFlowAndPersistsResult() throws IOException {
+  @Timeout(300)
+  void completesLiveTwoLevelFlowAndPersistsResults() throws IOException {
     Path reportDirectory = Path.of(requiredProperty("mazeGame.safariReportDirectory"));
     List<String> evidence = new ArrayList<>();
     WebDriver driver = null;
+    Throwable primaryFailure = null;
     try {
-      driver = new SafariDriver(new SafariOptions());
+      driver = SafariSessionLauncher.launch(() -> new SafariDriver(new SafariOptions()), evidence);
       driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(15));
       recordBrowser(evidence, driver);
       String javascriptReleaseUrl = requiredProperty("mazeGame.safariReleaseUrl");
@@ -77,18 +84,84 @@ final class SafariReleaseTest {
       captureScreenshot(driver, reportDirectory.resolve("result.png"));
       evidence.add("Result: PASS");
     } catch (Throwable failure) {
+      primaryFailure = failure;
       evidence.add("Result: FAIL");
       evidence.add(failure.toString());
       if (driver != null) {
         captureScreenshot(driver, reportDirectory.resolve("failure.png"));
       }
-      throw failure;
-    } finally {
-      if (driver != null) {
-        driver.quit();
-      }
+    }
+    RuntimeException cleanupFailure = quitDriver(driver, evidence);
+    IOException evidenceFailure = writeEvidence(reportDirectory, evidence);
+    if (primaryFailure != null) {
+      addSuppressed(primaryFailure, cleanupFailure);
+      addSuppressed(primaryFailure, evidenceFailure);
+      rethrow(primaryFailure);
+    }
+    if (evidenceFailure != null) {
+      addSuppressed(evidenceFailure, cleanupFailure);
+      throw evidenceFailure;
+    }
+    if (cleanupFailure != null) {
+      throw new SafariCleanupException(cleanupFailure);
+    }
+  }
+
+  private static IOException writeEvidence(Path reportDirectory, List<String> evidence) {
+    try {
       Files.createDirectories(reportDirectory);
       Files.write(reportDirectory.resolve("safari-release.txt"), evidence, StandardCharsets.UTF_8);
+      return null;
+    } catch (IOException failure) {
+      return failure;
+    }
+  }
+
+  private static void addSuppressed(Throwable primary, Throwable secondary) {
+    if (secondary != null) {
+      primary.addSuppressed(secondary);
+    }
+  }
+
+  private static void rethrow(Throwable failure) throws IOException {
+    if (failure instanceof IOException ioFailure) {
+      throw ioFailure;
+    }
+    if (failure instanceof RuntimeException runtimeFailure) {
+      throw new SafariReleaseValidationException(runtimeFailure);
+    }
+    if (failure instanceof Error error) {
+      throw error;
+    }
+    throw new AssertionError("unexpected checked failure", failure);
+  }
+
+  private static final class SafariReleaseValidationException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    private SafariReleaseValidationException(RuntimeException cause) {
+      super("Safari release validation failed", cause);
+    }
+  }
+
+  private static final class SafariCleanupException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    private SafariCleanupException(RuntimeException cause) {
+      super("SafariDriver cleanup failed after validation", cause);
+    }
+  }
+
+  static RuntimeException quitDriver(WebDriver driver, List<String> evidence) {
+    if (driver == null) {
+      return null;
+    }
+    try {
+      driver.quit();
+      return null;
+    } catch (RuntimeException failure) {
+      evidence.add("SafariDriver cleanup: FAIL - " + failure);
+      return failure;
     }
   }
 
@@ -103,7 +176,10 @@ final class SafariReleaseTest {
     driver.manage().window().setSize(new org.openqa.selenium.Dimension(1280, 800));
     String separator = releaseUrl.contains("?") ? "&" : "?";
     driver.get(releaseUrl + separator + "safari-release=" + System.nanoTime());
-    javascript(driver).executeScript("window.localStorage.removeItem(arguments[0]);", RESULT_KEY);
+    javascript(driver)
+        .executeScript(
+            "arguments[0].forEach(function(key) { window.localStorage.removeItem(key); });",
+            List.of(MILESTONE_ONE_RESULT_KEY, MILESTONE_TWO_RESULT_KEY));
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
@@ -111,36 +187,26 @@ final class SafariReleaseTest {
     Set<String> activeRequiredAssets =
         activeReleaseUrl.equals(releaseUrl) ? requiredAssets : JAVASCRIPT_ASSETS;
     installRuntimeErrorCapture(driver);
+    SafariControls controls = new SafariControls(driver);
 
-    clickCanvas(driver, 640, 280);
-    waitForRenderedControl(driver, 404, 280);
+    BrowserGameScenario.startMilestoneOne(controls);
     assertAudioResumed(driver);
-    clickCanvas(driver, 404, 280);
-    waitForRenderedControl(driver, 738, 656);
+    waitForSavedResult(driver, MILESTONE_ONE_RESULT_KEY);
+    String milestoneOneResult = readSavedResult(driver, MILESTONE_ONE_RESULT_KEY);
 
-    int emptyCellColor = screenshot(driver).getRGB(551, 360);
-    clickCanvas(driver, 551, 360);
-    waitForPixelChange(driver, 551, 360, emptyCellColor);
-    int wallColor = screenshot(driver).getRGB(551, 360);
-    clickCanvas(driver, 542, 656);
-    clickCanvas(driver, 551, 360);
-    waitForPixelChange(driver, 551, 360, wallColor);
-
-    clickCanvas(driver, 738, 656);
-    JavascriptExecutor javascript = javascript(driver);
-    new WebDriverWait(driver, Duration.ofSeconds(15))
-        .until(
-            ignored ->
-                javascript.executeScript(
-                        "return window.localStorage.getItem(arguments[0]);", RESULT_KEY)
-                    != null);
-    String savedResult = readSavedResult(driver);
+    BrowserGameScenario.startMilestoneTwo(controls);
+    waitForSavedResult(driver, MILESTONE_TWO_RESULT_KEY);
+    String milestoneTwoResult = readSavedResult(driver, MILESTONE_TWO_RESULT_KEY);
+    assertFalse(milestoneOneResult.equals(milestoneTwoResult));
     assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
+    recordResponsiveLayouts(driver, target, evidence);
 
+    driver.manage().window().setSize(new org.openqa.selenium.Dimension(1280, 800));
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
-    assertEquals(savedResult, readSavedResult(driver));
+    assertEquals(milestoneOneResult, readSavedResult(driver, MILESTONE_ONE_RESULT_KEY));
+    assertEquals(milestoneTwoResult, readSavedResult(driver, MILESTONE_TWO_RESULT_KEY));
     assertPageStarted(driver);
     assertReleaseLocation(driver, activeReleaseUrl);
     installRuntimeErrorCapture(driver);
@@ -154,10 +220,11 @@ final class SafariReleaseTest {
     if (!activeReleaseUrl.equals(releaseUrl)) {
       evidence.add(target + " fallback URL: " + activeReleaseUrl);
     }
-    evidence.add(target + " saved result: " + savedResult);
+    evidence.add(target + " Milestone 1 saved result: " + milestoneOneResult);
+    evidence.add(target + " Milestone 2 saved result: " + milestoneTwoResult);
     evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
     evidence.add(target + " audio context after interaction: running");
-    evidence.add(target + " refresh, interaction, and persistence: PASS");
+    evidence.add(target + " two-level progression, refresh, interaction, and persistence: PASS");
     evidence.add(target + " runtime errors after initialization: none");
   }
 
@@ -166,6 +233,34 @@ final class SafariReleaseTest {
     evidence.add("Browser: " + capabilities.getBrowserName());
     evidence.add("Browser version: " + capabilities.getBrowserVersion());
     evidence.add("Platform: " + capabilities.getPlatformName());
+  }
+
+  private static void recordResponsiveLayouts(
+      WebDriver driver, String target, List<String> evidence) {
+    recordResponsiveLayout(
+        driver, target, "portrait", new org.openqa.selenium.Dimension(500, 900), evidence);
+    recordResponsiveLayout(
+        driver, target, "landscape", new org.openqa.selenium.Dimension(900, 500), evidence);
+  }
+
+  private static void recordResponsiveLayout(
+      WebDriver driver,
+      String target,
+      String orientation,
+      org.openqa.selenium.Dimension windowSize,
+      List<String> evidence) {
+    driver.manage().window().setSize(windowSize);
+    String responsiveLayoutReady =
+        "return !document.getElementById('viewport-guidance').offsetParent"
+            + " && document.getElementById('canvas').width === window.innerWidth"
+            + " && document.getElementById('canvas').height === window.innerHeight;";
+    new WebDriverWait(driver, Duration.ofSeconds(10))
+        .until(
+            ignored ->
+                Boolean.TRUE.equals(javascript(driver).executeScript(responsiveLayoutReady)));
+    Object viewport =
+        javascript(driver).executeScript("return window.innerWidth + 'x' + window.innerHeight;");
+    evidence.add(target + " " + orientation + " responsive viewport: " + viewport + " PASS");
   }
 
   private static void assertPageStarted(WebDriver driver) {
@@ -301,14 +396,24 @@ final class SafariReleaseTest {
     return Set.of("application/javascript", "text/javascript");
   }
 
-  private static String readSavedResult(WebDriver driver) {
+  private static String readSavedResult(WebDriver driver, String resultKey) {
     Object value =
         javascript(driver)
-            .executeScript("return window.localStorage.getItem(arguments[0]);", RESULT_KEY);
+            .executeScript("return window.localStorage.getItem(arguments[0]);", resultKey);
     assertNotNull(value);
     String savedResult = value.toString();
     assertTrue(savedResult.matches("[0-9]+:[0-9]+"));
     return savedResult;
+  }
+
+  private static void waitForSavedResult(WebDriver driver, String resultKey) {
+    JavascriptExecutor javascript = javascript(driver);
+    new WebDriverWait(driver, Duration.ofSeconds(25))
+        .until(
+            ignored ->
+                javascript.executeScript(
+                        "return window.localStorage.getItem(arguments[0]);", resultKey)
+                    != null);
   }
 
   private static void clickCanvas(WebDriver driver, int referenceX, int referenceY) {
@@ -331,7 +436,7 @@ final class SafariReleaseTest {
 
   private static void waitForPixelChange(WebDriver driver, int x, int y, int originalColor)
       throws IOException {
-    long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+    long deadline = System.nanoTime() + Duration.ofSeconds(25).toNanos();
     while (pixelAt(driver, x, y) == originalColor && System.nanoTime() < deadline) {
       try {
         Thread.sleep(100L);
@@ -372,6 +477,57 @@ final class SafariReleaseTest {
 
   private static JavascriptExecutor javascript(WebDriver driver) {
     return (JavascriptExecutor) driver;
+  }
+
+  private static final class SafariControls implements BrowserGameScenario.Controls {
+    private final WebDriver driver;
+
+    private SafariControls(WebDriver driver) {
+      this.driver = driver;
+    }
+
+    @Override
+    public void clickButton(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId) {
+      ScreenPoint point =
+          BrowserGameScenario.buttonCenter(
+              REFERENCE_WIDTH, REFERENCE_HEIGHT, phase, level, hasNextLevel, elementId);
+      clickCanvas(driver, point.x(), point.y());
+    }
+
+    @Override
+    public void waitForButton(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId)
+        throws IOException {
+      ScreenPoint point =
+          BrowserGameScenario.buttonCenter(
+              REFERENCE_WIDTH, REFERENCE_HEIGHT, phase, level, hasNextLevel, elementId);
+      waitForRenderedControl(driver, point.x(), point.y());
+    }
+
+    @Override
+    public void placeAndClearWall(LevelDefinition level, GridPosition position) throws IOException {
+      ScreenPoint point = cellCenter(level, position);
+      int emptyColor = pixelAt(driver, point.x(), point.y());
+      clickCanvas(driver, point.x(), point.y());
+      waitForPixelChange(driver, point.x(), point.y(), emptyColor);
+      int wallColor = pixelAt(driver, point.x(), point.y());
+      clickButton(GamePhase.BUILDING, level, false, MazeGameLayout.BUILD_WALL_MODE);
+      clickCanvas(driver, point.x(), point.y());
+      waitForPixelChange(driver, point.x(), point.y(), wallColor);
+    }
+
+    @Override
+    public void placeWalls(LevelDefinition level, List<GridPosition> walls) {
+      for (GridPosition wall : walls) {
+        ScreenPoint point = cellCenter(level, wall);
+        clickCanvas(driver, point.x(), point.y());
+      }
+    }
+
+    private static ScreenPoint cellCenter(LevelDefinition level, GridPosition position) {
+      return BrowserGameScenario.cellCenter(REFERENCE_WIDTH, REFERENCE_HEIGHT, level, position);
+    }
   }
 
   private static String requiredProperty(String name) {

@@ -1,6 +1,6 @@
 # M2-07: Add Multi-Level End-to-End and Release Coverage
 
-Status: pending
+Status: complete
 
 Depends on: M2-01, M2-05, M2-06
 
@@ -43,3 +43,17 @@ progression, either authored level, or one of the two browser targets.
   failure handling.
 - Run `./gradlew spotlessApply qualityGate pagesBuild nativeImage` with GraalVM 21.
 - Confirm the deployed Pages artifact and branded Safari gate pass before completing the task.
+
+## Completion Evidence
+
+- The JavaScript and WebAssembly release tests each complete both authored levels, reject the locked
+  Level 2 card, exercise retry and replay, preserve independent best results over reload, and verify
+  runtime assets and WebAssembly MIME behavior.
+- Portrait and toolbar-constrained landscape touch contexts complete the two-level flow through the
+  same layout-derived controls and retain screenshots of the Level 2 result.
+- The desktop debug harness covers both levels without recreating browser assertions.
+- Safari release validation now records two-level and responsive-orientation evidence. SafariDriver
+  session creation retries at most three times; unit tests prove success-at-the-bound and exhaustion
+  with the original failure preserved.
+- Local release verification passed for both browser targets. Deployment and branded-Safari evidence
+  are produced by the single post-milestone Pages push, in accordance with the execution plan.

@@ -9,9 +9,22 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.time.Duration;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameDebugHarnessTest {
+  private static final Set<GridPosition> MILESTONE_TWO_WALLS =
+      Set.of(
+          new GridPosition(1, 1),
+          new GridPosition(1, 4),
+          new GridPosition(2, 0),
+          new GridPosition(2, 6),
+          new GridPosition(3, 3),
+          new GridPosition(3, 6),
+          new GridPosition(4, 0),
+          new GridPosition(5, 0),
+          new GridPosition(5, 2));
+
   @Test
   void rejectsInvalidScreenDimensions() {
     assertThrows(IllegalArgumentException.class, () -> new MazeGameDebugHarness(0, 720));
@@ -78,5 +91,22 @@ final class MazeGameDebugHarnessTest {
 
     harness.advance(Duration.ofSeconds(10)).clickRetry();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
+  }
+
+  @Test
+  void completesBothAuthoredLevelsThroughTheDesktopInteractionPath() {
+    MazeGameDebugHarness harness = new MazeGameDebugHarness();
+
+    harness.clickStartRun().advance(Duration.ofSeconds(10)).clickNextLevel();
+    assertEquals(Levels.milestoneTwo(), harness.snapshot().mazeState().levelDefinition());
+
+    MILESTONE_TWO_WALLS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(15));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
+    harness.clickReplay().advance(Duration.ofSeconds(15)).clickRetry();
+    assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
+    assertEquals(Levels.milestoneTwo(), harness.snapshot().mazeState().levelDefinition());
   }
 }

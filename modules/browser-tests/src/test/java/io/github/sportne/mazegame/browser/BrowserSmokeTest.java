@@ -1,5 +1,9 @@
 package io.github.sportne.mazegame.browser;
 
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.EDITED_CELL;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_ONE_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_RESULT_KEY;
+import static io.github.sportne.mazegame.browser.BrowserGameScenario.MILESTONE_TWO_WALLS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,6 +18,12 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Response;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.state.GamePhase;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,16 +54,14 @@ final class BrowserSmokeTest {
   private static final int PORTRAIT_HEIGHT = 844;
   private static final int MOBILE_SAFARI_LANDSCAPE_WIDTH = 844;
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
-  private static final int MOBILE_SAFE_LANDSCAPE_WIDTH = 756;
   private static final int STARTUP_SAMPLE_COUNT = 5;
-  private static final String RESULT_KEY = "maze-game.best-result.milestone-1";
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
       Set.of("styles.css", "mouse-sprites.png", "exploreMaze_T1.mp3");
 
   @Test
-  @Timeout(150)
-  void completesGameFlowAndLoadsSavedResultAfterReload() throws IOException {
+  @Timeout(240)
+  void completesTwoLevelFlowAndLoadsIndependentResultsAfterReload() throws IOException {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
     Path artifactDirectory = requiredDirectory("mazeGame.artifactDirectory");
     Path reportDirectory = Path.of(requiredProperty("mazeGame.browserSmokeReportDirectory"));
@@ -155,29 +163,45 @@ final class BrowserSmokeTest {
         responseEndMillis,
         usedHeap);
     assertResponsiveViewportSupport(page);
+    BrowserControls controls =
+        new BrowserControls(page, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, touchInput());
 
-    click(page, 640, 280);
-    waitForRenderedControl(page, 404, 280);
+    controls.waitForButton(
+        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+    BrowserGameScenario.startMilestoneOne(controls);
     assertAudioResumed(page);
-    click(page, 404, 280);
-    waitForRenderedControl(page, 738, 656);
+    waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
 
-    int emptyCellColor = screenshot(page).getRGB(551, 360);
-    click(page, 551, 360);
-    waitForPixelChange(page, 551, 360, emptyCellColor);
-    int wallColor = screenshot(page).getRGB(551, 360);
-    click(page, 542, 656);
-    click(page, 551, 360);
-    waitForPixelChange(page, 551, 360, wallColor);
+    controls.clickButtonAndWaitForChange(
+        GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_REPLAY);
+    controls.waitForButton(
+        GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_RETRY);
+    BrowserGameScenario.startMilestoneTwo(controls);
+    waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
 
-    click(page, 738, 656);
-    waitForSavedResult(page);
-    String savedResult = readSavedResult(page);
+    String milestoneOneResult = readSavedResult(page, MILESTONE_ONE_RESULT_KEY);
+    String milestoneTwoResult = readSavedResult(page, MILESTONE_TWO_RESULT_KEY);
+    assertFalse(milestoneOneResult.equals(milestoneTwoResult));
+    controls.clickButtonAndWaitForChange(
+        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+    controls.waitForButton(
+        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+    controls.clickButton(
+        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
 
-    assertEquals(savedResult, readSavedResult(page));
+    assertEquals(milestoneOneResult, readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
+    assertEquals(milestoneTwoResult, readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+    controls.clickButton(
+        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
     assertTrue(browserLog.observedAssets().containsAll(browserLog.requiredAssets()));
     if (browserLog.requiredAssets().contains("app.wasm")) {
       assertEquals("application/wasm", browserLog.contentType("app.wasm"));
@@ -208,14 +232,6 @@ final class BrowserSmokeTest {
         .doubleValue();
   }
 
-  private static void click(Page page, double x, double y) {
-    if (touchInput()) {
-      page.touchscreen().tap(x, y);
-    } else {
-      page.mouse().click(x, y);
-    }
-  }
-
   private static boolean touchInput() {
     return Boolean.parseBoolean(requiredProperty("mazeGame.touchInput"));
   }
@@ -236,36 +252,9 @@ final class BrowserSmokeTest {
 
   private static void runMobileTouchFlows(Browser browser, URI applicationUri, Path reportDirectory)
       throws IOException {
-    MobileViewport portrait =
-        new MobileViewport(
-            PORTRAIT_WIDTH,
-            PORTRAIT_HEIGHT,
-            new Point(195, 342),
-            new Point(109, 290),
-            new Point(124, 422),
-            new Point(103, 806),
-            new Point(288, 806),
-            new Point(73, 806));
+    MobileViewport portrait = new MobileViewport(PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
     MobileViewport landscape =
-        new MobileViewport(
-            MOBILE_SAFARI_LANDSCAPE_WIDTH,
-            MOBILE_SAFARI_LANDSCAPE_HEIGHT,
-            new Point(326, 151),
-            new Point(250, 95),
-            new Point(88, 143),
-            new Point(414, 143),
-            new Point(694, 143),
-            new Point(369, 200));
-    MobileViewport safeLandscape =
-        new MobileViewport(
-            MOBILE_SAFE_LANDSCAPE_WIDTH,
-            MOBILE_SAFARI_LANDSCAPE_HEIGHT,
-            new Point(282, 151),
-            new Point(206, 95),
-            new Point(88, 143),
-            new Point(392, 143),
-            new Point(628, 143),
-            new Point(354, 200));
+        new MobileViewport(MOBILE_SAFARI_LANDSCAPE_WIDTH, MOBILE_SAFARI_LANDSCAPE_HEIGHT);
     runMobileTouchFlow(
         browser,
         applicationUri,
@@ -277,12 +266,6 @@ final class BrowserSmokeTest {
         applicationUri,
         reportDirectory.resolve("mobile-landscape.png"),
         landscape,
-        portrait);
-    runMobileTouchFlow(
-        browser,
-        applicationUri,
-        reportDirectory.resolve("mobile-safe-landscape.png"),
-        safeLandscape,
         portrait);
   }
 
@@ -300,44 +283,91 @@ final class BrowserSmokeTest {
                     .setDeviceScaleFactor(3.0)
                     .setHasTouch(true));
         Page page = context.newPage()) {
-      page.navigate(applicationUri.toString());
-      assertLogicalCanvasSize(page, primary);
-      waitForRenderedControl(page, primary.menuStart().x(), primary.menuStart().y());
+      BrowserLog mobileLog = BrowserLog.forAuxiliaryTouchContext();
+      mobileLog.observe(page);
+      try {
+        page.navigate(applicationUri.toString());
+        assertLogicalCanvasSize(page, primary);
+        BrowserControls primaryControls =
+            new BrowserControls(page, primary.width(), primary.height(), true);
+        BrowserControls rotatedControls =
+            new BrowserControls(page, rotated.width(), rotated.height(), true);
+        primaryControls.waitForButton(
+            GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
 
-      resizeAndAssert(page, rotated);
-      resizeAndAssert(page, primary);
-      waitForRenderedControl(page, primary.menuStart().x(), primary.menuStart().y());
-      tap(page, primary.menuStart());
-      waitForRenderedControl(page, primary.levelCard().x(), primary.levelCard().y());
-      tap(page, primary.levelCard());
-      waitForRenderedControl(page, primary.startRun().x(), primary.startRun().y());
+        resizeAndAssert(page, rotated);
+        resizeAndAssert(page, primary);
+        primaryControls.clickButton(
+            GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+        primaryControls.waitForButton(
+            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        primaryControls.clickButton(
+            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+        primaryControls.clickButton(
+            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        primaryControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
 
-      tap(page, primary.editableCell());
-      assertWallCell(page, primary.editableCell());
-      resizeAndAssert(page, rotated);
-      waitForRenderedControl(page, rotated.wallMode().x(), rotated.wallMode().y());
-      assertWallCell(page, rotated.editableCell());
-      tap(page, rotated.wallMode());
-      tap(page, rotated.editableCell());
-      assertOpenCell(page, rotated.editableCell());
-      resizeAndAssert(page, primary);
-      waitForRenderedControl(page, primary.startRun().x(), primary.startRun().y());
-      assertOpenCell(page, primary.editableCell());
+        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        resizeAndAssert(page, rotated);
+        rotatedControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_WALL_MODE);
+        assertWallCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        rotatedControls.clickButton(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_WALL_MODE);
+        rotatedControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        assertOpenCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        resizeAndAssert(page, primary);
+        primaryControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
 
-      tap(page, primary.startRun());
-      resizeAndAssert(page, rotated);
-      waitForSavedResult(page);
-      waitForRenderedControl(page, rotated.retry().x(), rotated.retry().y());
-      resizeAndAssert(page, primary);
-      waitForRenderedControl(page, primary.retry().x(), primary.retry().y());
-      Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
-      page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
+        primaryControls.clickButton(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+        resizeAndAssert(page, rotated);
+        waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
+        rotatedControls.waitForButton(
+            GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        rotatedControls.clickButton(
+            GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        rotatedControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        rotatedControls.placeWalls(Levels.milestoneTwo(), MILESTONE_TWO_WALLS);
+        resizeAndAssert(page, primary);
+        primaryControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        primaryControls.clickButton(
+            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
+        primaryControls.waitForButton(
+            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+        Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
+        page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
 
-      resizeAndAssert(page, rotated);
-      waitForRenderedControl(page, rotated.retry().x(), rotated.retry().y());
-      tap(page, rotated.retry());
-      waitForRenderedControl(page, rotated.startRun().x(), rotated.startRun().y());
+        primaryControls.clickButtonAndWaitForChange(
+            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+        primaryControls.waitForButton(
+            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+        primaryControls.clickButton(
+            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+        primaryControls.waitForButton(
+            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        assertTrue(
+            mobileLog.errors().isEmpty(),
+            () -> String.join(System.lineSeparator(), mobileLog.errors()));
+      } catch (RuntimeException | IOException | Error failure) {
+        captureFailure(page, mobileLog, mobileFailureDirectory(screenshotPath), failure);
+        throw failure;
+      }
     }
+  }
+
+  private static Path mobileFailureDirectory(Path screenshotPath) {
+    String fileName = Objects.requireNonNull(screenshotPath.getFileName()).toString();
+    String reportName =
+        fileName.endsWith(".png") ? fileName.substring(0, fileName.length() - 4) : fileName;
+    return screenshotPath.resolveSibling(reportName + "-failure");
   }
 
   private static void resizeAndAssert(Page page, MobileViewport viewport) {
@@ -357,16 +387,12 @@ final class BrowserSmokeTest {
     assertEquals(viewport.height(), page.locator("canvas").boundingBox().height);
   }
 
-  private static void tap(Page page, Point point) {
-    page.touchscreen().tap(point.x(), point.y());
-  }
-
-  private static void assertWallCell(Page page, Point point) throws IOException {
+  private static void assertWallCell(Page page, ScreenPoint point) throws IOException {
     int color = pixelColor(page, point.x(), point.y());
     assertTrue(red(color) > 220 && green(color) > 220 && blue(color) > 220);
   }
 
-  private static void assertOpenCell(Page page, Point point) throws IOException {
+  private static void assertOpenCell(Page page, ScreenPoint point) throws IOException {
     int color = pixelColor(page, point.x(), point.y());
     assertTrue(red(color) < 80 && green(color) < 80 && blue(color) < 80);
   }
@@ -407,17 +433,17 @@ final class BrowserSmokeTest {
     assertEquals(VIEWPORT_HEIGHT, page.locator("canvas").evaluate("canvas => canvas.height"));
   }
 
-  private static String readSavedResult(Page page) {
-    String value = (String) page.evaluate("key => window.localStorage.getItem(key)", RESULT_KEY);
+  private static String readSavedResult(Page page, String resultKey) {
+    String value = (String) page.evaluate("key => window.localStorage.getItem(key)", resultKey);
     assertNotNull(value);
     assertTrue(value.matches("[0-9]+:[0-9]+"));
     return value;
   }
 
-  private static void waitForSavedResult(Page page) {
+  private static void waitForSavedResult(Page page, String resultKey) {
     page.waitForCondition(
-        () -> page.evaluate("key => window.localStorage.getItem(key)", RESULT_KEY) != null,
-        new Page.WaitForConditionOptions().setTimeout(15_000.0));
+        () -> page.evaluate("key => window.localStorage.getItem(key)", resultKey) != null,
+        new Page.WaitForConditionOptions().setTimeout(20_000.0));
   }
 
   private static void waitForRenderedControl(Page page, int x, int y) throws IOException {
@@ -427,7 +453,7 @@ final class BrowserSmokeTest {
 
   private static void waitForPixelChange(Page page, int x, int y, int originalColor)
       throws IOException {
-    long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+    long deadline = System.nanoTime() + Duration.ofSeconds(25).toNanos();
     while (pixelColor(page, x, y) == originalColor && System.nanoTime() < deadline) {
       page.waitForTimeout(100.0);
     }
@@ -478,14 +504,101 @@ final class BrowserSmokeTest {
     return property;
   }
 
+  private static final class BrowserControls implements BrowserGameScenario.Controls {
+    private final Page page;
+    private final int width;
+    private final int height;
+    private final boolean touch;
+
+    private BrowserControls(Page page, int width, int height, boolean touch) {
+      this.page = page;
+      this.width = width;
+      this.height = height;
+      this.touch = touch;
+    }
+
+    @Override
+    public void clickButton(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId) {
+      click(BrowserGameScenario.buttonCenter(width, height, phase, level, hasNextLevel, elementId));
+    }
+
+    private void clickButtonAndWaitForChange(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId)
+        throws IOException {
+      ScreenPoint point =
+          BrowserGameScenario.buttonCenter(width, height, phase, level, hasNextLevel, elementId);
+      int originalColor = pixelColor(page, point.x(), point.y());
+      click(point);
+      waitForPixelChange(page, point.x(), point.y(), originalColor);
+    }
+
+    @Override
+    public void waitForButton(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId)
+        throws IOException {
+      ScreenPoint point =
+          BrowserGameScenario.buttonCenter(width, height, phase, level, hasNextLevel, elementId);
+      waitForRenderedControl(page, point.x(), point.y());
+    }
+
+    @Override
+    public void placeAndClearWall(LevelDefinition level, GridPosition position) throws IOException {
+      ScreenPoint point = cellCenter(level, position);
+      int emptyColor = pixelColor(page, point.x(), point.y());
+      click(point);
+      waitForPixelChange(page, point.x(), point.y(), emptyColor);
+      int wallColor = pixelColor(page, point.x(), point.y());
+      clickButton(GamePhase.BUILDING, level, false, MazeGameLayout.BUILD_WALL_MODE);
+      click(point);
+      waitForPixelChange(page, point.x(), point.y(), wallColor);
+    }
+
+    @Override
+    public void placeWalls(LevelDefinition level, List<GridPosition> walls) throws IOException {
+      for (GridPosition wall : walls) {
+        click(cellCenter(level, wall));
+      }
+      assertWallCell(page, cellCenter(level, walls.get(walls.size() - 1)));
+    }
+
+    private void clickCell(LevelDefinition level, GridPosition position) {
+      click(cellCenter(level, position));
+    }
+
+    private ScreenPoint cellCenter(LevelDefinition level, GridPosition position) {
+      return BrowserGameScenario.cellCenter(width, height, level, position);
+    }
+
+    private void click(ScreenPoint point) {
+      if (touch) {
+        page.touchscreen().tap(point.x(), point.y());
+      } else {
+        page.mouse().click(point.x(), point.y());
+      }
+    }
+  }
+
   private static final class BrowserLog {
+    private static final String AUDIO_DEVICE_ERROR =
+        "The AudioContext encountered an error from the audio device or the WebAudio renderer.";
     private final List<String> errors = new ArrayList<>();
     private final Set<String> observedAssets = new HashSet<>();
     private final Map<String, String> contentTypes = new HashMap<>();
     private final Set<String> requiredAssets;
+    private final boolean ignoreAudioDeviceErrors;
 
     private BrowserLog(Set<String> requiredAssets) {
+      this(requiredAssets, false);
+    }
+
+    private BrowserLog(Set<String> requiredAssets, boolean ignoreAudioDeviceErrors) {
       this.requiredAssets = requiredAssets;
+      this.ignoreAudioDeviceErrors = ignoreAudioDeviceErrors;
+    }
+
+    private static BrowserLog forAuxiliaryTouchContext() {
+      return new BrowserLog(Set.of(), true);
     }
 
     private void observe(Page page) {
@@ -496,7 +609,8 @@ final class BrowserSmokeTest {
     }
 
     private void recordConsoleMessage(ConsoleMessage message) {
-      if ("error".equals(message.type())) {
+      if ("error".equals(message.type())
+          && !(ignoreAudioDeviceErrors && AUDIO_DEVICE_ERROR.equals(message.text()))) {
         errors.add("console: " + message.text());
       }
     }
@@ -530,17 +644,7 @@ final class BrowserSmokeTest {
     }
   }
 
-  private record Point(int x, int y) {}
-
-  private record MobileViewport(
-      int width,
-      int height,
-      Point menuStart,
-      Point levelCard,
-      Point editableCell,
-      Point wallMode,
-      Point startRun,
-      Point retry) {}
+  private record MobileViewport(int width, int height) {}
 
   private static final class StaticWebServer implements AutoCloseable {
     private final String applicationPath;

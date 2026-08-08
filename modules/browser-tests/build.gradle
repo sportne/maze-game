@@ -13,6 +13,7 @@ def wasmSmokeReportDirectory = layout.buildDirectory.dir('reports/browser-smoke-
 def safariReportDirectory = layout.buildDirectory.dir('reports/safari-release')
 
 dependencies {
+    testImplementation project(':modules:core')
     testImplementation libs.playwright
     testImplementation libs.selenium.safari.driver
     testImplementation libs.selenium.support

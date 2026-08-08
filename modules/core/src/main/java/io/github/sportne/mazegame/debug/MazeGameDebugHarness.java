@@ -169,6 +169,18 @@ public final class MazeGameDebugHarness {
   }
 
   /**
+   * Simulates clicking the enabled Milestone 2 card.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMilestoneTwoLevel() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(2)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
    * Simulates clicking a locked future level card.
    *
    * @param index zero-based level card index from 1 to 5
@@ -237,6 +249,18 @@ public final class MazeGameDebugHarness {
   public MazeGameDebugHarness clickReplay() {
     clickButton(
         currentScreenLayout(GamePhase.RESULT).bounds(MazeGameLayout.RESULT_REPLAY),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Simulates clicking the Next Level button after a passing result.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickNextLevel() {
+    clickButton(
+        currentScreenLayout(GamePhase.RESULT).bounds(MazeGameLayout.RESULT_NEXT_LEVEL),
         Input.Buttons.LEFT);
     return this;
   }
