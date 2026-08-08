@@ -53,6 +53,7 @@ final class LevelCatalogTest {
         FIRST_LEVEL.targetSolveTime(),
         FIRST_LEVEL.maximumSolveTime(),
         FIRST_LEVEL.mouseMoveInterval(),
+        MouseBehavior.RANDOM,
         2L);
   }
 }

@@ -8,6 +8,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.MouseBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Set;
@@ -128,6 +129,7 @@ final class RandomMouseSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(100),
             Duration.ofMillis(250),
+            MouseBehavior.RANDOM,
             1L);
     RandomMouseSimulation simulation = new RandomMouseSimulation(MazeState.empty(level));
 
@@ -158,6 +160,7 @@ final class RandomMouseSimulationTest {
         milestoneOne.targetSolveTime(),
         milestoneOne.maximumSolveTime(),
         milestoneOne.mouseMoveInterval(),
+        MouseBehavior.RANDOM,
         seed);
   }
 

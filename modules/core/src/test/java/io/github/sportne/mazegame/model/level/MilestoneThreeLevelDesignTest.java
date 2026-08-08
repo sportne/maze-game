@@ -10,6 +10,8 @@ import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.mouse.MouseSimulation;
+import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
 import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameResultEvaluator;
@@ -37,6 +39,7 @@ final class MilestoneThreeLevelDesignTest {
           Duration.ofSeconds(6),
           Duration.ofSeconds(8),
           MOVE_INTERVAL,
+          MouseBehavior.LEFT_PRIORITY,
           53L);
 
   private static final Set<GridPosition> PASSING_LAYOUT_A =
@@ -220,6 +223,25 @@ final class MilestoneThreeLevelDesignTest {
   }
 
   @Test
+  void productionScoutMatchesEveryAcceptedThirdLevelFixture() {
+    assertProductionTrace(
+        PASSING_LAYOUT_A,
+        PASSING_TRACE_A,
+        new MouseRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, MouseRunStatus.REACHED_CHEESE));
+    assertProductionTrace(
+        PASSING_LAYOUT_B,
+        PASSING_TRACE_B,
+        new MouseRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, MouseRunStatus.REACHED_CHEESE));
+    assertProductionTrace(
+        TIMEOUT_LAYOUT,
+        TIMEOUT_TRACE,
+        new MouseRunResult(
+            new GridPosition(0, 1), Duration.ofSeconds(8), 32, MouseRunStatus.TIMED_OUT));
+  }
+
+  @Test
   void emptyAndNaiveLayoutsFailWhileALongDetourTimesOut() {
     MazeState empty = MazeState.empty(PROPOSED_LEVEL);
     MouseRunResult emptyResult = new ReferenceScout(empty).update(Duration.ofSeconds(8));
@@ -305,6 +327,21 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals(expectedScout, new ReferenceScout(maze).update(level.maximumSolveTime()));
   }
 
+  private static void assertProductionTrace(
+      Set<GridPosition> walls, List<GridPosition> expectedTrace, MouseRunResult expectedResult) {
+    MazeState maze = new MazeState(PROPOSED_LEVEL, walls);
+    MouseSimulation simulation = MouseSimulationFactory.create(maze);
+    List<GridPosition> trace = new ArrayList<>();
+    trace.add(simulation.result().position());
+
+    while (simulation.result().status() == MouseRunStatus.RUNNING) {
+      trace.add(simulation.update(MOVE_INTERVAL).position());
+    }
+
+    assertEquals(expectedResult, simulation.result());
+    assertEquals(expectedTrace, trace);
+  }
+
   private static LevelDefinition levelWithMaximumSolveTime(Duration maximumSolveTime) {
     return new LevelDefinition(
         PROPOSED_LEVEL.id(),
@@ -316,6 +353,7 @@ final class MilestoneThreeLevelDesignTest {
         PROPOSED_LEVEL.targetSolveTime(),
         maximumSolveTime,
         PROPOSED_LEVEL.mouseMoveInterval(),
+        PROPOSED_LEVEL.mouseBehavior(),
         PROPOSED_LEVEL.randomSeed());
   }
 
@@ -330,6 +368,7 @@ final class MilestoneThreeLevelDesignTest {
         Duration.ofSeconds(1),
         Duration.ofSeconds(2),
         MOVE_INTERVAL,
+        MouseBehavior.LEFT_PRIORITY,
         1L);
   }
 

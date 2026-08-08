@@ -1,6 +1,8 @@
 # M3-03: Implement the Deterministic Scout Simulation
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-02
 

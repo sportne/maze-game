@@ -21,6 +21,7 @@ import java.util.Objects;
  * @param targetSolveTime solve time the mouse must exceed for the player to pass
  * @param maximumSolveTime timeout that ends the run if the cheese is not reached
  * @param mouseMoveInterval time between mouse movement decisions
+ * @param mouseBehavior movement rule used by this level
  * @param randomSeed seed used by deterministic mouse AI
  */
 public record LevelDefinition(
@@ -33,6 +34,7 @@ public record LevelDefinition(
     Duration targetSolveTime,
     Duration maximumSolveTime,
     Duration mouseMoveInterval,
+    MouseBehavior mouseBehavior,
     long randomSeed) {
   /**
    * Creates validated level authoring data.
@@ -50,6 +52,7 @@ public record LevelDefinition(
     requirePositive(targetSolveTime, "targetSolveTime");
     requirePositive(maximumSolveTime, "maximumSolveTime");
     requirePositive(mouseMoveInterval, "mouseMoveInterval");
+    Objects.requireNonNull(mouseBehavior, "mouseBehavior");
     requireWithinGrid(mouseStart, gridSize, "mouseStart");
     requireWithinGrid(cheese, gridSize, "cheese");
     if (mouseStart.equals(cheese)) {

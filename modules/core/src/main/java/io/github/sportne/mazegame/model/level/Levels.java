@@ -24,6 +24,7 @@ public final class Levels {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
+          MouseBehavior.RANDOM,
           1L);
 
   /** Larger second level specified by the Milestone 2 design. */
@@ -38,6 +39,7 @@ public final class Levels {
           Duration.ofSeconds(6),
           Duration.ofSeconds(15),
           Duration.ofMillis(250),
+          MouseBehavior.RANDOM,
           38L);
 
   /** Authored levels in stable display order. */

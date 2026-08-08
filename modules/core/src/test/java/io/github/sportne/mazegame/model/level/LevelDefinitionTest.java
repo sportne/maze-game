@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.level;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
@@ -22,6 +23,7 @@ final class LevelDefinitionTest {
     assertEquals(Duration.ofSeconds(5), level.targetSolveTime());
     assertEquals(Duration.ofSeconds(10), level.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), level.mouseMoveInterval());
+    assertEquals(MouseBehavior.RANDOM, level.mouseBehavior());
     assertEquals(1L, level.randomSeed());
   }
 
@@ -75,6 +77,7 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(5),
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
+                MouseBehavior.RANDOM,
                 1L));
   }
 
@@ -93,7 +96,19 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(11),
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
+                MouseBehavior.RANDOM,
                 1L));
+  }
+
+  @Test
+  void mouseBehaviorIsRequiredAndParticipatesInEquality() {
+    LevelDefinition random = levelWithBehavior(MouseBehavior.RANDOM);
+    LevelDefinition scout = levelWithBehavior(MouseBehavior.LEFT_PRIORITY);
+
+    assertEquals(MouseBehavior.RANDOM, random.mouseBehavior());
+    assertEquals(MouseBehavior.LEFT_PRIORITY, scout.mouseBehavior());
+    assertNotEquals(random, scout);
+    assertThrows(NullPointerException.class, () -> levelWithBehavior(null));
   }
 
   private static LevelDefinition level(
@@ -108,6 +123,23 @@ final class LevelDefinitionTest {
         Duration.ofSeconds(5),
         Duration.ofSeconds(10),
         Duration.ofMillis(250),
+        MouseBehavior.RANDOM,
         1L);
+  }
+
+  private static LevelDefinition levelWithBehavior(MouseBehavior mouseBehavior) {
+    LevelDefinition source = Levels.milestoneOne();
+    return new LevelDefinition(
+        source.id(),
+        source.name(),
+        source.gridSize(),
+        source.mouseStart(),
+        source.cheese(),
+        source.buildTime(),
+        source.targetSolveTime(),
+        source.maximumSolveTime(),
+        source.mouseMoveInterval(),
+        mouseBehavior,
+        source.randomSeed());
   }
 }

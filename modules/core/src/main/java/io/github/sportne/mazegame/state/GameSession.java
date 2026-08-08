@@ -9,7 +9,7 @@ import io.github.sportne.mazegame.model.maze.WallPlacementResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.mouse.MouseSimulation;
-import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
+import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -301,7 +301,7 @@ public final class GameSession {
     gamePhase = GamePhase.MOUSE_RUNNING;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
-    mouseSimulation = new RandomMouseSimulation(mazeState);
+    mouseSimulation = MouseSimulationFactory.create(mazeState);
     mouseRunResult = mouseSimulation.result();
   }
 
@@ -348,7 +348,7 @@ public final class GameSession {
     }
     gamePhase = GamePhase.REPLAY;
     runRequested = true;
-    mouseSimulation = new RandomMouseSimulation(mazeState);
+    mouseSimulation = MouseSimulationFactory.create(mazeState);
     mouseRunResult = mouseSimulation.result();
   }
 

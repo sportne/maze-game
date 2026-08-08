@@ -11,6 +11,7 @@ import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.MouseBehavior;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
@@ -39,6 +40,7 @@ final class GameSessionTest {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
+          MouseBehavior.RANDOM,
           1L);
 
   private static final LevelCatalog TEST_CATALOG =
@@ -230,6 +232,47 @@ final class GameSessionTest {
     session.replayRun();
     session.updateMouseRun(10.0F);
 
+    assertEquals(firstResult, session.mouseRunResult());
+  }
+
+  @Test
+  void sessionUsesTheAuthoredMouseBehavior() {
+    LevelDefinition source = Levels.milestoneOne();
+    LevelDefinition scoutLevel =
+        new LevelDefinition(
+            "scout-session",
+            "Scout Session",
+            source.gridSize(),
+            source.mouseStart(),
+            source.cheese(),
+            source.buildTime(),
+            source.targetSolveTime(),
+            source.maximumSolveTime(),
+            source.mouseMoveInterval(),
+            MouseBehavior.LEFT_PRIORITY,
+            256L);
+    GameSession session =
+        new GameSession(
+            new LevelCatalog(List.of(scoutLevel)), scoutLevel.id(), BestResultStore.none());
+
+    session.startLevel(scoutLevel.id());
+    session.startRun();
+    List<GridPosition> firstTrace = nextFourPositions(session);
+    session.updateMouseRun(10.0F);
+    MouseRunResult firstResult = session.mouseRunResult();
+
+    session.replayRun();
+    List<GridPosition> replayTrace = nextFourPositions(session);
+    session.updateMouseRun(10.0F);
+
+    assertEquals(
+        List.of(
+            new GridPosition(4, 1),
+            new GridPosition(4, 0),
+            new GridPosition(3, 0),
+            new GridPosition(2, 0)),
+        firstTrace);
+    assertEquals(firstTrace, replayTrace);
     assertEquals(firstResult, session.mouseRunResult());
   }
 
@@ -495,6 +538,15 @@ final class GameSessionTest {
     GameSession session = new GameSession();
     session.startLevel(Levels.milestoneOne().id());
     return session;
+  }
+
+  private static List<GridPosition> nextFourPositions(GameSession session) {
+    List<GridPosition> positions = new ArrayList<>();
+    for (int index = 0; index < 4; index++) {
+      session.updateMouseRun(0.25F);
+      positions.add(session.mouseRunResult().position());
+    }
+    return List.copyOf(positions);
   }
 
   private static void addVerticalCorridorWalls(GameSession session) {
