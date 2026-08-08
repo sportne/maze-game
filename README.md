@@ -7,9 +7,9 @@ module uses gdx-teavm 1.6.1, which embeds TeaVM 0.15.0. TeaVM JavaScript generat
 without Gradle's configuration cache because gdx-teavm 1.6.1 captures a non-serializable task
 logger.
 
-Milestone 2 is complete with an introductory 5x5 level and a harder
-7x7 level, persistent unlock progression and per-level best results, responsive mouse and touch
-controls, and retry/replay support.
+Milestone 3 is complete with three authored levels, persistent unlock progression and per-level
+best results, responsive mouse and touch controls, retry/replay support, and Scout: a visually
+distinct deterministic mouse whose search must be learned by observation.
 
 ## Local Commands
 
@@ -45,8 +45,9 @@ See [the JavaScript release guide](docs/javascript-release.md) for the browser s
 browser-storage limitations, JavaScript/WebAssembly strategy, and rollback procedure.
 The [WebAssembly rollout decision](docs/webassembly-rollout.md) records the preview URL, comparison
 metrics, compatibility evidence, constraints, and regression baseline.
-The [Milestone 2 release baseline](docs/milestone-2-release.md) records the accepted levels,
-playtest evidence, mobile behavior, and known constraints.
+The [Milestone 3 release baseline](docs/milestone-3-release.md) records the accepted levels,
+playtest evidence, mobile behavior, and known constraints. The earlier
+[Milestone 2 baseline](docs/milestone-2-release.md) remains as release history.
 
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,

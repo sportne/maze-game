@@ -4,6 +4,9 @@ Status: complete
 
 Archived: yes
 
+Superseded presentation detail: M3-07 physical-device feedback removed Scout's pre-run behavioral
+sentence. Release coverage now verifies the concise level card and common build objective instead.
+
 Depends on: M3-04, M3-05
 
 ## Goal
@@ -32,7 +35,7 @@ regresses.
 - The release flow proves third-level unlock and per-level results survive reload without contaminating
   Milestone 1 or 2 data.
 - Portrait and constrained-landscape touch flows edit and complete the Scout level with usable
-  controls and readable behavior text.
+  controls and concise, non-spoiling text.
 - Live Safari evidence names the browser/platform and records all three level and orientation results.
 - JavaScript fallback and the WebAssembly preview remain independently startable and atomically
   deployed.

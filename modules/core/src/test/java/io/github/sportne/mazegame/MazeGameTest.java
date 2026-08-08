@@ -70,6 +70,24 @@ final class MazeGameTest {
   }
 
   @Test
+  void buildBackReturnsToLevelSelection() {
+    MazeGame game = new MazeGame();
+    game.openLevelSelect();
+    game.handleScreenClick(396, 638 - 398, Input.Buttons.LEFT, 1280, 720);
+    ScreenRectangle back =
+        game.debugScreenLayout(GamePhase.BUILDING, 1280, 720).bounds(MazeGameLayout.BUILD_BACK);
+
+    game.handleScreenClick(
+        Math.round(back.x() + back.width() / 2.0F),
+        Math.round(720.0F - back.y() - back.height() / 2.0F),
+        Input.Buttons.LEFT,
+        1280,
+        720);
+
+    assertEquals(GamePhase.LEVEL_SELECT, game.gamePhase());
+  }
+
+  @Test
   void lockedFutureLevelDoesNotStartGameplay() {
     MazeGame game = new MazeGame();
 

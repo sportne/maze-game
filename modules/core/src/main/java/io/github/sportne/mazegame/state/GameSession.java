@@ -246,6 +246,13 @@ public final class GameSession {
     }
   }
 
+  /** Leaves an unstarted level attempt and returns to the level-select menu. */
+  public void returnToLevelSelect() {
+    if (gamePhase == GamePhase.BUILDING) {
+      initializeLevelState(levelDefinition, GamePhase.LEVEL_SELECT);
+    }
+  }
+
   /** Opens the settings menu from the startup menu. */
   public void openSettings() {
     if (gamePhase == GamePhase.MAIN_MENU) {

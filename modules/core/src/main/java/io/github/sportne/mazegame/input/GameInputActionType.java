@@ -29,6 +29,9 @@ public enum GameInputActionType {
   /** Start the mouse run early from the build phase. */
   START_RUN,
 
+  /** Leave an unstarted level attempt and return to level selection. */
+  BACK_TO_LEVEL_SELECT,
+
   /** Toggle the wall at the clicked grid cell. */
   TOGGLE_WALL,
 

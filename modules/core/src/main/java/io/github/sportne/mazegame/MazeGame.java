@@ -533,6 +533,7 @@ public final class MazeGame extends ApplicationAdapter {
       case OPEN_SETTINGS -> openSettings();
       case QUIT -> runtimeConfiguration.exitAction().run();
       case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
+      case BACK_TO_LEVEL_SELECT -> session.returnToLevelSelect();
       case TOGGLE_AUDIO -> toggleAudio();
       case SELECT_LEVEL -> startLevel(action.levelId());
       case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {

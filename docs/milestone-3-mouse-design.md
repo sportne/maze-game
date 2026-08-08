@@ -9,10 +9,11 @@ Milestone 3 introduces **Scout**, a deterministic mouse that internally prefers 
 3. Right relative to its current direction.
 4. Back to the cell it came from, when that is the only open direction.
 
-The exact order is deliberately not shown before play. Selection and build screens say only:
-**“Scout follows a consistent search pattern.”** The player discovers the preference by watching
-runs while still trying to delay the mouse and preserve a valid path to the cheese. Result feedback
-may prompt the player to watch Scout's choices at intersections, but must not state the order.
+The exact order is deliberately not shown before play. Level-selection cards retain the simple
+level-name and best-result format used by earlier levels, and the build screen identifies Scout by
+name without describing its search. The player discovers the preference by watching runs while
+still trying to delay the mouse and preserve a valid path to the cheese. Result feedback may prompt
+the player to watch Scout's choices at intersections, but must not state the order.
 
 ## Complete Decision Rules
 
@@ -139,9 +140,10 @@ asset pipeline. It keeps a recognizable mouse silhouette but adds a blue cap wit
 star badge. The cap/badge makes Scout distinguishable without relying only on color and does not
 reveal the turning preference; the existing random mouse retains its red scarf and current sprite.
 
-Level selection, build, running, and result presentation identify the active mouse by the player-
-facing name. Before the first run, the UI reveals only that Scout is deterministic. Subsequent result
-text may encourage observation without naming the left-first rule or adding a tutorial flow.
+Build, running, and result presentation identify the active mouse by the player-facing name. Level
+selection intentionally uses the same concise level-name and best-result structure for every card.
+Before the first run, the UI reveals no behavioral description. Subsequent result text may encourage
+observation without naming the left-first rule or adding a tutorial flow.
 
 ## Compatibility and Release Boundaries
 

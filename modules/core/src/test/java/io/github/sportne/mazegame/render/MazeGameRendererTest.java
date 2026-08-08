@@ -361,9 +361,9 @@ final class MazeGameRendererTest {
 
     assertTrue(font.capturedText().contains("Best 10.0s / 40"));
     assertTrue(font.capturedText().contains("Best 15.0s / 60"));
-    assertTrue(font.capturedText().contains("Scout follows a"));
-    assertTrue(font.capturedText().contains("consistent search"));
-    assertTrue(font.capturedText().contains("pattern"));
+    assertFalse(font.capturedText().contains("Scout follows a"));
+    assertFalse(font.capturedText().contains("consistent search"));
+    assertFalse(font.capturedText().contains("pattern"));
     assertTrue(font.capturedText().contains("Locked"));
     assertTrue(font.capturedText().contains("Best 6.5s / 26"));
     assertTrue(font.capturedText().contains("Menu"));
@@ -414,11 +414,11 @@ final class MazeGameRendererTest {
     renderer.render(
         scoutLayout(GamePhase.RESULT), scoutSnapshot(GamePhase.RESULT, result, progress));
 
-    assertTrue(font.capturedText().contains("Scout follows a"));
-    assertTrue(font.capturedText().contains("consistent search pattern"));
-    assertTrue(font.capturedText().contains("Scout follows a consistent search pattern"));
+    assertTrue(font.capturedText().contains("Delay past 6.0s; keep a path to the cheese"));
+    assertFalse(font.capturedText().contains("Scout follows a consistent search pattern"));
     assertTrue(font.capturedText().contains("Scout | 7.0s | >6.0s"));
     assertTrue(font.capturedText().contains("Scout | Success | >6.0s"));
+    assertTrue(font.capturedText().contains("Back"));
     assertTrue(spriteBatch.drawnRegionXs().contains(20));
   }
 

@@ -69,6 +69,9 @@ public final class GameInputRouter {
 
   private static GameInputAction routeBuildControls(
       ScreenLayout layout, int screenX, float screenYFromBottom) {
+    if (contains(layout, MazeGameLayout.BUILD_BACK, screenX, screenYFromBottom)) {
+      return GameInputAction.of(GameInputActionType.BACK_TO_LEVEL_SELECT);
+    }
     if (contains(layout, MazeGameLayout.BUILD_START, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.START_RUN);
     }

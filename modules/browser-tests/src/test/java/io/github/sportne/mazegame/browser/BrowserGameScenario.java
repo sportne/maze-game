@@ -49,6 +49,14 @@ final class BrowserGameScenario {
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
         GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+    controls.clickButton(
+        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_BACK);
+    controls.waitForButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
     controls.placeAndClearWall(Levels.milestoneOne(), EDITED_CELL);
     controls.clickButton(
         GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);

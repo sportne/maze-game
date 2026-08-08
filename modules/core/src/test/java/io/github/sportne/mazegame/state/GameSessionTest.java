@@ -91,6 +91,19 @@ final class GameSessionTest {
   }
 
   @Test
+  void returnsFromAnUnstartedLevelToSelectionAndClearsTheAttempt() {
+    GameSession session = startedSession();
+    session.placeWall(new GridPosition(2, 2));
+
+    session.returnToLevelSelect();
+
+    assertEquals(GamePhase.LEVEL_SELECT, session.gamePhase());
+    assertTrue(session.mazeState().walls().isEmpty());
+    assertFalse(session.runRequested());
+    assertNull(session.mouseRunResult());
+  }
+
+  @Test
   void buildTimerAutoStartsRunAtZero() {
     GameSession session = startedSession();
 

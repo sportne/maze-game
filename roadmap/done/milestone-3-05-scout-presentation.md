@@ -4,6 +4,10 @@ Status: complete
 
 Archived: yes
 
+Superseded presentation detail: M3-07 physical-device feedback simplified every level card to the
+level name and best result and removed the pre-run search-pattern sentence. Scout remains identified
+by name and sprite without any behavioral description.
+
 Depends on: M3-04
 
 ## Goal
@@ -19,8 +23,7 @@ on color alone.
 - Keep the current random mouse sprite and cheese presentation unchanged.
 - Select the sprite from immutable level mouse behavior rather than level id or screen-specific
   conditionals.
-- Show the player-facing name `Scout` and only “Scout follows a consistent search pattern” on level
-  selection and build presentation.
+- Show the player-facing name `Scout` without revealing its turning preference.
 - Permit result feedback to suggest watching turns at intersections, but never disclose the exact
   left, straight, right, back order in player-facing text.
 - Identify the active mouse consistently during running and results without overcrowding compact

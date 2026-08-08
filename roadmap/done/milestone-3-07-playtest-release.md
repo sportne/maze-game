@@ -1,6 +1,8 @@
 # M3-07: Playtest, Tune, and Release Milestone 3
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-01 through M3-06
 
@@ -44,3 +46,17 @@ third level distinct and fair before accepting the Milestone 3 release baseline.
 - Run the full formatting, analysis, coverage, test, browser, Pages, Safari, and native-image gates.
 - Review every Milestone 3 definition-of-done item before commit, then validate the deployed release
   under the approved push workflow.
+
+## Completion Notes
+
+- The product owner exercised the JavaScript release on a physical iPhone in portrait and landscape
+  and accepted the final controls and presentation after a local-network retest.
+- Device feedback simplified every level card to its level name and locked/best state, removed the
+  pre-run Scout behavior note, and added a build-screen Back action that abandons the attempt and
+  returns to level selection.
+- The reviewer already knew Scout's authored rule, so the first-time independent-discovery criterion
+  could not be tested blindly. Product-owner release approval accepts that limitation without
+  representing it as successful discovery evidence.
+- Accepted parameters, automated cross-platform evidence, physical-device evidence, and known
+  constraints are recorded in
+  [`docs/milestone-3-release.md`](../../docs/milestone-3-release.md).

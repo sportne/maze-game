@@ -96,8 +96,11 @@ final class MazeGameLayoutTest {
         new ScreenRectangle(417.5F, 137.5F, 445.0F, 445.0F),
         layout.bounds(MazeGameLayout.GAME_GRID));
     assertEquals(
-        new ScreenRectangle(550.0F, 41.5F, 180.0F, 44.0F),
+        new ScreenRectangle(646.0F, 41.5F, 180.0F, 44.0F),
         layout.bounds(MazeGameLayout.BUILD_START));
+    assertEquals(
+        new ScreenRectangle(454.0F, 41.5F, 180.0F, 44.0F),
+        layout.bounds(MazeGameLayout.BUILD_BACK));
   }
 
   private static void assertMobileTargets(GamePhase phase, int width, int height) {
@@ -236,6 +239,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.BUILD_TITLE,
                 MazeGameLayout.BUILD_STATUS,
                 MazeGameLayout.BUILD_INSTRUCTIONS,
+                MazeGameLayout.BUILD_BACK,
                 MazeGameLayout.BUILD_START)),
         Arguments.of(
             GamePhase.MOUSE_RUNNING, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)),

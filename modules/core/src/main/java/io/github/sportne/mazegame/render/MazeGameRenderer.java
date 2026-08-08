@@ -318,6 +318,7 @@ public final class MazeGameRenderer {
 
   private void drawControls(ScreenLayout layout, GameRenderSnapshot snapshot) {
     if (snapshot.phase() == GamePhase.BUILDING) {
+      drawButton(layout.bounds(MazeGameLayout.BUILD_BACK));
       drawButton(layout.bounds(MazeGameLayout.BUILD_START));
     } else if (snapshot.phase() == GamePhase.RESULT) {
       drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
@@ -379,15 +380,14 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        presentation.initialDescription().isEmpty()
-            ? "Delay past "
-                + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
-                + "; keep a path to the cheese"
-            : presentation.initialDescription(),
+        "Delay past "
+            + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
+            + "; keep a path to the cheese",
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
-    drawTextInRegion("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START), 44.0F);
+    drawCenteredText("Back", layout.bounds(MazeGameLayout.BUILD_BACK));
+    drawCenteredText("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START));
   }
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
@@ -510,27 +510,8 @@ public final class MazeGameRenderer {
   }
 
   private void drawLevelCardText(LevelProgress progress, ScreenRectangle card) {
-    MousePresentation presentation =
-        MousePresentation.forBehavior(progress.levelDefinition().mouseBehavior());
-    if (presentation.initialDescription().isEmpty()) {
-      drawCenteredText(progress.levelDefinition().name(), card, card.y() + 56.0F);
-      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 32.0F);
-      return;
-    }
-    if (card.width() < 180.0F) {
-      drawCenteredText(progress.levelDefinition().name(), card, card.y() + card.height() - 10.0F);
-      drawCenteredText("Scout follows a", card, card.y() + card.height() - 25.0F);
-      drawCenteredText("consistent search", card, card.y() + card.height() - 40.0F);
-      drawCenteredText("pattern", card, card.y() + card.height() - 55.0F);
-      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 10.0F);
-      return;
-    }
-    drawCenteredText(progress.levelDefinition().name(), card, card.y() + card.height() - 12.0F);
-    drawCenteredText("Scout follows a", card, card.y() + card.height() - 30.0F);
-    drawCenteredText("consistent search pattern", card, card.y() + card.height() - 48.0F);
-    if (card.height() >= 80.0F) {
-      drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 16.0F);
-    }
+    drawCenteredText(progress.levelDefinition().name(), card, card.y() + 56.0F);
+    drawCenteredText(levelSubtitle(progress, card.width()), card, card.y() + 32.0F);
   }
 
   private static String targetText(GameRenderSnapshot snapshot) {

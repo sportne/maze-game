@@ -1,6 +1,6 @@
 # Milestone 3: Scout Mouse
 
-Status: planned
+Status: complete
 
 ## Goal
 
@@ -20,8 +20,9 @@ build interaction.
 - Existing levels retain the deterministic random mouse and their exact replay behavior.
 - Scout has a new sprite with a blue cap and high-contrast star badge, making it recognizable without
   color alone while avoiding a visual spoiler.
-- Initial in-game text says only “Scout follows a consistent search pattern.” Result feedback may
-  encourage watching intersections but does not disclose the priority order.
+- Level-selection cards show only the level name and best result. The build screen names Scout but
+  provides no behavioral description. Result feedback may encourage watching intersections but does
+  not disclose the priority order.
 
 The complete behavior specification is recorded in
 [`docs/milestone-3-mouse-design.md`](../docs/milestone-3-mouse-design.md).
@@ -43,14 +44,15 @@ The complete behavior specification is recorded in
   random paths, stable ids, saved results, or unlock state.
 - A balanced third level lets players discover and exploit Scout using only normal walls and the
   existing build interaction.
-- Scout has a unique, non-color-only visual identity and is named consistently on selection, build,
-  running, and result screens.
+- Scout has a unique, non-color-only visual identity and is named consistently on build, running,
+  and result screens; its selection card matches the concise earlier-level format.
 - The third level supports unlock, selection, retry, replay, next-level behavior, persistence, reload,
   and clean-profile migration.
 - Desktop, portrait and landscape touch, JavaScript, WebAssembly, live Pages, branded Safari, native
   packaging, formatting, static analysis, coverage, and architecture gates remain green.
-- Physical-device and desktop playtesting find the new rule understandable and the new level
-  noticeably different but fair.
+- Product-owner physical-device review accepts the new level's interface and deliberate-construction
+  challenge. Because that reviewer authored Scout's rule, independent first-time discoverability is
+  explicitly deferred rather than claimed as proven for this release.
 
 ## Task Order
 
@@ -60,7 +62,7 @@ The complete behavior specification is recorded in
 4. [M3-04: Add the third authored level and progression](done/milestone-3-04-third-level.md)
 5. [M3-05: Give Scout a unique visual and UI identity](done/milestone-3-05-scout-presentation.md)
 6. [M3-06: Extend cross-platform release coverage](done/milestone-3-06-release-coverage.md)
-7. [M3-07: Playtest, tune, and release Milestone 3](milestone-3-07-playtest-release.md)
+7. [M3-07: Playtest, tune, and release Milestone 3](done/milestone-3-07-playtest-release.md)
 8. [M3-08: Define Milestone 4](milestone-3-08-define-milestone-4.md)
 
 M3-08 is non-gating follow-up planning for the next milestone. Milestone 3 product work is complete

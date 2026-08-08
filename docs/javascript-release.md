@@ -36,7 +36,7 @@ JavaScript, WebGL, Web Audio, and local storage enabled. Touch input supports po
 viewports with at least 568 CSS pixels on the long side and 270 on the short side. Smaller viewports
 receive resize guidance.
 
-The desktop release matrix was run against the live Pages URL on 2026-08-03. The two-level local
+The desktop release matrix was run against the live Pages URL on 2026-08-03. The three-level local
 release candidate and touch matrix were run on 2026-08-08:
 
 | Browser or input | Version exercised | Result |
@@ -46,15 +46,15 @@ release candidate and touch matrix were run on 2026-08-08:
 | Firefox engine | 151.0 | Full mouse game flow passed |
 | WebKit compatibility | 26.5 | Full mouse game flow passed |
 | Safari on macOS | 26.5.2 | Automated branded Safari release flow passed |
-| Chromium touch emulation | 149.0.7827.55 | Two-level portrait and constrained-landscape touch flows passed |
-| Safari on a physical iPhone | Version not recorded | Two-level JavaScript playtest passed in portrait and landscape |
+| Chromium touch emulation | 149.0.7827.55 | Three-level portrait and constrained-landscape touch flows passed |
+| Safari on a physical iPhone | Version not recorded | Three-level JavaScript interface playtest passed in portrait and landscape |
 
 Each passing desktop flow covered cache-busted direct navigation, relative asset loading from
 `/maze-game/`, canvas initialization, audio loading and Web Audio resume after interaction, menu
 and level selection, maze editing, game completion, local persistence, and reload. The updated
-Chromium flow completes both levels, including locked selection, unlock, independent best results,
-retry, replay, and reload, in JavaScript and WebAssembly. Its touch contexts complete the same
-two-level flow at 390x844 portrait and 844x286 toolbar-constrained landscape sizes. The automated
+Chromium flow completes all three levels, including locked selection, unlock, independent best
+results, retry, replay, and reload, in JavaScript and WebAssembly. Its touch contexts complete the
+same three-level flow at 390x844 portrait and 844x286 toolbar-constrained landscape sizes. The automated
 flows reported no page, console, request, or HTTP response errors.
 
 The Pages workflow validates every deployment in branded Safari through Apple's `safaridriver` on
@@ -63,9 +63,10 @@ screenshot artifact. It covers the live game loop, required asset HTTP status an
 audio loading, runtime errors after initialization, local persistence, and refresh behavior.
 SafariDriver does not expose complete browser-console history, so initialization is additionally
 guarded by the page's visible failure state. Physical iPhone Safari has exercised the responsive
-two-level JavaScript release in portrait and landscape, although the exact device and browser
+three-level JavaScript interface in portrait and landscape, although the exact device and browser
 versions were not recorded. Real iPhone or iPad Safari remains an explicit constraint for the
-WebAssembly preview.
+WebAssembly preview. See the [Milestone 3 release baseline](milestone-3-release.md) for the accepted
+physical-device evidence and qualitative-testing limitation.
 
 ## Browser Data and Audio
 

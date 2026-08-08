@@ -76,10 +76,11 @@ Status: complete.
 Add Scout, a visually distinct deterministic mouse with a discoverable direction preference, and a
 third 7x7 level that isolates its behavior from new building mechanics.
 
-See [Milestone 3](milestone-3.md) and the accepted
-[mouse design](../docs/milestone-3-mouse-design.md).
+See [Milestone 3](milestone-3.md), the accepted
+[mouse design](../docs/milestone-3-mouse-design.md), and the
+[release baseline](../docs/milestone-3-release.md).
 
-Status: planned.
+Status: complete.
 
 ### Milestone 4 Candidate: Inventory-Based Block Building
 
@@ -115,6 +116,6 @@ Completed task cards are retained in the [done archive](done/README.md).
 - The first mouse may move in any free direction, including immediately moving backward.
 - Replay re-runs the same seeded AI from the beginning, producing the same path.
 - Scout begins facing north and deterministically prefers left, straight, right, then back, while the
-  initial player-facing UI reveals only that its search pattern is consistent.
+  initial player-facing UI gives no description of its search behavior.
 - A level is passed when the mouse exceeds the target time, whether it eventually reaches the cheese or times out.
 - The next level option only appears when a next level exists.

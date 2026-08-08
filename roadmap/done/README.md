@@ -27,6 +27,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M3-04: Add the third authored level and progression](milestone-3-04-third-level.md)
 - [M3-05: Give Scout a unique visual and UI identity](milestone-3-05-scout-presentation.md)
 - [M3-06: Extend cross-platform release coverage](milestone-3-06-release-coverage.md)
+- [M3-07: Playtest, tune, and release Milestone 3](milestone-3-07-playtest-release.md)
 
 ## TeaVM and GitHub Pages
 

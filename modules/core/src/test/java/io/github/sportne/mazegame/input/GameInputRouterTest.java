@@ -98,6 +98,9 @@ final class GameInputRouterTest {
     assertEquals(
         GameInputActionType.START_RUN,
         click(GamePhase.BUILDING, MazeGameLayout.BUILD_START).type());
+    assertEquals(
+        GameInputActionType.BACK_TO_LEVEL_SELECT,
+        click(GamePhase.BUILDING, MazeGameLayout.BUILD_BACK).type());
 
     GameInputAction place =
         GameInputRouter.route(

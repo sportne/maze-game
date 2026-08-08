@@ -52,6 +52,9 @@ public final class MazeGameLayout {
   /** Build start button id. */
   public static final String BUILD_START = "build.start";
 
+  /** Build Back button id. */
+  public static final String BUILD_BACK = "build.back";
+
   /** Running-phase countdown region id. */
   public static final String RUN_STATUS = "run.status";
 
@@ -114,8 +117,6 @@ public final class MazeGameLayout {
 
   /** Vertical space between the grid/instructions area and the primary button. */
   private static final float BUILD_BUTTON_GAP = 52.0F;
-
-  /** Horizontal space between build action buttons. */
 
   /** Horizontal space between result-phase buttons. */
   private static final float RESULT_BUTTON_GAP = 12.0F;
@@ -278,7 +279,8 @@ public final class MazeGameLayout {
           text(
               BUILD_INSTRUCTIONS,
               new ScreenRectangle(panelX, screenHeight - 108.0F, panelWidth, TEXT_REGION_HEIGHT)));
-      elements.add(button(BUILD_START, compactBuildButton(grid, screenWidth, screenHeight)));
+      elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
+      elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
       return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
     }
     if (isCompactPortrait(screenWidth, screenHeight)) {
@@ -295,7 +297,8 @@ public final class MazeGameLayout {
           text(
               BUILD_INSTRUCTIONS,
               new ScreenRectangle(grid.x(), grid.y() - 34.0F, grid.width(), TEXT_REGION_HEIGHT)));
-      elements.add(button(BUILD_START, compactPortraitBuildButton(screenWidth)));
+      elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
+      elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
       return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
     }
     elements.add(
@@ -310,7 +313,8 @@ public final class MazeGameLayout {
         text(
             BUILD_INSTRUCTIONS,
             new ScreenRectangle(grid.x(), grid.y() - 34.0F, 320.0F, TEXT_REGION_HEIGHT)));
-    elements.add(button(BUILD_START, buildStartButton(screenWidth, screenHeight, gridSize)));
+    elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
+    elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
     return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
   }
 
@@ -469,6 +473,27 @@ public final class MazeGameLayout {
         BUILD_BUTTON_HEIGHT);
   }
 
+  private static ScreenRectangle buildActionButton(
+      ScreenRectangle grid, int screenWidth, int screenHeight, int index) {
+    boolean landscape = isCompactLandscape(screenWidth, screenHeight);
+    float areaX = landscape ? compactPanelX(grid) : COMPACT_MARGIN;
+    float areaWidth = screenWidth - areaX - COMPACT_MARGIN;
+    float gap = RESULT_BUTTON_GAP;
+    float buttonWidth = Math.min(BUILD_BUTTON_WIDTH, (areaWidth - gap) / 2.0F);
+    float totalWidth = 2.0F * buttonWidth + gap;
+    float left = areaX + (areaWidth - totalWidth) / 2.0F;
+    float y;
+    if (landscape) {
+      y = Math.max(COMPACT_MARGIN, screenHeight / 2.0F - BUILD_BUTTON_HEIGHT / 2.0F);
+    } else if (isCompactPortrait(screenWidth, screenHeight)) {
+      y = COMPACT_MARGIN;
+    } else {
+      y = Math.max(24.0F, grid.y() - BUILD_BUTTON_GAP - BUILD_BUTTON_HEIGHT);
+    }
+    return new ScreenRectangle(
+        left + index * (buttonWidth + gap), y, buttonWidth, BUILD_BUTTON_HEIGHT);
+  }
+
   private static ScreenRectangle resultButton(
       int screenWidth, int screenHeight, GridSize gridSize, int buttonCount, int index) {
     ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
@@ -620,24 +645,6 @@ public final class MazeGameLayout {
                   RESULT_BUTTON_HEIGHT)));
     }
     return screen(GamePhase.RESULT, screenWidth, screenHeight, elements);
-  }
-
-  private static ScreenRectangle compactBuildButton(
-      ScreenRectangle grid, int screenWidth, int screenHeight) {
-    float panelX = compactPanelX(grid);
-    float panelWidth = screenWidth - panelX - COMPACT_MARGIN;
-    float width = Math.min(BUILD_BUTTON_WIDTH, panelWidth);
-    return new ScreenRectangle(
-        panelX + (panelWidth - width) / 2.0F,
-        Math.max(COMPACT_MARGIN, screenHeight / 2.0F - BUILD_BUTTON_HEIGHT / 2.0F),
-        width,
-        BUILD_BUTTON_HEIGHT);
-  }
-
-  private static ScreenRectangle compactPortraitBuildButton(int screenWidth) {
-    float width = Math.min(BUILD_BUTTON_WIDTH, screenWidth - 2.0F * COMPACT_MARGIN);
-    return new ScreenRectangle(
-        (screenWidth - width) / 2.0F, COMPACT_MARGIN, width, BUILD_BUTTON_HEIGHT);
   }
 
   private static ScreenRectangle compactBackButton() {

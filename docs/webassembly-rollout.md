@@ -49,14 +49,14 @@ performance budgets because shared hosted-runner load affects absolute timing.
 | --- | --- | --- |
 | Google Chrome 151 on Windows | Full flow passed | Branded browser through CDP; metrics recorded |
 | Microsoft Edge 151 on Windows | Full flow passed | Branded browser through CDP; metrics recorded |
-| Chromium 149 touch emulation | Two-level flow passed | Used real touch events in portrait and constrained landscape, not mouse clicks |
+| Chromium 149 touch emulation | Three-level flow passed | Used real touch events in portrait and constrained landscape, not mouse clicks |
 | Firefox 151 on Windows | Preview remains provisional | JavaScript passed; local Playwright Firefox lacked a WebGL context for a valid comparison |
 | Safari 26.5.2 on macOS | Deployment gate | Pages runs both root and preview flows in branded Safari after every deployment |
 | iPhone or iPad Safari | Not verified | Remains an explicit preview constraint |
 
-The full flow covers both authored levels, locked selection and unlock, audio loading and gesture
-resume, maze editing, completion, per-level local persistence, retry, replay, reload, responsive
-touch layouts, runtime/asset requests, and errors. The
+The full flow covers all three authored levels, locked selection and unlock, audio loading and
+gesture resume, maze editing, completion, per-level local persistence, retry, replay, build-screen
+back navigation, reload, responsive touch layouts, runtime/asset requests, and errors. The
 local server and Safari deployment gate require `application/wasm` for the module response.
 Firefox, WebKit compatibility, and real iPhone/iPad Safari must pass this flow before WebAssembly can
 be considered for promotion from preview to the default release.
