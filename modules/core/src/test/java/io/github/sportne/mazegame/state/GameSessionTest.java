@@ -20,9 +20,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 final class GameSessionTest {
+  private static final String MISSING_LEVEL_ID = "missing-level";
+
   private static final LevelDefinition SECOND_LEVEL =
       new LevelDefinition(
           "test-level-2",
@@ -61,7 +66,8 @@ final class GameSessionTest {
     GameSession session = new GameSession(store);
 
     assertEquals(bestResult, session.bestResult());
-    assertEquals(Levels.milestoneOne().id(), store.loadedLevelId);
+    assertEquals(
+        List.of(Levels.milestoneOne().id(), Levels.milestoneTwo().id()), store.loadedLevelIds);
   }
 
   @Test
@@ -248,7 +254,7 @@ final class GameSessionTest {
     LevelDefinition originalLevel = session.levelDefinition();
     GamePhase originalPhase = session.gamePhase();
 
-    assertFalse(session.startLevel("missing-level"));
+    assertFalse(session.startLevel(MISSING_LEVEL_ID));
 
     assertEquals(originalLevel, session.levelDefinition());
     assertEquals(originalPhase, session.gamePhase());
@@ -395,10 +401,86 @@ final class GameSessionTest {
   }
 
   @Test
+  void playsTheAuthoredSecondLevelWithoutLeakingStateBetweenLevels() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
+    store.results.put(Levels.milestoneOne().id(), firstBest);
+    GameSession session = new GameSession(store);
+
+    assertTrue(session.startLevel(Levels.milestoneTwo().id()));
+    assertEquals(Levels.milestoneTwo(), session.levelDefinition());
+    assertEquals(25.0F, session.buildTimeRemainingSeconds());
+    session.placeWall(new GridPosition(7, 0));
+    assertEquals(new GridPosition(7, 0), session.rejectedPosition());
+    for (int column = 0; column < 7; column++) {
+      session.placeWall(new GridPosition(1, column));
+    }
+    assertEquals(6, session.mazeState().walls().size());
+    assertEquals(new GridPosition(1, 6), session.rejectedPosition());
+
+    session.retryLevel();
+    addMilestoneTwoTimeoutWalls(session);
+
+    session.updateBuildTimer(25.0F);
+    session.updateMouseRun(15.0F);
+
+    assertTrue(session.resultPassed());
+    assertEquals(MouseRunStatus.TIMED_OUT, session.mouseRunResult().status());
+    assertEquals(Levels.milestoneTwo().id(), store.savedLevelId);
+    assertEquals(9, session.mazeState().walls().size());
+
+    session.retryLevel();
+    assertEquals(Levels.milestoneTwo(), session.levelDefinition());
+    assertTrue(session.mazeState().walls().isEmpty());
+    assertEquals(25.0F, session.buildTimeRemainingSeconds());
+
+    session.startRun();
+    session.updateMouseRun(3.0F);
+    MouseRunResult failedResult = session.mouseRunResult();
+    assertFalse(session.resultPassed());
+    assertEquals(MouseRunStatus.REACHED_CHEESE, failedResult.status());
+
+    session.replayRun();
+    session.updateMouseRun(15.0F);
+    assertEquals(failedResult, session.mouseRunResult());
+    assertEquals(1, store.saveCount);
+
+    session.returnToMainMenu();
+    session.openLevelSelect();
+    assertEquals(GamePhase.LEVEL_SELECT, session.gamePhase());
+    assertEquals(Levels.milestoneTwo(), session.levelDefinition());
+
+    assertTrue(session.startLevel(Levels.milestoneOne().id()));
+    assertEquals(Levels.milestoneOne(), session.levelDefinition());
+    assertEquals(firstBest, session.bestResult());
+    assertTrue(session.mazeState().walls().isEmpty());
+    assertEquals(30.0F, session.buildTimeRemainingSeconds());
+  }
+
+  @ParameterizedTest
+  @MethodSource("authoredLevels")
+  void initializesEveryAuthoredLevelFromItsDefinition(LevelDefinition level) {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    GameSession session = new GameSession(store);
+
+    assertTrue(session.startLevel(level.id()));
+    assertEquals(level, session.levelDefinition());
+    assertEquals(level, session.mazeState().levelDefinition());
+    assertEquals(level.buildTime().toMillis() / 1000.0F, session.buildTimeRemainingSeconds());
+
+    session.placeWall(level.mouseStart());
+    assertEquals(level.mouseStart(), session.rejectedPosition());
+    session.placeWall(level.cheese());
+    assertEquals(level.cheese(), session.rejectedPosition());
+    assertTrue(session.mazeState().walls().isEmpty());
+  }
+
+  @Test
   void rejectsAnInitialLevelOutsideTheCatalog() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameSession(TEST_CATALOG, "missing-level", BestResultStore.none()));
+        () -> new GameSession(TEST_CATALOG, MISSING_LEVEL_ID, BestResultStore.none()));
   }
 
   @Test
@@ -428,8 +510,18 @@ final class GameSessionTest {
     session.placeWall(new GridPosition(0, 3));
   }
 
+  private static void addMilestoneTwoTimeoutWalls(GameSession session) {
+    int[][] coordinates = {{0, 5}, {1, 6}, {2, 1}, {2, 4}, {3, 5}, {4, 1}, {4, 2}, {5, 6}, {6, 1}};
+    for (int[] coordinate : coordinates) {
+      session.placeWall(new GridPosition(coordinate[0], coordinate[1]));
+    }
+  }
+
+  private static Stream<LevelDefinition> authoredLevels() {
+    return Levels.catalog().levels().stream();
+  }
+
   private static final class RecordingBestResultStore implements BestResultStore {
-    private String loadedLevelId;
     private String savedLevelId;
     private BestResult savedBestResult;
     private int saveCount;
@@ -438,7 +530,6 @@ final class GameSessionTest {
 
     @Override
     public Optional<BestResult> load(String levelId) {
-      loadedLevelId = levelId;
       loadedLevelIds.add(levelId);
       return Optional.ofNullable(results.get(levelId));
     }

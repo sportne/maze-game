@@ -116,5 +116,5 @@ remain while the seeded mouse still fails to reach the cheese. On the responsive
 cells measure 51 CSS pixels at 390x844 and 34 CSS pixels at both 844x286 and the 756x286 safe-content
 landscape case, so editing remains above the 32px requirement.
 
-This document defines and validates the authored data only. Adding it to the production catalog is
-reserved for the later implementation task.
+This definition is the production `Levels.milestoneTwo()` catalog entry. Its deterministic fixtures
+remain here as reproducible balancing evidence.

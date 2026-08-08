@@ -17,23 +17,13 @@ import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameResultEvaluator;
 import java.time.Duration;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /** Reproducible balancing evidence for the authored Milestone 2 level specification. */
 final class MilestoneTwoLevelDesignTest {
-  private static final LevelDefinition LEVEL =
-      new LevelDefinition(
-          "milestone-2",
-          "Milestone 2",
-          GridSize.square(7),
-          new GridPosition(6, 3),
-          new GridPosition(0, 3),
-          Duration.ofSeconds(25),
-          Duration.ofSeconds(6),
-          Duration.ofSeconds(15),
-          Duration.ofMillis(250),
-          38L);
+  private static final LevelDefinition LEVEL = Levels.milestoneTwo();
 
   private static final Set<GridPosition> PASSING_LAYOUT_A =
       Set.of(
@@ -83,6 +73,7 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals(Duration.ofSeconds(15), LEVEL.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), LEVEL.mouseMoveInterval());
     assertEquals(38L, LEVEL.randomSeed());
+    assertEquals(List.of(Levels.milestoneOne(), LEVEL), Levels.catalog().levels());
   }
 
   @Test

@@ -1,6 +1,8 @@
 # M2-05: Implement the Second Authored Level
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M2-02, M2-03, M2-04
 

@@ -60,8 +60,14 @@ final class GameInputRouterTest {
     assertEquals(GameInputActionType.SELECT_LEVEL, selection.type());
     assertEquals(Levels.milestoneOne().id(), selection.levelId());
     assertEquals(
-        GameInputActionType.SELECT_LOCKED_LEVEL,
+        GameInputActionType.SELECT_LEVEL,
         click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).type());
+    assertEquals(
+        Levels.milestoneTwo().id(),
+        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).levelId());
+    assertEquals(
+        GameInputActionType.SELECT_LOCKED_LEVEL,
+        click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(3)).type());
     assertEquals(
         GameInputActionType.BACK_TO_MAIN_MENU,
         click(GamePhase.LEVEL_SELECT, MazeGameLayout.LEVEL_SELECT_BACK).type());

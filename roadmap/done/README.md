@@ -13,6 +13,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M2-02: Design and balance the second authored level](milestone-2-02-level-design.md)
 - [M2-03: Generalize the authored-level catalog and selection contract](milestone-2-03-level-catalog.md)
 - [M2-04: Add progression, unlocking, and per-level persistence](milestone-2-04-progression.md)
+- [M2-05: Implement the second authored level](milestone-2-05-level-implementation.md)
 
 ## TeaVM and GitHub Pages
 
