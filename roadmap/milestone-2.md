@@ -43,10 +43,10 @@ block mechanic is introduced.
 
 ## Task Order
 
-1. [M2-01: Make mobile controls genuinely playable](milestone-2-01-mobile-controls.md)
-2. [M2-02: Design and balance the second authored level](milestone-2-02-level-design.md)
-3. [M2-03: Generalize the authored-level catalog and selection contract](milestone-2-03-level-catalog.md)
-4. [M2-04: Add progression, unlocking, and per-level persistence](milestone-2-04-progression.md)
+1. [M2-01: Make mobile controls genuinely playable](done/milestone-2-01-mobile-controls.md)
+2. [M2-02: Design and balance the second authored level](done/milestone-2-02-level-design.md)
+3. [M2-03: Generalize the authored-level catalog and selection contract](done/milestone-2-03-level-catalog.md)
+4. [M2-04: Add progression, unlocking, and per-level persistence](done/milestone-2-04-progression.md)
 5. [M2-05: Implement the second authored level](milestone-2-05-level-implementation.md)
 6. [M2-06: Make level-selection and game UI data-driven](milestone-2-06-multi-level-ui.md)
 7. [M2-07: Add multi-level end-to-end and release coverage](milestone-2-07-release-coverage.md)

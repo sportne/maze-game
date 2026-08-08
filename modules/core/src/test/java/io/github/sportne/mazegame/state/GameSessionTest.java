@@ -15,7 +15,10 @@ import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +56,7 @@ final class GameSessionTest {
   void loadsBestResultForCurrentLevel() {
     RecordingBestResultStore store = new RecordingBestResultStore();
     BestResult bestResult = new BestResult(Duration.ofSeconds(10), 40);
-    store.savedBestResult = bestResult;
+    store.results.put(Levels.milestoneOne().id(), bestResult);
 
     GameSession session = new GameSession(store);
 
@@ -156,7 +159,7 @@ final class GameSessionTest {
   @Test
   void worsePassingRunDoesNotReplaceSavedBestResult() {
     RecordingBestResultStore store = new RecordingBestResultStore();
-    store.savedBestResult = new BestResult(Duration.ofSeconds(11), 1);
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(11), 1));
     GameSession session = new GameSession(store);
     session.startLevel(Levels.milestoneOne().id());
 
@@ -227,6 +230,7 @@ final class GameSessionTest {
   @Test
   void startsAnyCatalogLevelByStableId() {
     RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
     GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
 
     assertTrue(session.startLevel(SECOND_LEVEL.id()));
@@ -234,7 +238,7 @@ final class GameSessionTest {
     assertEquals(SECOND_LEVEL, session.levelDefinition());
     assertEquals(SECOND_LEVEL, session.mazeState().levelDefinition());
     assertEquals(GamePhase.BUILDING, session.gamePhase());
-    assertEquals(SECOND_LEVEL.id(), store.loadedLevelId);
+    assertEquals(List.of(Levels.milestoneOne().id(), SECOND_LEVEL.id()), store.loadedLevelIds);
   }
 
   @Test
@@ -248,13 +252,14 @@ final class GameSessionTest {
 
     assertEquals(originalLevel, session.levelDefinition());
     assertEquals(originalPhase, session.gamePhase());
-    assertEquals(Levels.milestoneOne().id(), store.loadedLevelId);
+    assertEquals(List.of(Levels.milestoneOne().id(), SECOND_LEVEL.id()), store.loadedLevelIds);
   }
 
   @Test
   void retryAndReplayRetainTheSelectedLevel() {
-    GameSession session =
-        new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), BestResultStore.none());
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
     session.startLevel(SECOND_LEVEL.id());
     session.startRun();
     session.updateMouseRun(10.0F);
@@ -276,6 +281,7 @@ final class GameSessionTest {
   @Test
   void savesBestResultUnderTheSelectedLevelId() {
     RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
     GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
     session.startLevel(SECOND_LEVEL.id());
 
@@ -283,6 +289,109 @@ final class GameSessionTest {
     session.updateMouseRun(10.0F);
 
     assertEquals(SECOND_LEVEL.id(), store.savedLevelId);
+  }
+
+  @Test
+  void unlocksLevelsInCatalogOrderFromPassingResults() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+
+    assertTrue(session.levelProgress().get(0).unlocked());
+    assertFalse(session.levelProgress().get(1).unlocked());
+    assertFalse(session.startLevel(SECOND_LEVEL.id()));
+
+    session.startLevel(Levels.milestoneOne().id());
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertTrue(session.levelProgress().get(1).unlocked());
+    assertEquals(Optional.of(SECOND_LEVEL.id()), session.nextLevelId());
+    assertTrue(session.hasNextLevel());
+    assertTrue(session.startLevel(SECOND_LEVEL.id()));
+  }
+
+  @Test
+  void failedResultDoesNotUnlockTheNextLevel() {
+    GameSession session =
+        new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), BestResultStore.none());
+    session.startLevel(Levels.milestoneOne().id());
+    addVerticalCorridorWalls(session);
+
+    session.startRun();
+    session.updateMouseRun(1.0F);
+
+    assertFalse(session.resultPassed());
+    assertFalse(session.levelProgress().get(1).unlocked());
+    assertFalse(session.hasNextLevel());
+  }
+
+  @Test
+  void restoredFirstLevelResultUnlocksTheNextLevelWithoutSecondaryState() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+
+    GameSession restored = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+    assertTrue(restored.levelProgress().get(1).unlocked());
+
+    store.results.remove(Levels.milestoneOne().id());
+    GameSession cleared = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+    assertFalse(cleared.levelProgress().get(1).unlocked());
+  }
+
+  @Test
+  void exposesIndependentBestResultsForEachLevel() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    BestResult firstBest = new BestResult(Duration.ofSeconds(11), 20);
+    BestResult secondBest = new BestResult(Duration.ofSeconds(12), 30);
+    store.results.put(Levels.milestoneOne().id(), firstBest);
+    store.results.put(SECOND_LEVEL.id(), secondBest);
+
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+
+    assertEquals(firstBest, session.levelProgress().get(0).bestResult());
+    assertEquals(secondBest, session.levelProgress().get(1).bestResult());
+    session.startLevel(SECOND_LEVEL.id());
+    assertEquals(secondBest, session.bestResult());
+  }
+
+  @Test
+  void finalLevelNeverOffersAnotherLevel() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
+    session.startLevel(SECOND_LEVEL.id());
+
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertTrue(session.resultPassed());
+    assertFalse(session.hasNextLevel());
+    assertTrue(session.nextLevelId().isEmpty());
+  }
+
+  @Test
+  void unavailableStorageDoesNotInterruptProgressionInTheCurrentSession() {
+    BestResultStore unavailableStore =
+        new BestResultStore() {
+          @Override
+          public Optional<BestResult> load(String levelId) {
+            throw new IllegalStateException("storage unavailable");
+          }
+
+          @Override
+          public void save(String levelId, BestResult bestResult) {
+            throw new IllegalStateException("storage unavailable");
+          }
+        };
+    GameSession session =
+        new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), unavailableStore);
+
+    session.startLevel(Levels.milestoneOne().id());
+    session.startRun();
+    session.updateMouseRun(10.0F);
+
+    assertTrue(session.levelProgress().get(1).unlocked());
+    assertTrue(session.startLevel(SECOND_LEVEL.id()));
   }
 
   @Test
@@ -324,17 +433,21 @@ final class GameSessionTest {
     private String savedLevelId;
     private BestResult savedBestResult;
     private int saveCount;
+    private final List<String> loadedLevelIds = new ArrayList<>();
+    private final Map<String, BestResult> results = new HashMap<>();
 
     @Override
     public Optional<BestResult> load(String levelId) {
       loadedLevelId = levelId;
-      return Optional.ofNullable(savedBestResult);
+      loadedLevelIds.add(levelId);
+      return Optional.ofNullable(results.get(levelId));
     }
 
     @Override
     public void save(String levelId, BestResult bestResult) {
       savedLevelId = levelId;
       savedBestResult = bestResult;
+      results.put(levelId, bestResult);
       saveCount++;
     }
   }

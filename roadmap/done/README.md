@@ -7,6 +7,13 @@ and planned cards remain in the parent `roadmap/` directory.
 
 - [Milestone 1: 5x5 Playable Prototype](milestone-1.md)
 
+## Milestone 2
+
+- [M2-01: Make mobile controls genuinely playable](milestone-2-01-mobile-controls.md)
+- [M2-02: Design and balance the second authored level](milestone-2-02-level-design.md)
+- [M2-03: Generalize the authored-level catalog and selection contract](milestone-2-03-level-catalog.md)
+- [M2-04: Add progression, unlocking, and per-level persistence](milestone-2-04-progression.md)
+
 ## TeaVM and GitHub Pages
 
 - [WEB-01: Align the TeaVM toolchain](teavm-01-toolchain-alignment.md)

@@ -2,6 +2,8 @@
 
 Status: complete
 
+Archived: yes
+
 Depends on: M2-01
 
 ## Goal

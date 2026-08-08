@@ -1,6 +1,8 @@
 # M2-04: Add Progression, Unlocking, and Per-Level Persistence
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M2-03
 

@@ -41,13 +41,18 @@ public final class LibGdxBestResultStore implements BestResultStore {
   public void save(String levelId, BestResult bestResult) {
     Objects.requireNonNull(levelId, "levelId");
     Objects.requireNonNull(bestResult, "bestResult");
-    Preferences preferences = preferences();
-    if (preferences == null) {
+    try {
+      Preferences preferences = preferences();
+      if (preferences == null) {
+        return;
+      }
+      preferences.putLong(elapsedMillisKey(levelId), bestResult.elapsedTime().toMillis());
+      preferences.putInteger(moveCountKey(levelId), bestResult.moveCount());
+      preferences.flush();
+    } catch (RuntimeException exception) {
+      // Persistence is best-effort on platforms where storage can be unavailable.
       return;
     }
-    preferences.putLong(elapsedMillisKey(levelId), bestResult.elapsedTime().toMillis());
-    preferences.putInteger(moveCountKey(levelId), bestResult.moveCount());
-    preferences.flush();
   }
 
   private static Preferences preferences() {

@@ -11,8 +11,12 @@ import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
 import io.github.sportne.mazegame.model.result.BestResult;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Mutable session state for one Maze Game play session. */
 public final class GameSession {
@@ -30,6 +34,9 @@ public final class GameSession {
 
   /** Persistence boundary for level best results. */
   private final BestResultStore bestResultStore;
+
+  /** Best results loaded or recorded during this session, keyed by stable level id. */
+  private final Map<String, BestResult> bestResults = new HashMap<>();
 
   /** Best saved result for the current level, or null when none has been saved. */
   private BestResult bestResult;
@@ -88,6 +95,7 @@ public final class GameSession {
       throw new IllegalArgumentException(
           "initial level id is not in the catalog: ".concat(initialLevelId));
     }
+    loadBestResults();
     initializeMainMenu();
   }
 
@@ -98,6 +106,22 @@ public final class GameSession {
    */
   public List<LevelDefinition> levels() {
     return levelCatalog.levels();
+  }
+
+  /**
+   * Returns progression state in catalog order.
+   *
+   * @return immutable ordered progression entries
+   */
+  public List<LevelProgress> levelProgress() {
+    List<LevelProgress> progress = new ArrayList<>();
+    boolean unlocked = true;
+    for (LevelDefinition level : levelCatalog.levels()) {
+      BestResult levelBestResult = bestResults.get(level.id());
+      progress.add(new LevelProgress(level, unlocked, levelBestResult));
+      unlocked = unlocked && levelBestResult != null;
+    }
+    return List.copyOf(progress);
   }
 
   /**
@@ -205,6 +229,7 @@ public final class GameSession {
     Objects.requireNonNull(levelId, "levelId");
     return levelCatalog
         .findById(levelId)
+        .filter(ignored -> isLevelUnlocked(levelId))
         .map(
             selectedLevel -> {
               initializeLevelState(selectedLevel, GamePhase.BUILDING);
@@ -338,10 +363,31 @@ public final class GameSession {
   /**
    * Returns whether another level can be selected after this result.
    *
-   * @return false until progression policy is implemented
+   * @return true when a passing result unlocked the next catalog entry
    */
   public boolean hasNextLevel() {
-    return false;
+    return nextLevelId().isPresent();
+  }
+
+  /**
+   * Returns the next unlocked level after a passing result.
+   *
+   * @return stable next level id when advancement is available
+   */
+  public Optional<String> nextLevelId() {
+    if (!resultPassed()) {
+      return Optional.empty();
+    }
+    List<LevelProgress> progress = levelProgress();
+    for (int index = 0; index < progress.size() - 1; index++) {
+      if (progress.get(index).levelDefinition().id().equals(levelDefinition.id())) {
+        LevelProgress nextLevel = progress.get(index + 1);
+        return nextLevel.unlocked()
+            ? Optional.of(nextLevel.levelDefinition().id())
+            : Optional.empty();
+      }
+    }
+    return Optional.empty();
   }
 
   /**
@@ -370,19 +416,45 @@ public final class GameSession {
   private void recordBestResult(BestResult candidate) {
     if (candidate.beats(bestResult)) {
       bestResult = candidate;
-      bestResultStore.save(levelDefinition.id(), candidate);
+      bestResults.put(levelDefinition.id(), candidate);
+      saveBestResult(candidate);
     }
   }
 
-  /**
+  private boolean isLevelUnlocked(String levelId) {
+    return levelProgress().stream()
+        .anyMatch(
+            progress -> progress.unlocked() && progress.levelDefinition().id().equals(levelId));
+  }
+
+  private void loadBestResults() {
+    for (LevelDefinition level : levelCatalog.levels()) {
+      loadBestResult(level.id()).ifPresent(result -> bestResults.put(level.id(), result));
+    }
+  }
+
+  private Optional<BestResult> loadBestResult(String levelId) {
+    try {
+      return bestResultStore.load(levelId);
+    } catch (RuntimeException exception) {
+      return Optional.empty();
+    }
+  }
+
+  private void saveBestResult(BestResult candidate) {
+    try {
+      bestResultStore.save(levelDefinition.id(), candidate);
+    } catch (RuntimeException exception) {
+      return;
+    }
+  }
+
+  /*
    * Resets all model state and moves to the requested phase.
-   *
-   * @param selectedLevel level definition to initialize
-   * @param initialPhase phase to enter after resetting level state
    */
   private void initializeLevelState(LevelDefinition selectedLevel, GamePhase initialPhase) {
     levelDefinition = Objects.requireNonNull(selectedLevel, "selectedLevel");
-    bestResult = bestResultStore.load(levelDefinition.id()).orElse(null);
+    bestResult = bestResults.get(levelDefinition.id());
     mazeState = MazeState.empty(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
     rejectedPosition = null;
