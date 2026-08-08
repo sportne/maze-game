@@ -181,6 +181,18 @@ public final class MazeGameDebugHarness {
   }
 
   /**
+   * Simulates clicking the enabled Milestone 3 card.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMilestoneThreeLevel() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(3)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
    * Simulates clicking a locked future level card.
    *
    * @param index zero-based level card index from 1 to 5

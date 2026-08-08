@@ -42,9 +42,24 @@ public final class Levels {
           MouseBehavior.RANDOM,
           38L);
 
+  /** Third 7x7 level introducing Scout's deterministic search pattern. */
+  private static final LevelDefinition MILESTONE_THREE =
+      new LevelDefinition(
+          "milestone-3",
+          "Milestone 3",
+          GridSize.square(7),
+          new GridPosition(6, 3),
+          new GridPosition(0, 3),
+          Duration.ofSeconds(25),
+          Duration.ofSeconds(6),
+          Duration.ofSeconds(8),
+          Duration.ofMillis(250),
+          MouseBehavior.LEFT_PRIORITY,
+          53L);
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
-      new LevelCatalog(List.of(MILESTONE_ONE, MILESTONE_TWO));
+      new LevelCatalog(List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -65,6 +80,15 @@ public final class Levels {
    */
   public static LevelDefinition milestoneTwo() {
     return MILESTONE_TWO;
+  }
+
+  /**
+   * Returns the third authored level featuring Scout.
+   *
+   * @return the milestone-three level definition
+   */
+  public static LevelDefinition milestoneThree() {
+    return MILESTONE_THREE;
   }
 
   /**

@@ -1,6 +1,8 @@
 # M3-04: Add the Third Authored Level and Progression
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-01, M3-03
 

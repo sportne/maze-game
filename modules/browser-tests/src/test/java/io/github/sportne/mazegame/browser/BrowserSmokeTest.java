@@ -183,11 +183,11 @@ final class BrowserSmokeTest {
     String milestoneTwoResult = readSavedResult(page, MILESTONE_TWO_RESULT_KEY);
     assertFalse(milestoneOneResult.equals(milestoneTwoResult));
     controls.clickButtonAndWaitForChange(
-        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
     controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
         GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
 
@@ -339,16 +339,16 @@ final class BrowserSmokeTest {
             GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
 
         primaryControls.clickButtonAndWaitForChange(
-            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_REPLAY);
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), false, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.waitForButton(
             GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
         assertTrue(

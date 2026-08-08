@@ -73,7 +73,8 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals(Duration.ofSeconds(15), LEVEL.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), LEVEL.mouseMoveInterval());
     assertEquals(38L, LEVEL.randomSeed());
-    assertEquals(List.of(Levels.milestoneOne(), LEVEL), Levels.catalog().levels());
+    assertEquals(
+        List.of(Levels.milestoneOne(), LEVEL, Levels.milestoneThree()), Levels.catalog().levels());
   }
 
   @Test

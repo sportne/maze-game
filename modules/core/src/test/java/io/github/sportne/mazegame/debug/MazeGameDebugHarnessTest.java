@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.debug;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +25,13 @@ final class MazeGameDebugHarnessTest {
           new GridPosition(4, 0),
           new GridPosition(5, 0),
           new GridPosition(5, 2));
+
+  private static final Set<GridPosition> MILESTONE_THREE_WALLS =
+      Set.of(
+          new GridPosition(2, 2),
+          new GridPosition(3, 1),
+          new GridPosition(4, 0),
+          new GridPosition(5, 1));
 
   @Test
   void rejectsInvalidScreenDimensions() {
@@ -94,7 +102,7 @@ final class MazeGameDebugHarnessTest {
   }
 
   @Test
-  void completesBothAuthoredLevelsThroughTheDesktopInteractionPath() {
+  void completesAllAuthoredLevelsThroughTheDesktopInteractionPath() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
     harness.clickStartRun().advance(Duration.ofSeconds(10)).clickNextLevel();
@@ -105,8 +113,27 @@ final class MazeGameDebugHarnessTest {
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
-    harness.clickReplay().advance(Duration.ofSeconds(15)).clickRetry();
+    harness.clickNextLevel();
+    assertEquals(Levels.milestoneThree(), harness.snapshot().mazeState().levelDefinition());
+
+    MILESTONE_THREE_WALLS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(8));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
+    assertFalse(harness.snapshot().hasNextLevel());
+    harness.clickReplay().advance(Duration.ofSeconds(8)).clickRetry();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.milestoneTwo(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.milestoneThree(), harness.snapshot().mazeState().levelDefinition());
+
+    MILESTONE_THREE_WALLS.forEach(harness::leftClickCell);
+    harness
+        .clickStartRun()
+        .advance(Duration.ofSeconds(8))
+        .clickResultMainMenu()
+        .clickMainMenuStart()
+        .clickMilestoneThreeLevel();
+    assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
+    assertEquals(Levels.milestoneThree(), harness.snapshot().mazeState().levelDefinition());
   }
 }

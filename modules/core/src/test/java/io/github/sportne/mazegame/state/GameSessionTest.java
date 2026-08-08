@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,7 +70,9 @@ final class GameSessionTest {
 
     assertEquals(bestResult, session.bestResult());
     assertEquals(
-        List.of(Levels.milestoneOne().id(), Levels.milestoneTwo().id()), store.loadedLevelIds);
+        List.of(
+            Levels.milestoneOne().id(), Levels.milestoneTwo().id(), Levels.milestoneThree().id()),
+        store.loadedLevelIds);
   }
 
   @Test
@@ -500,11 +503,99 @@ final class GameSessionTest {
     assertEquals(30.0F, session.buildTimeRemainingSeconds());
   }
 
+  @Test
+  void existingProfilesDeriveTheThirdLevelUnlockWithoutMigrationState() {
+    RecordingBestResultStore cleanStore = new RecordingBestResultStore();
+    GameSession clean = new GameSession(cleanStore);
+    assertFalse(clean.levelProgress().get(2).unlocked());
+    assertFalse(clean.startLevel(Levels.milestoneThree().id()));
+
+    RecordingBestResultStore firstLevelOnlyStore = new RecordingBestResultStore();
+    firstLevelOnlyStore.results.put(
+        Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    GameSession firstLevelOnly = new GameSession(firstLevelOnlyStore);
+    assertTrue(firstLevelOnly.levelProgress().get(1).unlocked());
+    assertFalse(firstLevelOnly.levelProgress().get(2).unlocked());
+
+    RecordingBestResultStore existingTwoLevelStore = new RecordingBestResultStore();
+    existingTwoLevelStore.results.put(
+        Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    existingTwoLevelStore.results.put(
+        Levels.milestoneTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
+    GameSession existingTwoLevel = new GameSession(existingTwoLevelStore);
+    assertTrue(existingTwoLevel.levelProgress().get(2).unlocked());
+    assertTrue(existingTwoLevel.startLevel(Levels.milestoneThree().id()));
+
+    RecordingBestResultStore outOfOrderStore = new RecordingBestResultStore();
+    outOfOrderStore.results.put(
+        Levels.milestoneTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
+    GameSession outOfOrder = new GameSession(outOfOrderStore);
+    assertFalse(outOfOrder.levelProgress().get(1).unlocked());
+    assertFalse(outOfOrder.levelProgress().get(2).unlocked());
+  }
+
+  @Test
+  void thirdLevelSupportsUnlockRunRetryReplayPersistenceAndReload() {
+    RecordingBestResultStore store = new RecordingBestResultStore();
+    BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
+    store.results.put(Levels.milestoneOne().id(), firstBest);
+    GameSession session = new GameSession(store);
+
+    session.startLevel(Levels.milestoneTwo().id());
+    addMilestoneTwoTimeoutWalls(session);
+    session.startRun();
+    session.updateMouseRun(15.0F);
+    BestResult secondBest = session.bestResult();
+    assertEquals(Optional.of(Levels.milestoneThree().id()), session.nextLevelId());
+    assertTrue(session.startLevel(Levels.milestoneThree().id()));
+
+    addMilestoneThreePassingWalls(session);
+    Set<GridPosition> acceptedMaze = session.mazeState().walls();
+    session.startRun();
+    session.updateMouseRun(8.0F);
+    MouseRunResult firstRun = session.mouseRunResult();
+    BestResult thirdBest = session.bestResult();
+
+    assertTrue(session.resultPassed());
+    assertEquals(
+        new MouseRunResult(
+            Levels.milestoneThree().cheese(),
+            Duration.ofMillis(6500),
+            26,
+            MouseRunStatus.REACHED_CHEESE),
+        firstRun);
+    assertEquals(Levels.milestoneThree().id(), store.savedLevelId);
+    assertEquals(firstBest, store.results.get(Levels.milestoneOne().id()));
+    assertEquals(secondBest, store.results.get(Levels.milestoneTwo().id()));
+    assertEquals(thirdBest, store.results.get(Levels.milestoneThree().id()));
+    assertFalse(session.hasNextLevel());
+
+    session.replayRun();
+    session.updateMouseRun(8.0F);
+    assertEquals(firstRun, session.mouseRunResult());
+    assertEquals(acceptedMaze, session.mazeState().walls());
+
+    session.retryLevel();
+    assertEquals(Levels.milestoneThree(), session.levelDefinition());
+    assertTrue(session.mazeState().walls().isEmpty());
+    assertEquals(25.0F, session.buildTimeRemainingSeconds());
+
+    session.returnToMainMenu();
+    assertTrue(session.startLevel(Levels.milestoneThree().id()));
+    assertEquals(thirdBest, session.bestResult());
+
+    GameSession reloaded = new GameSession(store);
+    assertTrue(reloaded.levelProgress().get(2).unlocked());
+    assertTrue(reloaded.startLevel(Levels.milestoneThree().id()));
+    assertEquals(thirdBest, reloaded.bestResult());
+  }
+
   @ParameterizedTest
   @MethodSource("authoredLevels")
   void initializesEveryAuthoredLevelFromItsDefinition(LevelDefinition level) {
     RecordingBestResultStore store = new RecordingBestResultStore();
     store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
+    store.results.put(Levels.milestoneTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
     GameSession session = new GameSession(store);
 
     assertTrue(session.startLevel(level.id()));
@@ -564,6 +655,13 @@ final class GameSessionTest {
 
   private static void addMilestoneTwoTimeoutWalls(GameSession session) {
     int[][] coordinates = {{0, 5}, {1, 6}, {2, 1}, {2, 4}, {3, 5}, {4, 1}, {4, 2}, {5, 6}, {6, 1}};
+    for (int[] coordinate : coordinates) {
+      session.placeWall(new GridPosition(coordinate[0], coordinate[1]));
+    }
+  }
+
+  private static void addMilestoneThreePassingWalls(GameSession session) {
+    int[][] coordinates = {{2, 2}, {3, 1}, {4, 0}, {5, 1}};
     for (int[] coordinate : coordinates) {
       session.placeWall(new GridPosition(coordinate[0], coordinate[1]));
     }

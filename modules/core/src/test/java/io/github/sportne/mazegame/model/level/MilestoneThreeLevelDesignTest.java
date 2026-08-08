@@ -28,19 +28,7 @@ import org.junit.jupiter.api.Test;
 final class MilestoneThreeLevelDesignTest {
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
 
-  private static final LevelDefinition PROPOSED_LEVEL =
-      new LevelDefinition(
-          "milestone-3-design",
-          "Milestone 3 Design",
-          GridSize.square(7),
-          new GridPosition(6, 3),
-          new GridPosition(0, 3),
-          Duration.ofSeconds(25),
-          Duration.ofSeconds(6),
-          Duration.ofSeconds(8),
-          MOVE_INTERVAL,
-          MouseBehavior.LEFT_PRIORITY,
-          53L);
+  private static final LevelDefinition PROPOSED_LEVEL = Levels.milestoneThree();
 
   private static final Set<GridPosition> PASSING_LAYOUT_A =
       Set.of(
@@ -118,6 +106,24 @@ final class MilestoneThreeLevelDesignTest {
           6, 3, 6, 2, 6, 3, 5, 3, 6, 3, 6, 4, 6, 5, 5, 5, 4, 5, 4, 4, 4, 5, 3, 5, 2, 5, 2, 4, 2, 3,
           3, 3, 2, 3, 2, 2, 2, 1, 3, 1, 4, 1, 4, 2, 4, 1, 5, 1, 5, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0,
           1, 0, 0, 0, 0, 1);
+
+  @Test
+  void productionLevelMatchesEveryAcceptedAuthoredParameter() {
+    assertEquals("milestone-3", PROPOSED_LEVEL.id());
+    assertEquals("Milestone 3", PROPOSED_LEVEL.name());
+    assertEquals(GridSize.square(7), PROPOSED_LEVEL.gridSize());
+    assertEquals(position(6, 3), PROPOSED_LEVEL.mouseStart());
+    assertEquals(position(0, 3), PROPOSED_LEVEL.cheese());
+    assertEquals(Duration.ofSeconds(25), PROPOSED_LEVEL.buildTime());
+    assertEquals(Duration.ofSeconds(6), PROPOSED_LEVEL.targetSolveTime());
+    assertEquals(Duration.ofSeconds(8), PROPOSED_LEVEL.maximumSolveTime());
+    assertEquals(MOVE_INTERVAL, PROPOSED_LEVEL.mouseMoveInterval());
+    assertEquals(MouseBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.mouseBehavior());
+    assertEquals(53L, PROPOSED_LEVEL.randomSeed());
+    assertEquals(
+        List.of(Levels.milestoneOne(), Levels.milestoneTwo(), PROPOSED_LEVEL),
+        Levels.catalog().levels());
+  }
 
   @Test
   void mapsEveryHeadingToTheAcceptedAbsolutePriority() {
