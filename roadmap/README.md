@@ -66,9 +66,10 @@ Add a genuinely mobile-playable responsive layout, a harder second authored leve
 progression, data-driven level selection, and complete cross-platform release coverage while retaining
 the existing random mouse and normal walls.
 
-See [Milestone 2](milestone-2.md).
+See [Milestone 2](milestone-2.md) and the accepted
+[release baseline](../docs/milestone-2-release.md).
 
-Status: planned.
+Status: complete.
 
 ### Milestone 3: New Mouse Behavior
 

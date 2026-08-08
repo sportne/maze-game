@@ -16,6 +16,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M2-05: Implement the second authored level](milestone-2-05-level-implementation.md)
 - [M2-06: Make level-selection and game UI data-driven](milestone-2-06-multi-level-ui.md)
 - [M2-07: Add multi-level end-to-end and release coverage](milestone-2-07-release-coverage.md)
+- [M2-08: Playtest, tune, and release Milestone 2](milestone-2-08-playtest-release.md)
 
 ## TeaVM and GitHub Pages
 

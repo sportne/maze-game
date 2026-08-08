@@ -23,7 +23,6 @@ import java.util.Objects;
  * @param bestResult best saved result for the current level, or null when none exists
  * @param levelProgress authored level presentation state in catalog order
  * @param audioEnabled whether session audio is enabled
- * @param clearWallMode whether a primary pointer clears walls during the build phase
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
  */
@@ -38,7 +37,6 @@ public record GameRenderSnapshot(
     BestResult bestResult,
     List<LevelProgress> levelProgress,
     boolean audioEnabled,
-    boolean clearWallMode,
     boolean resultPassed,
     boolean hasNextLevel) {
   /** Creates a render snapshot with required frame state validated. */

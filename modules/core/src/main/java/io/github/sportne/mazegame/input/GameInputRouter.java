@@ -69,9 +69,6 @@ public final class GameInputRouter {
 
   private static GameInputAction routeBuildControls(
       ScreenLayout layout, int screenX, float screenYFromBottom) {
-    if (contains(layout, MazeGameLayout.BUILD_WALL_MODE, screenX, screenYFromBottom)) {
-      return GameInputAction.of(GameInputActionType.TOGGLE_WALL_MODE);
-    }
     if (contains(layout, MazeGameLayout.BUILD_START, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.START_RUN);
     }
@@ -151,7 +148,7 @@ public final class GameInputRouter {
       return GameInputAction.NONE;
     }
     if (button == Input.Buttons.LEFT) {
-      return GameInputAction.cell(GameInputActionType.PLACE_WALL, position.get());
+      return GameInputAction.cell(GameInputActionType.TOGGLE_WALL, position.get());
     }
     if (button == Input.Buttons.RIGHT) {
       return GameInputAction.cell(GameInputActionType.CLEAR_WALL, position.get());

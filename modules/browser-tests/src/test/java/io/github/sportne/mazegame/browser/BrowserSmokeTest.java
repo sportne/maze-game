@@ -312,10 +312,8 @@ final class BrowserSmokeTest {
         assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
         resizeAndAssert(page, rotated);
         rotatedControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_WALL_MODE);
+            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
         assertWallCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
-        rotatedControls.clickButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_WALL_MODE);
         rotatedControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
         assertOpenCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
         resizeAndAssert(page, primary);
@@ -549,7 +547,6 @@ final class BrowserSmokeTest {
       click(point);
       waitForPixelChange(page, point.x(), point.y(), emptyColor);
       int wallColor = pixelColor(page, point.x(), point.y());
-      clickButton(GamePhase.BUILDING, level, false, MazeGameLayout.BUILD_WALL_MODE);
       click(point);
       waitForPixelChange(page, point.x(), point.y(), wallColor);
     }

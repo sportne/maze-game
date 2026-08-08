@@ -36,7 +36,8 @@ JavaScript, WebGL, Web Audio, and local storage enabled. Touch input supports po
 viewports with at least 568 CSS pixels on the long side and 270 on the short side. Smaller viewports
 receive resize guidance.
 
-The release matrix was run against the live Pages URL on 2026-08-03:
+The desktop release matrix was run against the live Pages URL on 2026-08-03. The two-level local
+release candidate and touch matrix were run on 2026-08-08:
 
 | Browser or input | Version exercised | Result |
 | --- | --- | --- |
@@ -45,21 +46,26 @@ The release matrix was run against the live Pages URL on 2026-08-03:
 | Firefox engine | 151.0 | Full mouse game flow passed |
 | WebKit compatibility | 26.5 | Full mouse game flow passed |
 | Safari on macOS | 26.5.2 | Automated branded Safari release flow passed |
-| Chromium touch emulation | 149.0.7827.55 | Full touch game flow passed |
+| Chromium touch emulation | 149.0.7827.55 | Two-level portrait and constrained-landscape touch flows passed |
+| Safari on a physical iPhone | Version not recorded | Two-level JavaScript playtest passed in portrait and landscape |
 
-Each passing flow covered cache-busted direct navigation, relative asset loading from
+Each passing desktop flow covered cache-busted direct navigation, relative asset loading from
 `/maze-game/`, canvas initialization, audio loading and Web Audio resume after interaction, menu
-and level selection, maze editing, game completion, local persistence, and reload. The Chrome,
-Edge, Firefox, WebKit, and touch-emulation flows observed no page, console, request, or HTTP
-response errors.
+and level selection, maze editing, game completion, local persistence, and reload. The updated
+Chromium flow completes both levels, including locked selection, unlock, independent best results,
+retry, replay, and reload, in JavaScript and WebAssembly. Its touch contexts complete the same
+two-level flow at 390x844 portrait and 844x286 toolbar-constrained landscape sizes. The automated
+flows reported no page, console, request, or HTTP response errors.
 
 The Pages workflow validates every deployment in branded Safari through Apple's `safaridriver` on
 GitHub's `macos-15` runner. The test records the exact browser and platform version with its
 screenshot artifact. It covers the live game loop, required asset HTTP status and MIME types,
 audio loading, runtime errors after initialization, local persistence, and refresh behavior.
 SafariDriver does not expose complete browser-console history, so initialization is additionally
-guarded by the page's visible failure state. Real iPhone or iPad Safari has not been exercised and
-remains an explicit rollout constraint.
+guarded by the page's visible failure state. Physical iPhone Safari has exercised the responsive
+two-level JavaScript release in portrait and landscape, although the exact device and browser
+versions were not recorded. Real iPhone or iPad Safari remains an explicit constraint for the
+WebAssembly preview.
 
 ## Browser Data and Audio
 
@@ -69,9 +75,10 @@ private browsing ends, or storage is evicted. A storage failure must not prevent
 running, but the best result may not survive a reload.
 
 Browsers may keep Web Audio suspended until the first click or touch. The release flow confirms
-that audio loads and the context resumes after interaction. Browser mute settings, autoplay
-policy, operating-system audio configuration, or accessibility preferences can still prevent
-audible output.
+that audio loads and the context resumes after interaction. On iPhone Safari, Silent Mode can still
+suppress audible music even while the browser reports that Web Audio is running; disable Silent
+Mode to hear it. Browser mute settings, autoplay policy, other operating-system audio configuration,
+or accessibility preferences can also prevent audible output.
 
 ## JavaScript and WebAssembly
 

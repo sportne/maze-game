@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
-import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.state.GamePhase;
@@ -512,7 +511,6 @@ final class SafariReleaseTest {
       clickCanvas(driver, point.x(), point.y());
       waitForPixelChange(driver, point.x(), point.y(), emptyColor);
       int wallColor = pixelAt(driver, point.x(), point.y());
-      clickButton(GamePhase.BUILDING, level, false, MazeGameLayout.BUILD_WALL_MODE);
       clickCanvas(driver, point.x(), point.y());
       waitForPixelChange(driver, point.x(), point.y(), wallColor);
     }

@@ -1,6 +1,6 @@
 # Milestone 2: Mobile-Playable Two-Level Progression
 
-Status: planned
+Status: complete
 
 ## Goal
 
@@ -50,8 +50,11 @@ block mechanic is introduced.
 5. [M2-05: Implement the second authored level](done/milestone-2-05-level-implementation.md)
 6. [M2-06: Make level-selection and game UI data-driven](done/milestone-2-06-multi-level-ui.md)
 7. [M2-07: Add multi-level end-to-end and release coverage](done/milestone-2-07-release-coverage.md)
-8. [M2-08: Playtest, tune, and release Milestone 2](milestone-2-08-playtest-release.md)
-9. [M2-09: Define Milestone 3's new mouse type](milestone-2-09-define-milestone-3.md)
+8. [M2-08: Playtest, tune, and release Milestone 2](done/milestone-2-08-playtest-release.md)
+
+M2-09 is non-gating follow-up planning for the next milestone:
+
+- [M2-09: Define Milestone 3's new mouse type](milestone-2-09-define-milestone-3.md)
 
 ## Future Direction
 

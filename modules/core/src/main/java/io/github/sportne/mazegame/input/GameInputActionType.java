@@ -29,11 +29,8 @@ public enum GameInputActionType {
   /** Start the mouse run early from the build phase. */
   START_RUN,
 
-  /** Toggle whether a primary pointer clears or places walls. */
-  TOGGLE_WALL_MODE,
-
-  /** Place a wall at the clicked grid cell. */
-  PLACE_WALL,
+  /** Toggle the wall at the clicked grid cell. */
+  TOGGLE_WALL,
 
   /** Clear a wall at the clicked grid cell. */
   CLEAR_WALL,

@@ -299,40 +299,31 @@ final class MazeGameTest {
   }
 
   @Test
-  void leftClickPlacesWallAndRightClickClearsWall() {
+  void leftClickTogglesWallAndRightClickStillClearsWall() {
     MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertTrue(game.mazeState().hasWallAt(wall));
 
+    game.handleGridClick(wall, Input.Buttons.LEFT);
+    assertFalse(game.mazeState().hasWallAt(wall));
+
+    game.handleGridClick(wall, Input.Buttons.LEFT);
     game.handleGridClick(wall, Input.Buttons.RIGHT);
     assertFalse(game.mazeState().hasWallAt(wall));
   }
 
   @Test
-  void wallModeMakesPrimaryPointerClearAndResetsOnRetry() {
+  void primaryPointerClearsAnOccupiedCellOnItsSecondClick() {
     MazeGame game = startedGame();
     GridPosition wall = new GridPosition(2, 2);
-    game.handleGridClick(wall, Input.Buttons.LEFT);
-    ScreenRectangle modeButton =
-        game.debugScreenLayout(GamePhase.BUILDING, 1280, 720)
-            .bounds(MazeGameLayout.BUILD_WALL_MODE);
 
-    game.handleScreenClick(
-        Math.round(modeButton.x() + modeButton.width() / 2.0F),
-        Math.round(720.0F - modeButton.y() - modeButton.height() / 2.0F),
-        Input.Buttons.LEFT,
-        1280,
-        720);
     game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
-
-    assertFalse(game.mazeState().hasWallAt(wall));
-
-    game.retryLevel();
-    game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
-
     assertTrue(game.mazeState().hasWallAt(wall));
+
+    game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
+    assertFalse(game.mazeState().hasWallAt(wall));
   }
 
   @Test

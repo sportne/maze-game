@@ -19,7 +19,7 @@ public record GameInputAction(GameInputActionType type, GridPosition position, S
   public GameInputAction {
     Objects.requireNonNull(type, "type");
     boolean cellAction =
-        type == GameInputActionType.PLACE_WALL || type == GameInputActionType.CLEAR_WALL;
+        type == GameInputActionType.TOGGLE_WALL || type == GameInputActionType.CLEAR_WALL;
     boolean levelAction = type == GameInputActionType.SELECT_LEVEL;
     if (cellAction && position == null) {
       throw new IllegalArgumentException("cell actions require a position");

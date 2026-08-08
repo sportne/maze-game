@@ -111,7 +111,6 @@ final class MazeGameRendererTest {
             levelProgress(bestResult),
             true,
             false,
-            false,
             true);
 
     assertEquals(GamePhase.MOUSE_RUNNING, snapshot.phase());
@@ -135,8 +134,7 @@ final class MazeGameRendererTest {
         NullPointerException.class,
         () ->
             new GameRenderSnapshot(
-                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, List.of(), true, false, false,
-                false));
+                null, LEVEL, maze, 12.0F, null, 0.0F, null, null, List.of(), true, false, false));
   }
 
   @Test
@@ -213,7 +211,6 @@ final class MazeGameRendererTest {
                 new LevelProgress(Levels.milestoneTwo(), true, secondBest)),
             true,
             false,
-            false,
             false);
 
     renderer.render(layout(GamePhase.LEVEL_SELECT), snapshot);
@@ -250,7 +247,6 @@ final class MazeGameRendererTest {
                     Levels.milestoneOne(), true, new BestResult(Duration.ofSeconds(10), 40)),
                 new LevelProgress(Levels.milestoneTwo(), true, null)),
             true,
-            false,
             true,
             true);
     ScreenLayout resultLayout =
@@ -285,7 +281,6 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Milestone 1"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
     assertTrue(font.capturedText().contains("Delay past 5.0s; keep a path to the cheese"));
-    assertTrue(font.capturedText().contains("Mode: Place"));
     assertTrue(font.capturedText().contains("Start Mouse"));
     assertTrue(font.capturedText().contains("Milestone 1 | 7.5s | >5.0s"));
     assertTrue(font.capturedText().contains("Milestone 1 | Success | >5.0s"));
@@ -329,7 +324,6 @@ final class MazeGameRendererTest {
             progress,
             true,
             false,
-            false,
             false);
     ScreenLayout selectLayout =
         MazeGameLayout.forPhase(
@@ -351,7 +345,6 @@ final class MazeGameRendererTest {
             firstBest,
             progress,
             true,
-            false,
             true,
             true);
     ScreenLayout resultLayout =
@@ -398,7 +391,6 @@ final class MazeGameRendererTest {
         mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
         levelProgress(mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40)),
         true,
-        false,
         resultPassed,
         false);
   }

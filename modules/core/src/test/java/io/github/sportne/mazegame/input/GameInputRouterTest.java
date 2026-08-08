@@ -96,9 +96,6 @@ final class GameInputRouterTest {
   @Test
   void routesBuildControlsAndGridCells() {
     assertEquals(
-        GameInputActionType.TOGGLE_WALL_MODE,
-        click(GamePhase.BUILDING, MazeGameLayout.BUILD_WALL_MODE).type());
-    assertEquals(
         GameInputActionType.START_RUN,
         click(GamePhase.BUILDING, MazeGameLayout.BUILD_START).type());
 
@@ -121,7 +118,7 @@ final class GameInputRouterTest {
             GRID_SIZE,
             LEVEL_PROGRESS);
 
-    assertEquals(GameInputActionType.PLACE_WALL, place.type());
+    assertEquals(GameInputActionType.TOGGLE_WALL, place.type());
     assertEquals(new GridPosition(2, 2), place.position());
     assertEquals(GameInputActionType.CLEAR_WALL, clear.type());
     assertEquals(new GridPosition(2, 2), clear.position());
@@ -217,7 +214,7 @@ final class GameInputRouterTest {
   void cellActionsRequireCellPayloads() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.PLACE_WALL, null, null));
+        () -> new GameInputAction(GameInputActionType.TOGGLE_WALL, null, null));
   }
 
   @Test

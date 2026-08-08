@@ -87,9 +87,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
 
-  /** Whether primary-pointer grid clicks clear walls instead of placing them. */
-  private boolean clearWallMode;
-
   /** Whether the platform has delivered the gesture required to start browser audio. */
   private boolean audioGestureReceived;
 
@@ -218,13 +215,11 @@ public final class MazeGame extends ApplicationAdapter {
   /** Resets all session state and enters the startup menu. */
   private void initializeMainMenu() {
     session.initializeMainMenu();
-    clearWallMode = false;
   }
 
   /** Resets all session state for a fresh attempt of the selected level. */
   void startLevel(String levelId) {
     session.startLevel(levelId);
-    clearWallMode = false;
   }
 
   /**
@@ -413,11 +408,6 @@ public final class MazeGame extends ApplicationAdapter {
         () -> Gdx.audio == null ? null : Gdx.audio.newMusic(backgroundMusicFile()));
   }
 
-  /** Toggles the touch-safe primary-pointer wall edit mode. */
-  void toggleWallMode() {
-    clearWallMode = !clearWallMode;
-  }
-
   /**
    * Advances the active phase by a frame delta.
    *
@@ -458,7 +448,11 @@ public final class MazeGame extends ApplicationAdapter {
    */
   void handleGridClick(GridPosition position, int button) {
     if (button == Input.Buttons.LEFT) {
-      session.placeWall(position);
+      if (session.mazeState().hasWallAt(position)) {
+        session.clearWall(position);
+      } else {
+        session.placeWall(position);
+      }
     } else if (button == Input.Buttons.RIGHT) {
       session.clearWall(position);
     }
@@ -515,15 +509,12 @@ public final class MazeGame extends ApplicationAdapter {
       case QUIT -> runtimeConfiguration.exitAction().run();
       case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
       case TOGGLE_AUDIO -> toggleAudio();
-      case TOGGLE_WALL_MODE -> toggleWallMode();
       case SELECT_LEVEL -> startLevel(action.levelId());
       case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {
         // Recognized but intentionally state-neutral actions.
       }
       case START_RUN -> startRun();
-      case PLACE_WALL ->
-          handleGridClick(
-              action.position(), clearWallMode ? Input.Buttons.RIGHT : Input.Buttons.LEFT);
+      case TOGGLE_WALL -> handleGridClick(action.position(), Input.Buttons.LEFT);
       case CLEAR_WALL -> handleGridClick(action.position(), Input.Buttons.RIGHT);
       case RETRY -> retryLevel();
       case REPLAY -> replayRun();
@@ -535,7 +526,6 @@ public final class MazeGame extends ApplicationAdapter {
   /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
     session.retryLevel();
-    clearWallMode = false;
   }
 
   /** Replays the completed maze from the same deterministic seed. */
@@ -592,7 +582,6 @@ public final class MazeGame extends ApplicationAdapter {
         session.bestResult(),
         session.levelProgress(),
         audioEnabled(),
-        clearWallMode,
         resultPassed(),
         hasNextLevel());
   }

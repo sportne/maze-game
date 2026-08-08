@@ -1,6 +1,6 @@
 # M2-08: Playtest, Tune, and Release Milestone 2
 
-Status: pending
+Status: complete
 
 Depends on: M2-01 through M2-07
 
@@ -45,3 +45,29 @@ adjustments, and document a stable Milestone 2 release baseline.
 - Complete both levels from a clean profile and an existing Milestone 1 profile.
 - Run the full quality and release gates after the last tuning change.
 - Review the release evidence against every Milestone 2 definition-of-done item.
+
+## Completion Evidence
+
+- Accepted the authored parameters without further tuning. Deterministic empty, passing, and timeout
+  fixtures retain their documented outcomes, and the debug harness completes both levels.
+- JavaScript and WebAssembly release flows complete both levels from isolated clean profiles, then
+  verify independent results and unlock state after reload. Portrait, toolbar-constrained landscape,
+  and safe-content landscape touch evidence uses the same production artifacts.
+- Physical iPhone Safari playtesting accepted both levels in portrait and landscape after the old
+  minimum-window gate was removed. Exact device and browser versions were not recorded.
+- The initial playtest found the separate place/clear mode awkward. The accepted interaction toggles
+  the tapped cell directly, removes the redundant mode control, and retains desktop right-click
+  clearing. Physical-iPhone retesting accepted the change and the remaining mobile presentation.
+- The iPhone audio observation was traced to Silent Mode and is documented as expected platform
+  behavior; no alternate audio path was added.
+- [`docs/milestone-2-release.md`](../../docs/milestone-2-release.md) records the accepted parameters,
+  playtest matrix, progression behavior, input sizes, known constraints, and release gates.
+- Local formatting, static analysis, coverage, tests, browser builds and flows, Pages assembly, and
+  native packaging passed. The user-mandated single aggregate push produces the post-commit CI,
+  deployment, and branded-Safari evidence required to close the execution cycle.
+
+## Post-Commit Aggregate Gate
+
+M2-08 is committed before deployment because this task cycle permits only one push after all five
+task commits. The aggregate push must leave CI, Pages deployment, and branded Safari green. If it
+does not, fixes are tested and staged for owner review without another commit or push.
