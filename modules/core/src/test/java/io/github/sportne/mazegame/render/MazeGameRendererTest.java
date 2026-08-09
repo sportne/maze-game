@@ -406,6 +406,28 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void placedCellDragAddsNonColorSourceReservationWithoutHidingTypePreview() {
+    GridPosition source = new GridPosition(3, 1);
+    GridPosition destination = new GridPosition(2, 2);
+    PaletteDragPreview palettePreview =
+        new PaletteDragPreview(PlaceableCellType.SLOW_FLOOR, 300.0F, 300.0F, destination, true);
+    PaletteDragPreview cellPreview =
+        new PaletteDragPreview(
+            PlaceableCellType.SLOW_FLOOR, 300.0F, 300.0F, destination, true, source);
+    RecordingShapeRenderer paletteShapes = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer cellShapes = allocate(RecordingShapeRenderer.class);
+
+    renderer(allocate(RecordingSpriteBatch.class), paletteShapes, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshotWithPreview(palettePreview));
+    renderer(allocate(RecordingSpriteBatch.class), cellShapes, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshotWithPreview(cellPreview));
+
+    assertEquals(12, previewLineCount(paletteShapes));
+    assertEquals(20, previewLineCount(cellShapes));
+    assertFalse(paletteShapes.recordedLines().equals(cellShapes.recordedLines()));
+  }
+
+  @Test
   void compactPresentationUsesLabelsThatFitNarrowCardsAndActions() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =

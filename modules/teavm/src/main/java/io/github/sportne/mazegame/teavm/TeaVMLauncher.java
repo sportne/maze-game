@@ -3,6 +3,8 @@ package io.github.sportne.mazegame.teavm;
 import com.badlogic.gdx.Gdx;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplication;
 import io.github.sportne.mazegame.MazeGame;
+import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
+import io.github.sportne.mazegame.state.BestResultStore;
 import org.teavm.jso.JSBody;
 import org.teavm.jso.browser.Window;
 import org.teavm.jso.core.JSArrayReader;
@@ -31,11 +33,15 @@ public final class TeaVMLauncher {
   public static void main(String[] args) {
     configurePage();
     try {
+      MazeGameRuntimeConfiguration runtimeConfiguration =
+          TeaVMRuntimeConfiguration.create(
+              assetPath -> Gdx.files.internal(assetPath), TeaVMLauncher::gameRendered);
+      BestResultStore bestResultStore = TeaVMBestResultStore.create();
       activeGame =
-          new MazeGame(
-              TeaVMRuntimeConfiguration.create(
-                  assetPath -> Gdx.files.internal(assetPath), TeaVMLauncher::gameRendered),
-              TeaVMBestResultStore.create());
+          browserBuildGestureFixtureRequested(
+                  Window.current().getLocation().getHostName(), TeaVMLauncher::sessionStorageItem)
+              ? BrowserBuildGestureFixture.create(runtimeConfiguration, bestResultStore)
+              : new MazeGame(runtimeConfiguration, bestResultStore);
       new WebApplication(activeGame, TeaVMApplicationConfiguration.create()) {
         @Override
         protected void onError(Throwable error) {
@@ -48,6 +54,25 @@ public final class TeaVMLauncher {
       showFailureState();
       throw error;
     }
+  }
+
+  static boolean browserBuildGestureFixtureRequested(
+      String hostName, FixtureTokenReader fixtureTokenReader) {
+    return BrowserBuildGestureFixture.isLoopback(hostName)
+        && BrowserBuildGestureFixture.requested(
+            hostName, fixtureTokenReader.read(BrowserBuildGestureFixture.STORAGE_KEY));
+  }
+
+  @JSBody(
+      params = "key",
+      script =
+          "try { return window.sessionStorage.getItem(key); }"
+              + " catch (storageError) { return null; }")
+  private static native String sessionStorageItem(String key);
+
+  @FunctionalInterface
+  interface FixtureTokenReader {
+    String read(String key);
   }
 
   private static void configurePage() {

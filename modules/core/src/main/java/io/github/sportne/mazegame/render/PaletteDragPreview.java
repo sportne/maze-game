@@ -12,13 +12,15 @@ import java.util.Objects;
  * @param pointerY clamped-preview source y in bottom-left screen coordinates
  * @param destination grid destination under the pointer, or null outside the grid
  * @param validDestination whether dropping on the destination would be accepted
+ * @param sourcePosition reserved occupied-cell source, or null for a palette drag
  */
 public record PaletteDragPreview(
     PlaceableCellType type,
     float pointerX,
     float pointerY,
     GridPosition destination,
-    boolean validDestination) {
+    boolean validDestination,
+    GridPosition sourcePosition) {
   /** Validates required preview state. */
   public PaletteDragPreview {
     Objects.requireNonNull(type, "type");
@@ -28,5 +30,15 @@ public record PaletteDragPreview(
     if (destination == null && validDestination) {
       throw new IllegalArgumentException("an outside-grid preview cannot be valid");
     }
+  }
+
+  /** Creates a palette-origin preview without a reserved grid source. */
+  public PaletteDragPreview(
+      PlaceableCellType type,
+      float pointerX,
+      float pointerY,
+      GridPosition destination,
+      boolean validDestination) {
+    this(type, pointerX, pointerY, destination, validDestination, null);
   }
 }

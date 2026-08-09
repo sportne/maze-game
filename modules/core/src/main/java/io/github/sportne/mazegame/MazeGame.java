@@ -68,7 +68,7 @@ public final class MazeGame extends ApplicationAdapter {
   /** Current mutable gameplay session. */
   private final GameSession session;
 
-  /** Controller-owned transient state for one active palette pointer gesture. */
+  /** Controller-owned transient state for one active build pointer gesture. */
   private final BuildGestureController buildGestureController = new BuildGestureController();
 
   /** Controller for optional background music. */
@@ -133,6 +133,11 @@ public final class MazeGame extends ApplicationAdapter {
   public MazeGame(
       MazeGameRuntimeConfiguration runtimeConfiguration, BestResultStore bestResultStore) {
     this(null, runtimeConfiguration, bestResultStore);
+  }
+
+  /** Creates the game around an explicit session for platform integration fixtures. */
+  public MazeGame(MazeGameRuntimeConfiguration runtimeConfiguration, GameSession gameSession) {
+    this(null, runtimeConfiguration, gameSession);
   }
 
   /**
@@ -544,7 +549,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Starts a palette gesture or dispatches a non-palette press through normal click routing.
+   * Starts a palette or grid gesture or dispatches another press through normal click routing.
    *
    * @param screenX CSS-pixel x coordinate from the left edge
    * @param screenY CSS-pixel y coordinate from the top edge
@@ -565,14 +570,31 @@ public final class MazeGame extends ApplicationAdapter {
       Optional<PlaceableCellType> paletteType =
           GameInputRouter.paletteTypeAt(layout, screenX, screenHeight - screenY);
       if (paletteType.isPresent()) {
-        return buildGestureController.press(pointer, paletteType.get(), screenX, screenY, 1.0F);
+        return buildGestureController.pressPalette(
+            pointer, paletteType.get(), screenX, screenY, 1.0F);
+      }
+      Optional<GridPosition> gridPosition =
+          GameInputRouter.gridPositionAt(
+              layout.bounds(MazeGameLayout.GAME_GRID),
+              screenX,
+              screenHeight - screenY,
+              session.levelDefinition().gridSize());
+      if (gridPosition.isPresent()) {
+        GridPosition source = gridPosition.get();
+        return buildGestureController.pressCell(
+            pointer,
+            source,
+            Optional.ofNullable(session.mazeState().placedCellAt(source)),
+            screenX,
+            screenY,
+            1.0F);
       }
     }
     return handleScreenClick(screenX, screenY, button, screenWidth, screenHeight);
   }
 
   /**
-   * Updates the owning palette pointer.
+   * Updates the owning build pointer.
    *
    * @param screenX CSS-pixel x coordinate from the left edge
    * @param screenY CSS-pixel y coordinate from the top edge
@@ -584,14 +606,14 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Completes selection or placement for the owning palette pointer.
+   * Completes selection, placement, click editing, or movement for the owning pointer.
    *
    * @param screenX CSS-pixel x coordinate from the left edge
    * @param screenY CSS-pixel y coordinate from the top edge
    * @param pointer pointer id
    * @param screenWidth logical screen width
    * @param screenHeight logical screen height
-   * @return exact placement result, or empty for selection, cancellation, or a non-owner
+   * @return exact edit result, or empty for selection, cancellation, or a non-owner
    */
   public Optional<MazeEditResult> handlePointerUp(
       int screenX, int screenY, int pointer, int screenWidth, int screenHeight) {
@@ -601,8 +623,14 @@ public final class MazeGame extends ApplicationAdapter {
       return Optional.empty();
     }
     BuildGestureState gesture = released.get();
-    if (!gesture.dragThresholdCrossed()) {
+    if (!gesture.dragThresholdCrossed() && gesture.paletteOrigin()) {
       session.selectCellType(gesture.originType());
+      return Optional.empty();
+    }
+    if (!gesture.dragThresholdCrossed()) {
+      return session.placeOrReplaceCell(gesture.originPosition());
+    }
+    if (!gesture.dragging()) {
       return Optional.empty();
     }
     ScreenLayout layout = screenLayout(GamePhase.BUILDING, screenWidth, screenHeight);
@@ -615,11 +643,14 @@ public final class MazeGame extends ApplicationAdapter {
     if (destination.isEmpty()) {
       return Optional.empty();
     }
-    session.selectCellType(gesture.originType());
-    return session.placeOrReplaceCell(destination.get());
+    if (gesture.paletteOrigin()) {
+      session.selectCellType(gesture.originType());
+      return session.placeOrReplaceCell(destination.get());
+    }
+    return session.moveCell(gesture.originPosition(), destination.get());
   }
 
-  /** Clears active palette preview and pointer ownership without editing. */
+  /** Clears active build preview and pointer ownership without editing. */
   public void cancelBuildGesture() {
     buildGestureController.cancel();
   }
@@ -634,7 +665,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Builds the current palette preview for a logical screen size.
+   * Builds the current palette or placed-cell preview for a logical screen size.
    *
    * @param screenWidth logical screen width
    * @param screenHeight logical screen height
@@ -642,9 +673,7 @@ public final class MazeGame extends ApplicationAdapter {
    */
   PaletteDragPreview paletteDragPreview(int screenWidth, int screenHeight) {
     Optional<BuildGestureState> active = buildGestureController.state();
-    if (active.isEmpty()
-        || !active.get().dragThresholdCrossed()
-        || gamePhase() != GamePhase.BUILDING) {
+    if (active.isEmpty() || !active.get().dragging() || gamePhase() != GamePhase.BUILDING) {
       return null;
     }
     BuildGestureState gesture = active.get();
@@ -655,17 +684,28 @@ public final class MazeGame extends ApplicationAdapter {
             gesture.currentX(),
             screenHeight - gesture.currentY(),
             session.levelDefinition().gridSize());
-    boolean valid =
-        destination
-            .flatMap(position -> session.previewPlaceOrReplaceCell(gesture.originType(), position))
-            .map(result -> result.status().accepted())
-            .orElse(false);
+    boolean valid;
+    if (gesture.paletteOrigin()) {
+      valid =
+          destination
+              .flatMap(
+                  position -> session.previewPlaceOrReplaceCell(gesture.originType(), position))
+              .map(result -> result.status().accepted())
+              .orElse(false);
+    } else {
+      valid =
+          destination
+              .flatMap(position -> session.previewMoveCell(gesture.originPosition(), position))
+              .map(result -> result.status().accepted())
+              .orElse(false);
+    }
     return new PaletteDragPreview(
         gesture.originType(),
         gesture.currentX(),
         screenHeight - gesture.currentY(),
         destination.orElse(null),
-        valid);
+        valid,
+        gesture.originPosition());
   }
 
   /**

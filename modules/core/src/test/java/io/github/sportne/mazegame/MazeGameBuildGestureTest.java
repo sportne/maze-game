@@ -3,6 +3,7 @@ package io.github.sportne.mazegame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.badlogic.gdx.Input;
@@ -28,10 +29,12 @@ import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
-final class MazeGamePaletteDragTest {
+final class MazeGameBuildGestureTest {
   private static final int WIDTH = 1280;
   private static final int HEIGHT = 720;
   private static final GridPosition DESTINATION = new GridPosition(2, 1);
@@ -212,6 +215,125 @@ final class MazeGamePaletteDragTest {
     assertLateReleaseDoesNotEdit(game, destination, 0, initial);
   }
 
+  @Test
+  void placedWallsAndSlowFloorsMoveAtomicallyWithoutChangingFiniteOrInfiniteInventory() {
+    MazeGame game = game(level(CellSupply.finite(2), CellSupply.infinite(), GridSize.square(5)));
+    GridPosition wallSource = new GridPosition(3, 0);
+    GridPosition slowSource = new GridPosition(3, 4);
+    GridPosition wallDestination = new GridPosition(2, 0);
+    GridPosition slowDestination = new GridPosition(2, 4);
+    place(game, PlaceableCellType.WALL, wallSource);
+    place(game, PlaceableCellType.SLOW_FLOOR, slowSource);
+    Map<PlaceableCellType, CellSupply> suppliesBefore = game.mazeState().remainingSupplies();
+
+    MazeState beforeWall = game.mazeState();
+    beginCellDrag(game, wallSource, wallDestination, 2);
+    assertSame(beforeWall, game.mazeState());
+    PaletteDragPreview wallPreview = game.paletteDragPreview(WIDTH, HEIGHT);
+    assertEquals(wallSource, wallPreview.sourcePosition());
+    assertEquals(PlaceableCellType.WALL, wallPreview.type());
+    assertTrue(wallPreview.validDestination());
+    assertEquals(
+        MazeEditStatus.MOVED, releaseCellDrag(game, wallDestination, 2).orElseThrow().status());
+
+    MazeState beforeSlow = game.mazeState();
+    beginCellDrag(game, slowSource, slowDestination, 2);
+    assertSame(beforeSlow, game.mazeState());
+    PaletteDragPreview slowPreview = game.paletteDragPreview(WIDTH, HEIGHT);
+    assertEquals(slowSource, slowPreview.sourcePosition());
+    assertEquals(PlaceableCellType.SLOW_FLOOR, slowPreview.type());
+    assertTrue(slowPreview.validDestination());
+    assertEquals(
+        MazeEditStatus.MOVED, releaseCellDrag(game, slowDestination, 2).orElseThrow().status());
+
+    assertNull(game.mazeState().placedCellAt(wallSource));
+    assertEquals(PlaceableCellType.WALL, game.mazeState().placedCellAt(wallDestination));
+    assertNull(game.mazeState().placedCellAt(slowSource));
+    assertEquals(PlaceableCellType.SLOW_FLOOR, game.mazeState().placedCellAt(slowDestination));
+    assertEquals(suppliesBefore, game.mazeState().remainingSupplies());
+  }
+
+  @Test
+  void placedCellMoveRejectsEveryInvalidDestinationWithoutPublishingTransientState() {
+    MazeGame game = game(level(CellSupply.finite(4), CellSupply.infinite(), GridSize.square(3)));
+    GridPosition source = new GridPosition(2, 0);
+    GridPosition occupied = new GridPosition(1, 2);
+    GridPosition otherBarrier = new GridPosition(1, 0);
+    GridPosition blocksPath = new GridPosition(1, 1);
+    GridPosition protectedStart = new GridPosition(2, 1);
+    place(game, PlaceableCellType.WALL, source);
+    place(game, PlaceableCellType.WALL, occupied);
+    place(game, PlaceableCellType.WALL, otherBarrier);
+    MazeState original = game.mazeState();
+    Map<PlaceableCellType, CellSupply> supplies = original.remainingSupplies();
+
+    assertRejectedMove(
+        game, source, occupied, MazeEditStatus.REJECTED_OCCUPIED_DESTINATION, original);
+    assertRejectedMove(
+        game, source, protectedStart, MazeEditStatus.REJECTED_PROTECTED_CELL, original);
+    assertRejectedMove(game, source, blocksPath, MazeEditStatus.REJECTED_BLOCKS_PATH, original);
+
+    beginCellDrag(game, source, source, 3);
+    MazeEditResult sourceDrop = releaseCellDrag(game, source, 3).orElseThrow();
+    assertEquals(MazeEditStatus.NO_OP, sourceDrop.status());
+    assertSame(original, game.mazeState());
+
+    beginCellDrag(game, source, blocksPath, 3);
+    assertTrue(game.handlePointerUp(0, 0, 3, WIDTH, HEIGHT).isEmpty());
+    assertSame(original, game.mazeState());
+    assertEquals(supplies, game.mazeState().remainingSupplies());
+  }
+
+  @Test
+  void gridTapKeepsActiveToolSemanticsAndEmptyCellDragDoesNothing() {
+    MazeGame game = game(level(CellSupply.finite(2), CellSupply.finite(2), GridSize.square(5)));
+    GridPosition source = new GridPosition(2, 1);
+    GridPosition other = new GridPosition(2, 3);
+    place(game, PlaceableCellType.SLOW_FLOOR, source);
+    click(game, paletteCenter(game, PlaceableCellType.WALL));
+
+    assertEquals(MazeEditStatus.REPLACED, tapCell(game, source, 5, 7).orElseThrow().status());
+    assertEquals(PlaceableCellType.WALL, game.mazeState().placedCellAt(source));
+    assertEquals(MazeEditStatus.REMOVED, tapCell(game, source, 5, 0).orElseThrow().status());
+    assertNull(game.mazeState().placedCellAt(source));
+    assertEquals(MazeEditStatus.PLACED, tapCell(game, source, 5, 0).orElseThrow().status());
+
+    MazeState beforeEmptyDrag = game.mazeState();
+    beginCellDrag(game, other, source, 5);
+    assertFalse(game.buildGestureState().orElseThrow().dragging());
+    assertNull(game.paletteDragPreview(WIDTH, HEIGHT));
+    assertTrue(releaseCellDrag(game, source, 5).isEmpty());
+    assertSame(beforeEmptyDrag, game.mazeState());
+  }
+
+  @Test
+  void placedCellCancellationAndExplorationRacesPreserveTheExactSourceMaze() {
+    GridPosition source = new GridPosition(2, 1);
+    GridPosition destination = new GridPosition(2, 3);
+    MazeGame game = game(level(CellSupply.finite(1), CellSupply.infinite(), GridSize.square(5)));
+    place(game, PlaceableCellType.SLOW_FLOOR, source);
+    MazeState original = game.mazeState();
+
+    beginCellDrag(game, source, destination, 6);
+    game.cancelBuildGesture();
+    assertLateReleaseDoesNotEdit(game, cellCenter(game, destination), 6, original);
+
+    beginCellDrag(game, source, destination, 6);
+    game.resize(844, 286);
+    assertLateReleaseDoesNotEdit(game, cellCenter(game, destination), 6, original);
+
+    beginCellDrag(game, source, destination, 6);
+    game.pause();
+    assertLateReleaseDoesNotEdit(game, cellCenter(game, destination), 6, original);
+    game.resume();
+
+    beginCellDrag(game, source, destination, 6);
+    game.updateGame(game.buildTimeRemainingSeconds());
+    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertLateReleaseDoesNotEdit(game, cellCenter(game, destination), 6, original);
+    assertEquals(PlaceableCellType.SLOW_FLOOR, game.mazeState().placedCellAt(source));
+  }
+
   private static void assertEquivalent(
       LevelDefinition level,
       Consumer<MazeGame> setup,
@@ -243,6 +365,22 @@ final class MazeGamePaletteDragTest {
     }
   }
 
+  private static void assertRejectedMove(
+      MazeGame game,
+      GridPosition source,
+      GridPosition destination,
+      MazeEditStatus status,
+      MazeState original) {
+    beginCellDrag(game, source, destination, 3);
+    PaletteDragPreview preview = game.paletteDragPreview(WIDTH, HEIGHT);
+    assertFalse(preview.validDestination());
+    assertEquals(source, preview.sourcePosition());
+    MazeEditResult result = releaseCellDrag(game, destination, 3).orElseThrow();
+    assertEquals(status, result.status());
+    assertSame(original, result.mazeState());
+    assertSame(original, game.mazeState());
+  }
+
   private static void beginDrag(
       MazeGame game, ScreenPoint palette, ScreenPoint destination, int pointer) {
     assertTrue(
@@ -250,6 +388,33 @@ final class MazeGamePaletteDragTest {
             palette.x(), palette.y(), pointer, Input.Buttons.LEFT, WIDTH, HEIGHT));
     assertTrue(game.handlePointerDragged(destination.x(), destination.y(), pointer));
     assertTrue(game.buildGestureState().orElseThrow().dragThresholdCrossed());
+  }
+
+  private static void beginCellDrag(
+      MazeGame game, GridPosition source, GridPosition destination, int pointer) {
+    ScreenPoint sourcePoint = cellCenter(game, source);
+    ScreenPoint destinationPoint = cellCenter(game, destination);
+    assertTrue(
+        game.handlePointerDown(
+            sourcePoint.x(), sourcePoint.y(), pointer, Input.Buttons.LEFT, WIDTH, HEIGHT));
+    int dragX = source.equals(destination) ? destinationPoint.x() + 8 : destinationPoint.x();
+    assertTrue(game.handlePointerDragged(dragX, destinationPoint.y(), pointer));
+    assertTrue(game.buildGestureState().orElseThrow().dragThresholdCrossed());
+  }
+
+  private static Optional<MazeEditResult> releaseCellDrag(
+      MazeGame game, GridPosition destination, int pointer) {
+    ScreenPoint destinationPoint = cellCenter(game, destination);
+    return game.handlePointerUp(destinationPoint.x(), destinationPoint.y(), pointer, WIDTH, HEIGHT);
+  }
+
+  private static Optional<MazeEditResult> tapCell(
+      MazeGame game, GridPosition position, int pointer, int deltaX) {
+    ScreenPoint point = cellCenter(game, position);
+    assertTrue(
+        game.handlePointerDown(point.x(), point.y(), pointer, Input.Buttons.LEFT, WIDTH, HEIGHT));
+    assertTrue(game.handlePointerDragged(point.x() + deltaX, point.y(), pointer));
+    return game.handlePointerUp(point.x() + deltaX, point.y(), pointer, WIDTH, HEIGHT);
   }
 
   private static void assertLateReleaseDoesNotEdit(
@@ -319,7 +484,7 @@ final class MazeGamePaletteDragTest {
       CellSupply wallSupply, CellSupply slowSupply, GridSize gridSize) {
     int centerColumn = gridSize.columns() / 2;
     return new LevelDefinition(
-        "palette-drag-" + gridSize.rows() + "x" + gridSize.columns(),
+        "palette-drag-%dx%d".formatted(gridSize.rows(), gridSize.columns()),
         "Palette Drag",
         gridSize,
         new GridPosition(gridSize.rows() - 1, centerColumn),

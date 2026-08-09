@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.input;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
+import io.github.sportne.mazegame.model.grid.GridPosition;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -33,15 +34,32 @@ public final class BuildGestureController {
       float inputX,
       float inputY,
       float pixelsPerCssPixel) {
+    return pressPalette(pointerId, originType, inputX, inputY, pixelsPerCssPixel);
+  }
+
+  /** Starts a palette press when no pointer already owns the controller. */
+  public boolean pressPalette(
+      int pointerId,
+      PlaceableCellType originType,
+      float inputX,
+      float inputY,
+      float pixelsPerCssPixel) {
     Objects.requireNonNull(originType, "originType");
-    validateScale(pixelsPerCssPixel);
-    if (state != null) {
-      return false;
-    }
-    float cssX = inputX / pixelsPerCssPixel;
-    float cssY = inputY / pixelsPerCssPixel;
-    state = new BuildGestureState(pointerId, originType, cssX, cssY, cssX, cssY, false);
-    return true;
+    return press(pointerId, originType, null, inputX, inputY, pixelsPerCssPixel);
+  }
+
+  /** Starts an empty or occupied grid-cell press when no pointer already owns the controller. */
+  public boolean pressCell(
+      int pointerId,
+      GridPosition originPosition,
+      Optional<PlaceableCellType> originType,
+      float inputX,
+      float inputY,
+      float pixelsPerCssPixel) {
+    Objects.requireNonNull(originPosition, "originPosition");
+    Objects.requireNonNull(originType, "originType");
+    return press(
+        pointerId, originType.orElse(null), originPosition, inputX, inputY, pixelsPerCssPixel);
   }
 
   /**
@@ -113,7 +131,7 @@ public final class BuildGestureController {
    * @return true only during an active drag
    */
   public boolean pointerCaptured() {
-    return state != null && state.dragThresholdCrossed();
+    return state != null && state.dragging();
   }
 
   private BuildGestureState updatedState(float cssX, float cssY) {
@@ -125,11 +143,30 @@ public final class BuildGestureController {
     return new BuildGestureState(
         state.pointerId(),
         state.originType(),
+        state.originPosition(),
         state.pressX(),
         state.pressY(),
         cssX,
         cssY,
         thresholdCrossed);
+  }
+
+  private boolean press(
+      int pointerId,
+      PlaceableCellType originType,
+      GridPosition originPosition,
+      float inputX,
+      float inputY,
+      float pixelsPerCssPixel) {
+    validateScale(pixelsPerCssPixel);
+    if (state != null) {
+      return false;
+    }
+    float cssX = inputX / pixelsPerCssPixel;
+    float cssY = inputY / pixelsPerCssPixel;
+    state =
+        new BuildGestureState(pointerId, originType, originPosition, cssX, cssY, cssX, cssY, false);
+    return true;
   }
 
   private static void validateScale(float pixelsPerCssPixel) {

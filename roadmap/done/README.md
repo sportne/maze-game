@@ -38,6 +38,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M4-04: Integrate selected tools and atomic edits into the build session](milestone-4-04-session-editing.md)
 - [M4-05: Render the responsive palette and support select-then-place](milestone-4-05-palette-placement.md)
 - [M4-06: Add drag-from-palette placement](milestone-4-06-palette-drag.md)
+- [M4-07: Reposition placed cells by drag](milestone-4-07-cell-repositioning.md)
 
 ## TeaVM and GitHub Pages
 

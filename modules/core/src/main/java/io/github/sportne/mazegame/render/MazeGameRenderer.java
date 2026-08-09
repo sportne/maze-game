@@ -64,6 +64,9 @@ public final class MazeGameRenderer {
   /** Preview border for a destination that would reject the dragged type. */
   private static final Color DRAG_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
 
+  /** High-contrast corner marks reserving a placed-cell drag source. */
+  private static final Color DRAG_SOURCE_RESERVED = new Color(0.40F, 0.82F, 1.0F, 1.0F);
+
   /** Grid line color drawn over cell fills. */
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
 
@@ -344,11 +347,30 @@ public final class MazeGameRenderer {
       return;
     }
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    if (preview.sourcePosition() != null) {
+      drawDragSourceReservation(grid, snapshot.levelDefinition(), preview.sourcePosition());
+    }
     if (preview.destination() != null) {
       drawDragDestination(grid, snapshot.levelDefinition(), preview);
     }
     drawDragIcon(layout.viewport(), preview);
     shapeRenderer.end();
+  }
+
+  private void drawDragSourceReservation(
+      ScreenRectangle grid, LevelDefinition levelDefinition, GridPosition source) {
+    ScreenRectangle mark = insetCellBounds(grid, levelDefinition, source, 5.0F);
+    float horizontal = mark.width() * 0.25F;
+    float vertical = mark.height() * 0.25F;
+    shapeRenderer.setColor(DRAG_SOURCE_RESERVED);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.x() + horizontal, mark.y(), 3.0F);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.x(), mark.y() + vertical, 3.0F);
+    shapeRenderer.rectLine(mark.right(), mark.y(), mark.right() - horizontal, mark.y(), 3.0F);
+    shapeRenderer.rectLine(mark.right(), mark.y(), mark.right(), mark.y() + vertical, 3.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.x() + horizontal, mark.top(), 3.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.x(), mark.top() - vertical, 3.0F);
+    shapeRenderer.rectLine(mark.right(), mark.top(), mark.right() - horizontal, mark.top(), 3.0F);
+    shapeRenderer.rectLine(mark.right(), mark.top(), mark.right(), mark.top() - vertical, 3.0F);
   }
 
   private void drawDragDestination(

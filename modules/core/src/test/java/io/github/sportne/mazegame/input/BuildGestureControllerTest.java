@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 final class BuildGestureControllerTest {
@@ -58,5 +60,26 @@ final class BuildGestureControllerTest {
         IllegalArgumentException.class,
         () -> controller.press(0, PlaceableCellType.WALL, 0.0F, 0.0F, 0.0F));
     assertThrows(NullPointerException.class, () -> controller.press(0, null, 0.0F, 0.0F, 1.0F));
+  }
+
+  @Test
+  void occupiedCellCrossingThresholdCapturesWhileEmptyCellDoesNot() {
+    GridPosition source = new GridPosition(2, 1);
+    BuildGestureController occupied = new BuildGestureController();
+    BuildGestureController empty = new BuildGestureController();
+
+    assertTrue(
+        occupied.pressCell(
+            0, source, Optional.of(PlaceableCellType.SLOW_FLOOR), 10.0F, 20.0F, 1.0F));
+    assertTrue(empty.pressCell(0, source, Optional.empty(), 10.0F, 20.0F, 1.0F));
+    occupied.move(0, 18.0F, 20.0F, 1.0F);
+    empty.move(0, 18.0F, 20.0F, 1.0F);
+
+    assertTrue(occupied.pointerCaptured());
+    assertTrue(occupied.state().orElseThrow().occupiedCellOrigin());
+    assertEquals(source, occupied.state().orElseThrow().originPosition());
+    assertFalse(empty.pointerCaptured());
+    assertTrue(empty.state().orElseThrow().dragThresholdCrossed());
+    assertFalse(empty.state().orElseThrow().dragging());
   }
 }

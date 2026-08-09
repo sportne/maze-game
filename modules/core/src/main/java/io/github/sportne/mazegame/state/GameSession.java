@@ -417,6 +417,16 @@ public final class GameSession {
     return Optional.of(applyEdit(mazeState.move(source, destination), destination));
   }
 
+  /** Evaluates a placed-cell move without publishing maze, inventory, or feedback changes. */
+  public Optional<MazeEditResult> previewMoveCell(GridPosition source, GridPosition destination) {
+    Objects.requireNonNull(source, "source");
+    Objects.requireNonNull(destination, "destination");
+    if (gamePhase != GamePhase.BUILDING) {
+      return Optional.empty();
+    }
+    return Optional.of(mazeState.move(source, destination));
+  }
+
   /** Places a Wall through the shared atomic edit path for compatibility with released tests. */
   public void placeWall(GridPosition position) {
     Objects.requireNonNull(position, "position");

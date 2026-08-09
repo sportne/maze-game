@@ -50,8 +50,8 @@ playtest evidence, mobile behavior, and known constraints. The earlier
 [Milestone 2 baseline](docs/milestone-2-release.md) remains as release history.
 The planned [Milestone 4 roadmap](roadmap/milestone-4.md) defines the next inventory-based Wall and
 Slow Floor building system. Its authored supply, transactional maze inventory, shared mouse timing,
-phase-safe session editing, responsive palette, and click/drag placement are now implemented, while
-placed-cell repositioning and the fourth level remain ordered work.
+phase-safe session editing, responsive palette, click/drag placement, and placed-cell repositioning
+are now implemented, while the fourth level remains ordered work.
 
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
