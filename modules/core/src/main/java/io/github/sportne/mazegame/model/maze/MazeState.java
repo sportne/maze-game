@@ -130,6 +130,19 @@ public record MazeState(
     return placedCells.containsKey(position);
   }
 
+  /** Returns whether a candidate position is inside the grid and walkable by either mouse. */
+  public boolean isTraversable(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    return position.isWithin(levelDefinition.gridSize())
+        && placedCells.get(position) != PlaceableCellType.WALL;
+  }
+
+  /** Returns whether entering a cell delays the next mouse decision by one movement interval. */
+  public boolean delaysNextDecisionAt(GridPosition position) {
+    requireInsideGrid(position);
+    return placedCells.get(position) == PlaceableCellType.SLOW_FLOOR;
+  }
+
   /** Returns the placeable type at a position, or null when the cell is empty or protected. */
   public PlaceableCellType placedCellAt(GridPosition position) {
     requireInsideGrid(position);

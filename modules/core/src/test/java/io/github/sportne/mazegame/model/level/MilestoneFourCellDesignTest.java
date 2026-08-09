@@ -40,7 +40,7 @@ final class MilestoneFourCellDesignTest {
   private static final Set<GridPosition> PASSING_WALLS = positions(0, 0, 1, 1, 2, 2);
   private static final Set<GridPosition> PASSING_SLOW_FLOORS = positions(6, 2, 6, 1, 6, 0);
   private static final Set<GridPosition> TIMEOUT_WALLS = positions(0, 1, 1, 2, 2, 1);
-  private static final Set<GridPosition> TIMEOUT_SLOW_FLOORS = positions(1, 0, 2, 0, 3, 0);
+  private static final Set<GridPosition> TIMEOUT_SLOW_FLOORS = positions(1, 0, 2, 0, 1, 3);
 
   private static final List<GridPosition> EMPTY_TRACE =
       path(6, 3, 6, 2, 6, 1, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 3);
@@ -53,7 +53,7 @@ final class MilestoneFourCellDesignTest {
   private static final List<GridPosition> TIMEOUT_TRACE =
       path(
           6, 3, 6, 2, 6, 1, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 0, 3, 0,
-          3, 1, 3, 2, 2, 2, 2, 3);
+          3, 1, 3, 2, 2, 2, 2, 3, 1, 3);
 
   @Test
   void recordsAcceptedLevelParametersAndCombinedPassingFixture() {
@@ -248,8 +248,8 @@ final class MilestoneFourCellDesignTest {
         ReferenceSimulation.scout(board(TIMEOUT_WALLS, TIMEOUT_SLOW_FLOORS)).update(TIMEOUT);
 
     assertEquals(TIMEOUT_TRACE, run.trace());
-    assertEquals(new RunResult(position(2, 3), TIMEOUT, 18, RunStatus.TIMED_OUT), run.result());
-    assertEquals(18, run.decisionTimesMillis().size());
+    assertEquals(new RunResult(position(1, 3), TIMEOUT, 19, RunStatus.TIMED_OUT), run.result());
+    assertEquals(19, run.decisionTimesMillis().size());
   }
 
   @Test
@@ -272,9 +272,9 @@ final class MilestoneFourCellDesignTest {
     assertEquals(RunStatus.REACHED_CHEESE, scout.result().status());
     assertEquals(Duration.ofMillis(5750), scout.result().elapsed());
     assertEquals(
-        new RunResult(position(4, 4), TIMEOUT, 25, RunStatus.TIMED_OUT), randomEmpty.result());
+        new RunResult(position(4, 3), TIMEOUT, 26, RunStatus.TIMED_OUT), randomEmpty.result());
     assertEquals(
-        new RunResult(position(5, 4), TIMEOUT, 24, RunStatus.TIMED_OUT), randomCombined.result());
+        new RunResult(position(4, 4), TIMEOUT, 25, RunStatus.TIMED_OUT), randomCombined.result());
     assertTrue(passed(randomEmpty.result()));
     assertTrue(passed(randomCombined.result()));
   }
@@ -603,6 +603,7 @@ final class MilestoneFourCellDesignTest {
     private Direction heading = Direction.NORTH;
     private Duration elapsed = Duration.ZERO;
     private Duration untilDecision = MOVE_INTERVAL;
+    private boolean delayedDecision;
     private int moveCount;
     private RunStatus status = RunStatus.RUNNING;
 
@@ -629,10 +630,14 @@ final class MilestoneFourCellDesignTest {
         elapsed = elapsed.plus(step);
         remaining = remaining.minus(step);
         untilDecision = untilDecision.minus(step);
-        if (elapsed.compareTo(TIMEOUT) >= 0) {
-          status = RunStatus.TIMED_OUT;
-        } else if (untilDecision.isZero()) {
+        boolean reachedTimeout = elapsed.compareTo(TIMEOUT) >= 0;
+        if (untilDecision.isZero() && !(delayedDecision && reachedTimeout)) {
           moveOnce();
+          if (status == RunStatus.RUNNING && reachedTimeout) {
+            status = RunStatus.TIMED_OUT;
+          }
+        } else if (reachedTimeout) {
+          status = RunStatus.TIMED_OUT;
         }
       }
       return snapshot();
@@ -646,7 +651,8 @@ final class MilestoneFourCellDesignTest {
       if (position.equals(CHEESE)) {
         status = RunStatus.REACHED_CHEESE;
       } else {
-        untilDecision = board.isSlow(position) ? MOVE_INTERVAL.multipliedBy(2) : MOVE_INTERVAL;
+        delayedDecision = board.isSlow(position);
+        untilDecision = delayedDecision ? MOVE_INTERVAL.multipliedBy(2) : MOVE_INTERVAL;
       }
     }
 

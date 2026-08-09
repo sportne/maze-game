@@ -227,12 +227,13 @@ supply therefore cannot recreate an earlier unlimited-Wall pass. Test-side editi
 exercises infinite-Wall/zero-Slow-Floor authoring as the released-level compatibility case.
 
 A timeout fixture uses Walls at `(0,1)`, `(1,2)`, `(2,1)` and Slow Floors at `(1,0)`, `(2,0)`,
-`(3,0)`. Repeated entries consume the remaining time and stop Scout at `(2,3)` after 18 moves at
-exactly 6.5 seconds, with no post-timeout decision. Whole-duration and 100-millisecond chunked runs
-produce identical traces, decision timestamps, counts, and results. Parallel seeded-Random fixtures
+`(1,3)`. Scout enters the final Slow Floor at 6.25 seconds, then its pending extra wait reaches the
+6.5-second timeout at `(1,3)` after 19 moves, with no post-timeout decision. Whole-duration and
+100-millisecond chunked runs produce identical traces, decision timestamps, counts, and results.
+Parallel seeded-Random fixtures
 prove the same Slow Floor timing rule preserves its route and move count. Random seed 53 times out
-even on the empty board at `(4,4)` after 25 moves; the combined board also times out, at `(5,4)`
-after 24 moves. Because its do-nothing and combined layouts both pass, it does not provide Scout's
+even on the empty board at `(4,3)` after 26 moves; the combined board also times out, at `(4,4)`
+after 25 moves. Because its do-nothing and combined layouts both pass, it does not provide Scout's
 deliberate, teachable combined-type threshold; Scout is therefore retained for Level 4. The
 test-side wall-only traces for both mouse behaviors are cross-checked against the existing production
 simulation implementations so the reference timing model cannot silently redefine route choice.

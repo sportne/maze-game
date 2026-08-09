@@ -60,7 +60,7 @@ The exact mechanic and gesture contract is recorded in
 
 1. [M4-01: Validate cell mechanics and balance Level 4](done/milestone-4-01-cell-design.md)
 2. [M4-02: Add authored supplies and transactional maze inventory](done/milestone-4-02-domain-inventory.md)
-3. [M4-03: Apply Slow Floor timing to both mouse simulations](milestone-4-03-slow-floor-simulation.md)
+3. [M4-03: Apply Slow Floor timing to both mouse simulations](done/milestone-4-03-slow-floor-simulation.md)
 4. [M4-04: Integrate selected tools and atomic edits into the build session](milestone-4-04-session-editing.md)
 5. [M4-05: Render the responsive palette and support select-then-place](milestone-4-05-palette-placement.md)
 6. [M4-06: Add drag-from-palette placement](milestone-4-06-palette-drag.md)

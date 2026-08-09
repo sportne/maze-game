@@ -10,13 +10,15 @@ abstract class TimedMouseSimulation implements MouseSimulation {
   private final MazeState mazeState;
   private GridPosition position;
   private Duration elapsedTime = Duration.ZERO;
-  private Duration accumulatedTime = Duration.ZERO;
+  private Duration timeUntilDecision;
+  private boolean delayedDecision;
   private int moveCount;
   private MouseRunStatus status = MouseRunStatus.RUNNING;
 
   TimedMouseSimulation(MazeState mazeState) {
     this.mazeState = Objects.requireNonNull(mazeState, "mazeState");
     position = mazeState.levelDefinition().mouseStart();
+    timeUntilDecision = mazeState.levelDefinition().mouseMoveInterval();
   }
 
   @Override
@@ -33,14 +35,24 @@ abstract class TimedMouseSimulation implements MouseSimulation {
     while (status == MouseRunStatus.RUNNING && !remainingDelta.isZero()) {
       Duration step = nextStep(remainingDelta);
       elapsedTime = elapsedTime.plus(step);
-      accumulatedTime = accumulatedTime.plus(step);
+      timeUntilDecision = timeUntilDecision.minus(step);
       remainingDelta = remainingDelta.minus(step);
-      if (accumulatedTime.compareTo(mazeState.levelDefinition().mouseMoveInterval()) >= 0) {
-        accumulatedTime = Duration.ZERO;
+      boolean reachedTimeout =
+          elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0;
+      if (timeUntilDecision.isZero() && !(delayedDecision && reachedTimeout)) {
         moveOnce();
         moveCount++;
+        updateStatus();
+        if (status == MouseRunStatus.RUNNING) {
+          delayedDecision = mazeState.delaysNextDecisionAt(position);
+          timeUntilDecision =
+              delayedDecision
+                  ? mazeState.levelDefinition().mouseMoveInterval().multipliedBy(2)
+                  : mazeState.levelDefinition().mouseMoveInterval();
+        }
+      } else {
+        updateStatus();
       }
-      updateStatus();
     }
     return result();
   }
@@ -62,8 +74,7 @@ abstract class TimedMouseSimulation implements MouseSimulation {
   }
 
   final boolean isOpen(GridPosition candidate) {
-    return candidate.isWithin(mazeState.levelDefinition().gridSize())
-        && !mazeState.hasWallAt(candidate);
+    return mazeState.isTraversable(candidate);
   }
 
   private Duration nextStep(Duration remainingDelta) {
@@ -71,7 +82,7 @@ abstract class TimedMouseSimulation implements MouseSimulation {
   }
 
   private Duration timeUntilNextMove() {
-    return mazeState.levelDefinition().mouseMoveInterval().minus(accumulatedTime);
+    return timeUntilDecision;
   }
 
   private Duration timeUntilTimeout() {

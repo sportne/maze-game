@@ -34,6 +34,7 @@ and planned cards remain in the parent `roadmap/` directory.
 
 - [M4-01: Validate cell mechanics and balance Level 4](milestone-4-01-cell-design.md)
 - [M4-02: Add authored supplies and transactional maze inventory](milestone-4-02-domain-inventory.md)
+- [M4-03: Apply Slow Floor timing to both mouse simulations](milestone-4-03-slow-floor-simulation.md)
 
 ## TeaVM and GitHub Pages
 

@@ -1,6 +1,8 @@
 # M4-03: Apply Slow Floor Timing to Both Mouse Simulations
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-02
 
