@@ -122,7 +122,8 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals(MouseBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.mouseBehavior());
     assertEquals(53L, PROPOSED_LEVEL.randomSeed());
     assertEquals(
-        List.of(Levels.milestoneOne(), Levels.milestoneTwo(), PROPOSED_LEVEL),
+        List.of(
+            Levels.milestoneOne(), Levels.milestoneTwo(), PROPOSED_LEVEL, Levels.milestoneFour()),
         Levels.catalog().levels());
   }
 

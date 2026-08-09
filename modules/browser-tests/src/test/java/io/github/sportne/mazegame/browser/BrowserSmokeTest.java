@@ -226,11 +226,11 @@ final class BrowserSmokeTest {
         SCOUT_STATUS_SIGNATURE,
         true);
     controls.clickButtonAndWaitForChange(
-        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
+        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
     controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
         GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
     controls.clickButton(
@@ -256,7 +256,7 @@ final class BrowserSmokeTest {
     controls.clickButton(
         GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -546,16 +546,16 @@ final class BrowserSmokeTest {
         waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
         assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
 
         primaryControls.clickButtonAndWaitForChange(
-            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.waitForButton(
             GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
         assertTrue(
@@ -846,7 +846,7 @@ final class BrowserSmokeTest {
     private final int levelCount;
 
     private BrowserControls(Page page, int width, int height, boolean touch) {
-      this(page, width, height, touch, 3);
+      this(page, width, height, touch, Levels.catalog().levels().size());
     }
 
     private BrowserControls(Page page, int width, int height, boolean touch, int levelCount) {

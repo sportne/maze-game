@@ -604,9 +604,7 @@ public final class MazeGameRenderer {
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
-        "Delay past "
-            + formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F)
-            + "; keep a path to the cheese",
+        buildInstructions(snapshot),
         layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS).x(),
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
@@ -624,6 +622,15 @@ public final class MazeGameRenderer {
               bounds.height());
       drawCenteredText(paletteLabel(paletteItem), labelBounds);
     }
+  }
+
+  static String buildInstructions(GameRenderSnapshot snapshot) {
+    String target =
+        formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F);
+    if (snapshot.levelDefinition().supplyFor(PlaceableCellType.SLOW_FLOOR).available()) {
+      return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
+    }
+    return String.format(Locale.ROOT, "Delay past %s; keep a path to the cheese", target);
   }
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {

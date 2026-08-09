@@ -46,6 +46,8 @@ final class BrowserGameScenario {
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
     controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(4));
+    controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
         GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
@@ -128,7 +130,14 @@ final class BrowserGameScenario {
 
   private static ScreenLayout layout(
       int width, int height, GamePhase phase, LevelDefinition level, boolean hasNextLevel) {
-    return MazeGameLayout.forPhase(phase, width, height, level.gridSize(), false, 3, hasNextLevel);
+    return MazeGameLayout.forPhase(
+        phase,
+        width,
+        height,
+        level.gridSize(),
+        false,
+        Levels.catalog().levels().size(),
+        hasNextLevel);
   }
 
   interface Controls {

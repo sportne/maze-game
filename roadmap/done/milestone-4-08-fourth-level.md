@@ -1,6 +1,8 @@
 # M4-08: Add the Fourth Authored Level and Progression
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-01, M4-03, M4-04, M4-05, M4-06, M4-07
 

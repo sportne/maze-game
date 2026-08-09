@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.level;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
@@ -61,9 +62,27 @@ public final class Levels {
           MouseBehavior.LEFT_PRIORITY,
           53L);
 
+  /** Fourth 7x7 level introducing finite Walls and Slow Floors with Scout. */
+  private static final LevelDefinition MILESTONE_FOUR =
+      new LevelDefinition(
+          "milestone-4",
+          "Milestone 4",
+          GridSize.square(7),
+          new GridPosition(6, 3),
+          new GridPosition(0, 3),
+          Duration.ofSeconds(25),
+          Duration.ofMillis(5500),
+          Duration.ofMillis(6500),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 3),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
+          MouseBehavior.LEFT_PRIORITY,
+          53L);
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
-      new LevelCatalog(List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE));
+      new LevelCatalog(List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE, MILESTONE_FOUR));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -93,6 +112,15 @@ public final class Levels {
    */
   public static LevelDefinition milestoneThree() {
     return MILESTONE_THREE;
+  }
+
+  /**
+   * Returns the fourth authored level featuring finite Walls and Slow Floors.
+   *
+   * @return the milestone-four level definition
+   */
+  public static LevelDefinition milestoneFour() {
+    return MILESTONE_FOUR;
   }
 
   /**

@@ -202,6 +202,37 @@ public final class MazeGameDebugHarness {
   }
 
   /**
+   * Simulates clicking the enabled Milestone 4 card.
+   *
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness clickMilestoneFourLevel() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(4)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /**
+   * Drags one palette item to a grid cell through the desktop pointer path.
+   *
+   * @param type palette type to drag
+   * @param destination grid cell that receives the item
+   * @return this harness for fluent scripting
+   */
+  public MazeGameDebugHarness dragPaletteItemToCell(
+      PlaceableCellType type, GridPosition destination) {
+    ScreenRectangle palette =
+        currentScreenLayout(GamePhase.BUILDING).bounds(MazeGameLayout.paletteItemId(type));
+    ScreenPoint start = topLeftCenter(palette);
+    ScreenPoint end = cellCenter(destination);
+    game.handlePointerDown(start.x(), start.y(), 0, Input.Buttons.LEFT, screenWidth, screenHeight);
+    game.handlePointerDragged(end.x(), end.y(), 0);
+    game.handlePointerUp(end.x(), end.y(), 0, screenWidth, screenHeight);
+    return this;
+  }
+
+  /**
    * Simulates clicking a locked future level card.
    *
    * @param index zero-based level card index from 1 to 5
@@ -322,6 +353,11 @@ public final class MazeGameDebugHarness {
    * @param button libGDX mouse button code
    */
   private void clickCell(GridPosition position, int button) {
+    ScreenPoint center = cellCenter(position);
+    game.handleScreenClick(center.x(), center.y(), button, screenWidth, screenHeight);
+  }
+
+  private ScreenPoint cellCenter(GridPosition position) {
     ScreenRectangle grid = currentScreenLayout(GamePhase.BUILDING).bounds(MazeGameLayout.GAME_GRID);
     float cellSize = grid.width() / game.mazeState().levelDefinition().gridSize().columns();
     float x = grid.x() + (position.column() + 0.5F) * cellSize;
@@ -329,7 +365,13 @@ public final class MazeGameDebugHarness {
         grid.y()
             + (game.mazeState().levelDefinition().gridSize().rows() - 1 - position.row() + 0.5F)
                 * cellSize;
-    clickAtBottomLeftCoordinates(x, yFromBottom, button);
+    return new ScreenPoint(Math.round(x), Math.round(screenHeight - yFromBottom));
+  }
+
+  private ScreenPoint topLeftCenter(ScreenRectangle bounds) {
+    return new ScreenPoint(
+        Math.round(bounds.x() + bounds.width() / 2.0F),
+        Math.round(screenHeight - bounds.y() - bounds.height() / 2.0F));
   }
 
   /**
@@ -364,4 +406,6 @@ public final class MazeGameDebugHarness {
   private ScreenLayout currentScreenLayout(GamePhase phase) {
     return game.debugScreenLayout(phase, screenWidth, screenHeight);
   }
+
+  private record ScreenPoint(int x, int y) {}
 }

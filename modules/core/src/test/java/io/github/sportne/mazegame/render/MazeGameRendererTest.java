@@ -291,6 +291,17 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void fourthLevelBuildFeedbackTeachesToolsWithoutRevealingScoutRule() {
+    String instructions = MazeGameRenderer.buildInstructions(buildSnapshot(Levels.milestoneFour()));
+
+    assertEquals("Tap or drag tools; delay past 5.5s; keep a path", instructions);
+    assertFalse(instructions.toLowerCase(java.util.Locale.ROOT).contains("left"));
+    assertEquals(
+        "Delay past 5.0s; keep a path to the cheese",
+        MazeGameRenderer.buildInstructions(buildSnapshot(Levels.milestoneOne())));
+  }
+
+  @Test
   void rendersSelectedExhaustedPaletteStateAndMarkedSlowFloorWithoutColorOnlyCues() {
     LevelDefinition level = paletteLevel();
     GridPosition slowFloor = new GridPosition(2, 1);
@@ -732,6 +743,22 @@ final class MazeGameRendererTest {
         List.of(),
         List.of(),
         preview,
+        true,
+        false,
+        false);
+  }
+
+  private static GameRenderSnapshot buildSnapshot(LevelDefinition level) {
+    return new GameRenderSnapshot(
+        GamePhase.BUILDING,
+        level,
+        MazeState.empty(level),
+        level.buildTime().toMillis() / 1000.0F,
+        null,
+        0.0F,
+        null,
+        null,
+        List.of(),
         true,
         false,
         false);

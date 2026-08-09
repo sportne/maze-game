@@ -120,7 +120,8 @@ final class LevelDefinitionTest {
 
   @Test
   void releasedLevelsExplicitlyAuthorInfiniteWallsAndZeroSlowFloors() {
-    for (LevelDefinition level : Levels.catalog().levels()) {
+    for (LevelDefinition level :
+        List.of(Levels.milestoneOne(), Levels.milestoneTwo(), Levels.milestoneThree())) {
       assertEquals(CellSupply.infinite(), level.supplyFor(PlaceableCellType.WALL));
       assertEquals(CellSupply.finite(0), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
       assertEquals(PlaceableCellSupply.releasedDefaults(), level.placeableCellSupplies());
