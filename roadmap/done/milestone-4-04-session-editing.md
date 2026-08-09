@@ -1,6 +1,8 @@
 # M4-04: Integrate Selected Tools and Atomic Edits into the Build Session
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-02, M4-03
 

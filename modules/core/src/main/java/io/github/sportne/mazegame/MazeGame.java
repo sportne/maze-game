@@ -473,13 +473,9 @@ public final class MazeGame extends ApplicationAdapter {
    */
   void handleGridClick(GridPosition position, int button) {
     if (button == Input.Buttons.LEFT) {
-      if (session.mazeState().hasWallAt(position)) {
-        session.clearWall(position);
-      } else {
-        session.placeWall(position);
-      }
+      session.placeOrReplaceCell(position);
     } else if (button == Input.Buttons.RIGHT) {
-      session.clearWall(position);
+      session.removeCell(position);
     }
   }
 

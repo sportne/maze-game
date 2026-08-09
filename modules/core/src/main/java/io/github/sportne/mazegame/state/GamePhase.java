@@ -3,7 +3,7 @@ package io.github.sportne.mazegame.state;
 /**
  * High-level phase for the playable game loop.
  *
- * <p>The phase gates input handling and rendering: menus route navigation, building accepts wall
+ * <p>The phase gates input handling and rendering: menus route navigation, building accepts cell
  * edits, running advances the mouse simulation, result shows retry/replay controls, and replay
  * reuses the completed maze.
  */

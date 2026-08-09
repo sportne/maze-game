@@ -1,11 +1,13 @@
 package io.github.sportne.mazegame.state;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.maze.WallPlacementResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.mouse.MouseSimulation;
@@ -44,6 +46,9 @@ public final class GameSession {
 
   /** Current immutable maze layout. */
   private MazeState mazeState;
+
+  /** Active placeable type, or null when every authored supply starts exhausted. */
+  private PlaceableCellType selectedCellType;
 
   /** Seconds remaining before the mouse starts automatically. */
   private float buildTimeRemainingSeconds;
@@ -141,6 +146,33 @@ public final class GameSession {
    */
   public MazeState mazeState() {
     return mazeState;
+  }
+
+  /**
+   * Returns the selected placeable type.
+   *
+   * @return active type, or an empty value when no authored type starts available
+   */
+  public Optional<PlaceableCellType> selectedCellType() {
+    return Optional.ofNullable(selectedCellType);
+  }
+
+  /**
+   * Returns immutable palette state in authored display order.
+   *
+   * @return authored supply, remaining supply, availability, and selection for every type
+   */
+  public List<CellPaletteState> paletteState() {
+    List<CellPaletteState> palette = new ArrayList<>();
+    for (PlaceableCellSupply authored : levelDefinition.placeableCellSupplies()) {
+      palette.add(
+          new CellPaletteState(
+              authored.type(),
+              authored.supply(),
+              mazeState.remainingSupply(authored.type()),
+              authored.type() == selectedCellType));
+    }
+    return List.copyOf(palette);
   }
 
   /**
@@ -313,33 +345,77 @@ public final class GameSession {
   }
 
   /**
-   * Places a wall during the build phase.
+   * Selects a placeable type without consuming inventory.
    *
-   * @param position clicked grid cell
+   * @param type authored type to keep active
    */
+  public void selectCellType(PlaceableCellType type) {
+    Objects.requireNonNull(type, "type");
+    if (gamePhase == GamePhase.BUILDING) {
+      selectedCellType = type;
+    }
+  }
+
+  /**
+   * Applies the selected type to one grid cell during the build phase.
+   *
+   * @param position destination cell
+   * @return the domain edit result, or empty when editing is inactive or no tool is selected
+   */
+  public Optional<MazeEditResult> placeOrReplaceCell(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    if (gamePhase != GamePhase.BUILDING || selectedCellType == null) {
+      return Optional.empty();
+    }
+    return Optional.of(applyEdit(mazeState.placeOrReplace(selectedCellType, position), position));
+  }
+
+  /**
+   * Removes any placed type from one grid cell during the build phase.
+   *
+   * @param position cell to clear
+   * @return the domain edit result, or empty when editing is inactive
+   */
+  public Optional<MazeEditResult> removeCell(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    if (gamePhase != GamePhase.BUILDING) {
+      return Optional.empty();
+    }
+    return Optional.of(applyEdit(mazeState.remove(position), position));
+  }
+
+  /**
+   * Moves one placed type atomically during the build phase.
+   *
+   * @param source occupied source cell
+   * @param destination empty destination cell
+   * @return the domain edit result, or empty when editing is inactive
+   */
+  public Optional<MazeEditResult> moveCell(GridPosition source, GridPosition destination) {
+    Objects.requireNonNull(source, "source");
+    Objects.requireNonNull(destination, "destination");
+    if (gamePhase != GamePhase.BUILDING) {
+      return Optional.empty();
+    }
+    return Optional.of(applyEdit(mazeState.move(source, destination), destination));
+  }
+
+  /** Places a Wall through the shared atomic edit path for compatibility with released tests. */
   public void placeWall(GridPosition position) {
     Objects.requireNonNull(position, "position");
     if (gamePhase != GamePhase.BUILDING) {
       return;
     }
-    WallPlacementResult result = mazeState.placeWall(position);
-    if (result.accepted()) {
-      mazeState = result.mazeState();
-    } else {
-      rejectedPosition = position;
-      rejectedFlashRemainingSeconds = REJECTED_FLASH_SECONDS;
+    if (!position.isWithin(levelDefinition.gridSize()) || !mazeState.hasWallAt(position)) {
+      applyEdit(mazeState.placeOrReplace(PlaceableCellType.WALL, position), position);
     }
   }
 
-  /**
-   * Clears a wall during the build phase.
-   *
-   * @param position clicked grid cell
-   */
+  /** Clears a Wall through the shared atomic edit path for compatibility with released tests. */
   public void clearWall(GridPosition position) {
     Objects.requireNonNull(position, "position");
-    if (gamePhase == GamePhase.BUILDING) {
-      mazeState = mazeState.withoutWall(position);
+    if (gamePhase == GamePhase.BUILDING && mazeState.hasWallAt(position)) {
+      applyEdit(mazeState.remove(position), position);
     }
   }
 
@@ -457,6 +533,16 @@ public final class GameSession {
     }
   }
 
+  private MazeEditResult applyEdit(MazeEditResult result, GridPosition rejectedDestination) {
+    if (result.accepted()) {
+      mazeState = result.mazeState();
+    } else {
+      rejectedPosition = rejectedDestination;
+      rejectedFlashRemainingSeconds = REJECTED_FLASH_SECONDS;
+    }
+    return result;
+  }
+
   /*
    * Resets all model state and moves to the requested phase.
    */
@@ -464,6 +550,7 @@ public final class GameSession {
     levelDefinition = Objects.requireNonNull(selectedLevel, "selectedLevel");
     bestResult = bestResults.get(levelDefinition.id());
     mazeState = MazeState.empty(levelDefinition);
+    selectedCellType = initialSelectedCellType(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
@@ -471,5 +558,13 @@ public final class GameSession {
     mouseSimulation = null;
     mouseRunResult = null;
     gamePhase = initialPhase;
+  }
+
+  private static PlaceableCellType initialSelectedCellType(LevelDefinition levelDefinition) {
+    return levelDefinition.placeableCellSupplies().stream()
+        .filter(entry -> entry.supply().available())
+        .map(PlaceableCellSupply::type)
+        .findFirst()
+        .orElse(null);
   }
 }
