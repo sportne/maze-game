@@ -1,6 +1,8 @@
 # M4-01: Validate Cell Mechanics and Balance Level 4
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-08
 

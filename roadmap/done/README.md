@@ -30,6 +30,10 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M3-07: Playtest, tune, and release Milestone 3](milestone-3-07-playtest-release.md)
 - [M3-08: Define Milestone 4's cell inventory and building interactions](milestone-3-08-define-milestone-4.md)
 
+## Milestone 4
+
+- [M4-01: Validate cell mechanics and balance Level 4](milestone-4-01-cell-design.md)
+
 ## TeaVM and GitHub Pages
 
 - [WEB-01: Align the TeaVM toolchain](teavm-01-toolchain-alignment.md)

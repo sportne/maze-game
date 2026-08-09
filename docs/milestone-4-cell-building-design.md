@@ -191,6 +191,52 @@ Random/Scout comparison, whole-duration/chunked updates, and at least one soluti
 It must also confirm that the new level is not solvable merely by recreating an earlier unlimited-wall
 strategy.
 
+## Accepted Level 4 Parameters
+
+M4-01 accepts a 7x7 fourth level with Scout, bottom-center start `(6,3)`, top-center cheese `(0,3)`,
+a 25-second build time, 250-millisecond movement interval, 5.5-second target, 6.5-second timeout,
+three Walls, and three Slow Floors. The stable production id will be `milestone-4`; production
+authoring remains deferred to M4-08.
+
+The accepted passing edit uses Walls at `(0,0)`, `(1,1)`, and `(2,2)`, with Slow Floors at `(6,2)`,
+`(6,1)`, and `(6,0)`:
+
+```text
+W . . C . . .
+. W . . . . .
+. . W . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. S S M . . .
+```
+
+`M` and `C` are protected, `W` is Wall, and `S` is Slow Floor. Scout follows this literal route:
+
+```text
+(6,3) (6,2) (6,1) (6,0) (5,0) (4,0) (3,0) (2,0) (1,0) (2,0)
+(2,1) (3,1) (3,2) (3,3) (2,3) (1,3) (1,2) (0,2) (0,1) (0,2) (0,3)
+```
+
+The 20 moves occur at 0.25, 0.75, 1.25, 1.75, then every 0.25 seconds through 5.75 seconds.
+The three Slow Floor waits add 0.75 seconds without changing the route or move count. Empty finishes
+in 3.0 seconds, Slow-Floor-only in 3.75 seconds, and the same Walls without Slow Floor in 5.0
+seconds, so each fails. Exhaustively evaluating every legal layout with zero through three Walls
+finds 5.5 seconds as the maximum and no timeout, which does not exceed the target; the finite Wall
+supply therefore cannot recreate an earlier unlimited-Wall pass. Test-side editing evidence also
+exercises infinite-Wall/zero-Slow-Floor authoring as the released-level compatibility case.
+
+A timeout fixture uses Walls at `(0,1)`, `(1,2)`, `(2,1)` and Slow Floors at `(1,0)`, `(2,0)`,
+`(3,0)`. Repeated entries consume the remaining time and stop Scout at `(2,3)` after 18 moves at
+exactly 6.5 seconds, with no post-timeout decision. Whole-duration and 100-millisecond chunked runs
+produce identical traces, decision timestamps, counts, and results. Parallel seeded-Random fixtures
+prove the same Slow Floor timing rule preserves its route and move count. Random seed 53 times out
+even on the empty board at `(4,4)` after 25 moves; the combined board also times out, at `(5,4)`
+after 24 moves. Because its do-nothing and combined layouts both pass, it does not provide Scout's
+deliberate, teachable combined-type threshold; Scout is therefore retained for Level 4. The
+test-side wall-only traces for both mouse behaviors are cross-checked against the existing production
+simulation implementations so the reference timing model cannot silently redefine route choice.
+
 Every implementation card retains formatting, static analysis, coverage, architecture, desktop,
 JavaScript, WebAssembly, responsive touch, Pages, Safari, and native-image gates in proportion to its
 scope. The release card requires a physical-phone playtest in portrait and landscape and records any
