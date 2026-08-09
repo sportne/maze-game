@@ -33,6 +33,7 @@ and planned cards remain in the parent `roadmap/` directory.
 ## Milestone 4
 
 - [M4-01: Validate cell mechanics and balance Level 4](milestone-4-01-cell-design.md)
+- [M4-02: Add authored supplies and transactional maze inventory](milestone-4-02-domain-inventory.md)
 
 ## TeaVM and GitHub Pages
 

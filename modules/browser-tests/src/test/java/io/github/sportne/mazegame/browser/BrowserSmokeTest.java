@@ -17,6 +17,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.ConsoleMessage;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.Response;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -575,17 +576,33 @@ final class BrowserSmokeTest {
   }
 
   private static void waitForRenderedControl(Page page, int x, int y) throws IOException {
-    int backgroundColor = pixelColor(page, 0, 0);
+    int backgroundColor = pixelColorAfterNavigation(page, 0, 0);
     waitForPixelChange(page, x, y, backgroundColor);
   }
 
   private static void waitForPixelChange(Page page, int x, int y, int originalColor)
       throws IOException {
     long deadline = System.nanoTime() + Duration.ofSeconds(25).toNanos();
-    while (pixelColor(page, x, y) == originalColor && System.nanoTime() < deadline) {
+    while (pixelColorAfterNavigation(page, x, y) == originalColor && System.nanoTime() < deadline) {
       page.waitForTimeout(100.0);
     }
-    assertFalse(pixelColor(page, x, y) == originalColor, "expected rendered pixel change");
+    assertFalse(
+        pixelColorAfterNavigation(page, x, y) == originalColor, "expected rendered pixel change");
+  }
+
+  private static int pixelColorAfterNavigation(Page page, int cssX, int cssY) throws IOException {
+    long deadline = System.nanoTime() + Duration.ofSeconds(25).toNanos();
+    while (true) {
+      try {
+        return pixelColor(page, cssX, cssY);
+      } catch (PlaywrightException exception) {
+        if (!exception.getMessage().contains("Execution context was destroyed")
+            || System.nanoTime() >= deadline) {
+          throw exception;
+        }
+        page.waitForTimeout(100.0);
+      }
+    }
   }
 
   private static int pixelColor(Page page, int cssX, int cssY) throws IOException {

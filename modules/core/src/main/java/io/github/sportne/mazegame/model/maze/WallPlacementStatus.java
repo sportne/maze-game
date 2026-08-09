@@ -19,6 +19,9 @@ public enum WallPlacementStatus {
   /** The requested position is reserved for the mouse start or cheese. */
   REJECTED_PROTECTED_CELL(false),
 
+  /** The compatibility wall tool has no remaining finite supply. */
+  REJECTED_EXHAUSTED_SUPPLY(false),
+
   /** Adding the requested wall would disconnect the mouse from the cheese. */
   REJECTED_BLOCKS_PATH(false);
 

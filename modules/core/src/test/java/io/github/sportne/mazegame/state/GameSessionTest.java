@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
@@ -41,6 +42,7 @@ final class GameSessionTest {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
+          PlaceableCellSupply.releasedDefaults(),
           MouseBehavior.RANDOM,
           1L);
 
@@ -265,6 +267,7 @@ final class GameSessionTest {
             source.targetSolveTime(),
             source.maximumSolveTime(),
             source.mouseMoveInterval(),
+            source.placeableCellSupplies(),
             MouseBehavior.LEFT_PRIORITY,
             256L);
     GameSession session =

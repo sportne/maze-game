@@ -447,6 +447,7 @@ final class MazeGameRendererTest {
             LEVEL.targetSolveTime(),
             LEVEL.maximumSolveTime(),
             LEVEL.mouseMoveInterval(),
+            LEVEL.placeableCellSupplies(),
             MouseBehavior.LEFT_PRIORITY,
             LEVEL.randomSeed());
     MouseRunResult scoutResult =

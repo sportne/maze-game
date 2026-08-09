@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
@@ -136,6 +137,7 @@ final class ScoutMouseSimulationTest {
             Duration.ofSeconds(1),
             Duration.ofSeconds(2),
             MOVE_INTERVAL,
+            PlaceableCellSupply.releasedDefaults(),
             MouseBehavior.LEFT_PRIORITY,
             1L);
     MazeState maze = MazeState.empty(level);
@@ -160,6 +162,7 @@ final class ScoutMouseSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(100),
             MOVE_INTERVAL,
+            PlaceableCellSupply.releasedDefaults(),
             MouseBehavior.LEFT_PRIORITY,
             1L);
     ScoutMouseSimulation scout = new ScoutMouseSimulation(MazeState.empty(level));
@@ -214,6 +217,7 @@ final class ScoutMouseSimulationTest {
         Duration.ofSeconds(6),
         Duration.ofSeconds(8),
         MOVE_INTERVAL,
+        PlaceableCellSupply.releasedDefaults(),
         MouseBehavior.LEFT_PRIORITY,
         seed);
   }

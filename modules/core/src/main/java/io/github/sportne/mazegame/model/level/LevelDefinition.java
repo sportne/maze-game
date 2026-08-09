@@ -1,8 +1,13 @@
 package io.github.sportne.mazegame.model.level;
 
+import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -21,6 +26,7 @@ import java.util.Objects;
  * @param targetSolveTime solve time the mouse must exceed for the player to pass
  * @param maximumSolveTime timeout that ends the run if the cheese is not reached
  * @param mouseMoveInterval time between mouse movement decisions
+ * @param placeableCellSupplies finite or infinite authored supply for every placeable type
  * @param mouseBehavior movement rule used by this level
  * @param randomSeed seed used by deterministic mouse AI
  */
@@ -34,6 +40,7 @@ public record LevelDefinition(
     Duration targetSolveTime,
     Duration maximumSolveTime,
     Duration mouseMoveInterval,
+    List<PlaceableCellSupply> placeableCellSupplies,
     MouseBehavior mouseBehavior,
     long randomSeed) {
   /**
@@ -52,6 +59,7 @@ public record LevelDefinition(
     requirePositive(targetSolveTime, "targetSolveTime");
     requirePositive(maximumSolveTime, "maximumSolveTime");
     requirePositive(mouseMoveInterval, "mouseMoveInterval");
+    placeableCellSupplies = validateSupplies(placeableCellSupplies);
     Objects.requireNonNull(mouseBehavior, "mouseBehavior");
     requireWithinGrid(mouseStart, gridSize, "mouseStart");
     requireWithinGrid(cheese, gridSize, "cheese");
@@ -61,6 +69,38 @@ public record LevelDefinition(
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
     }
+  }
+
+  /** Returns the authored supply for one supported placeable type. */
+  public CellSupply supplyFor(PlaceableCellType type) {
+    Objects.requireNonNull(type, "type");
+    return placeableCellSupplies.stream()
+        .filter(entry -> entry.type() == type)
+        .findFirst()
+        .orElseThrow()
+        .supply();
+  }
+
+  /** Returns an immutable defensive copy of the authored supplies in palette order. */
+  @Override
+  public List<PlaceableCellSupply> placeableCellSupplies() {
+    return List.copyOf(placeableCellSupplies);
+  }
+
+  private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {
+    Objects.requireNonNull(supplies, "placeableCellSupplies");
+    List<PlaceableCellSupply> copied = List.copyOf(supplies);
+    EnumSet<PlaceableCellType> seen = EnumSet.noneOf(PlaceableCellType.class);
+    for (PlaceableCellSupply entry : copied) {
+      Objects.requireNonNull(entry, "placeableCellSupplies entry");
+      if (!seen.add(entry.type())) {
+        throw new IllegalArgumentException("duplicate supply for " + entry.type());
+      }
+    }
+    if (!seen.equals(EnumSet.allOf(PlaceableCellType.class))) {
+      throw new IllegalArgumentException("every placeable cell type must have exactly one supply");
+    }
+    return copied;
   }
 
   /**

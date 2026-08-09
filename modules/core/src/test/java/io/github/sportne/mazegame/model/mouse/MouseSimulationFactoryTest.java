@@ -43,6 +43,7 @@ final class MouseSimulationFactoryTest {
         source.targetSolveTime(),
         source.maximumSolveTime(),
         source.mouseMoveInterval(),
+        source.placeableCellSupplies(),
         mouseBehavior,
         source.randomSeed());
   }

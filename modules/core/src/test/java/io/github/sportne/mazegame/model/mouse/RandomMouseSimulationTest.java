@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
@@ -129,6 +130,7 @@ final class RandomMouseSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(100),
             Duration.ofMillis(250),
+            PlaceableCellSupply.releasedDefaults(),
             MouseBehavior.RANDOM,
             1L);
     RandomMouseSimulation simulation = new RandomMouseSimulation(MazeState.empty(level));
@@ -160,6 +162,7 @@ final class RandomMouseSimulationTest {
         milestoneOne.targetSolveTime(),
         milestoneOne.maximumSolveTime(),
         milestoneOne.mouseMoveInterval(),
+        milestoneOne.placeableCellSupplies(),
         MouseBehavior.RANDOM,
         seed);
   }

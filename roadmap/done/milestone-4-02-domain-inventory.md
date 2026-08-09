@@ -1,6 +1,8 @@
 # M4-02: Add Authored Supplies and Transactional Maze Inventory
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-01
 

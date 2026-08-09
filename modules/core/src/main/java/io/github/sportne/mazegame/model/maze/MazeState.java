@@ -1,139 +1,142 @@
 package io.github.sportne.mazegame.model.maze;
 
+import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import java.util.ArrayDeque;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
-/**
- * Immutable wall layout for a level.
- *
- * <p>The maze owns the player-created wall set and enforces the milestone-one rule that the mouse
- * start must remain connected to the cheese through four-directional movement. UI code should use
- * {@link #placeWall(GridPosition)} for friendly rejection reasons; tests and internal code can use
- * {@link #withWall(GridPosition)} when exceptions are more convenient.
- *
- * @param levelDefinition static level data this maze belongs to
- * @param walls immutable set of normal wall positions
- */
-public record MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls) {
-  /**
-   * Creates a validated immutable maze state.
-   *
-   * @throws IllegalArgumentException when a wall is out of bounds, protected, or disconnects the
-   *     start from the cheese
-   */
+/** Immutable player-placed cells and derived inventory for one authored level. */
+public record MazeState(
+    LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
+  /** Creates a validated, defensively copied maze. */
   public MazeState {
     Objects.requireNonNull(levelDefinition, "levelDefinition");
-    Objects.requireNonNull(walls, "walls");
-    walls = Set.copyOf(walls);
-    for (GridPosition wall : walls) {
-      validateWallPosition(levelDefinition, wall);
+    Objects.requireNonNull(placedCells, "placedCells");
+    placedCells = Map.copyOf(placedCells);
+    for (Map.Entry<GridPosition, PlaceableCellType> entry : placedCells.entrySet()) {
+      validatePlacedCell(levelDefinition, entry.getKey(), entry.getValue());
     }
-    if (!hasPathFromStartToCheese(levelDefinition, walls)) {
+    deriveRemainingSupplies(levelDefinition, placedCells);
+    if (!hasPathFromStartToCheese(levelDefinition, placedCells)) {
       throw new IllegalArgumentException("maze must keep a path from mouse start to cheese");
     }
   }
 
-  /**
-   * Creates an empty maze for the given level.
-   *
-   * @param levelDefinition level data to attach to the maze
-   * @return a maze with no player-placed walls
-   */
+  /** Compatibility constructor for released wall-only fixtures during the ordered migration. */
+  public MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls) {
+    this(levelDefinition, wallCells(walls));
+  }
+
+  /** Creates an empty maze with inventory derived from the level definition. */
   public static MazeState empty(LevelDefinition levelDefinition) {
-    return new MazeState(levelDefinition, Set.of());
+    return new MazeState(levelDefinition, Map.of());
   }
 
-  /**
-   * Returns a new maze with a normal wall at the given position.
-   *
-   * @param position cell where the wall should be placed
-   * @return the updated maze when placement is accepted
-   * @throws IllegalArgumentException when the wall placement is rejected
-   */
-  public MazeState withWall(GridPosition position) {
-    WallPlacementResult result = placeWall(position);
-    if (!result.accepted()) {
-      throw new IllegalArgumentException("wall placement rejected: " + result.status());
+  /** Returns remaining finite or infinite supply for every placeable type. */
+  public Map<PlaceableCellType, CellSupply> remainingSupplies() {
+    return deriveRemainingSupplies(levelDefinition, placedCells);
+  }
+
+  /** Returns remaining finite or infinite supply for one placeable type. */
+  public CellSupply remainingSupply(PlaceableCellType type) {
+    Objects.requireNonNull(type, "type");
+    return remainingSupplies().get(type);
+  }
+
+  /** Atomically places, replaces, or removes the selected type at a destination. */
+  public MazeEditResult placeOrReplace(PlaceableCellType type, GridPosition destination) {
+    Objects.requireNonNull(type, "type");
+    Objects.requireNonNull(destination, "destination");
+    MazeEditStatus invalidDestination = validateDestination(destination);
+    if (invalidDestination != null) {
+      return MazeEditResult.rejected(this, invalidDestination);
     }
-    return result.mazeState();
+    PlaceableCellType existing = placedCells.get(destination);
+    if (existing == type) {
+      Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
+      updated.remove(destination);
+      return MazeEditResult.accepted(
+          new MazeState(levelDefinition, updated), MazeEditStatus.REMOVED);
+    }
+    if (!remainingSupply(type).available()) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY);
+    }
+    Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
+    updated.put(destination, type);
+    if (!hasPathFromStartToCheese(levelDefinition, updated)) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
+    }
+    return MazeEditResult.accepted(
+        new MazeState(levelDefinition, updated),
+        existing == null ? MazeEditStatus.PLACED : MazeEditStatus.REPLACED);
   }
 
-  /**
-   * Returns the result of trying to place a normal wall at the given position.
-   *
-   * @param position cell where the wall should be placed
-   * @return accepted result with a new maze, or rejected result with this maze unchanged
-   */
-  public WallPlacementResult placeWall(GridPosition position) {
+  /** Atomically removes a placed cell. Empty destinations are accepted no-ops. */
+  public MazeEditResult remove(GridPosition position) {
     Objects.requireNonNull(position, "position");
-    if (!position.isWithin(levelDefinition.gridSize())) {
-      return WallPlacementResult.rejected(this, WallPlacementStatus.REJECTED_OUTSIDE_GRID);
+    MazeEditStatus invalidDestination = validateDestination(position);
+    if (invalidDestination != null) {
+      return MazeEditResult.rejected(this, invalidDestination);
     }
-    if (isProtected(position)) {
-      return WallPlacementResult.rejected(this, WallPlacementStatus.REJECTED_PROTECTED_CELL);
+    if (!placedCells.containsKey(position)) {
+      return MazeEditResult.accepted(this, MazeEditStatus.NO_OP);
     }
-    if (walls.contains(position)) {
-      return WallPlacementResult.accepted(this, WallPlacementStatus.ALREADY_PRESENT);
-    }
-    Set<GridPosition> updatedWalls = new HashSet<>(walls);
-    updatedWalls.add(position);
-    if (!hasPathFromStartToCheese(levelDefinition, updatedWalls)) {
-      return WallPlacementResult.rejected(this, WallPlacementStatus.REJECTED_BLOCKS_PATH);
-    }
-    return WallPlacementResult.accepted(
-        new MazeState(levelDefinition, updatedWalls), WallPlacementStatus.PLACED);
+    Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
+    updated.remove(position);
+    return MazeEditResult.accepted(new MazeState(levelDefinition, updated), MazeEditStatus.REMOVED);
   }
 
-  /**
-   * Returns a new maze without a wall at the given position.
-   *
-   * @param position cell to clear
-   * @return updated maze without that wall
-   */
-  public MazeState withoutWall(GridPosition position) {
+  /** Atomically moves one placed cell to an empty destination without changing inventory. */
+  public MazeEditResult move(GridPosition source, GridPosition destination) {
+    Objects.requireNonNull(source, "source");
+    Objects.requireNonNull(destination, "destination");
+    if (!source.isWithin(levelDefinition.gridSize())) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_OUTSIDE_GRID);
+    }
+    PlaceableCellType type = placedCells.get(source);
+    if (type == null) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_MISSING_SOURCE);
+    }
+    MazeEditStatus invalidDestination = validateDestination(destination);
+    if (invalidDestination != null) {
+      return MazeEditResult.rejected(this, invalidDestination);
+    }
+    if (source.equals(destination)) {
+      return MazeEditResult.accepted(this, MazeEditStatus.NO_OP);
+    }
+    if (placedCells.containsKey(destination)) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_OCCUPIED_DESTINATION);
+    }
+    Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
+    updated.remove(source);
+    updated.put(destination, type);
+    if (!hasPathFromStartToCheese(levelDefinition, updated)) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
+    }
+    return MazeEditResult.accepted(new MazeState(levelDefinition, updated), MazeEditStatus.MOVED);
+  }
+
+  /** Returns whether a placeable cell occupies a grid position. */
+  public boolean hasPlacedCellAt(GridPosition position) {
     requireInsideGrid(position);
-    Set<GridPosition> updatedWalls = new HashSet<>(walls);
-    updatedWalls.remove(position);
-    return new MazeState(levelDefinition, updatedWalls);
+    return placedCells.containsKey(position);
   }
 
-  /**
-   * Returns whether a normal wall occupies the given position.
-   *
-   * @param position cell to inspect
-   * @return true when the position contains a wall
-   */
-  public boolean hasWallAt(GridPosition position) {
+  /** Returns the placeable type at a position, or null when the cell is empty or protected. */
+  public PlaceableCellType placedCellAt(GridPosition position) {
     requireInsideGrid(position);
-    return walls.contains(position);
+    return placedCells.get(position);
   }
 
-  /**
-   * Returns whether the given position is reserved for start or cheese content.
-   *
-   * @param position cell to inspect
-   * @return true when the cell is the mouse start or cheese endpoint
-   */
-  public boolean isProtected(GridPosition position) {
-    requireInsideGrid(position);
-    return position.equals(levelDefinition.mouseStart())
-        || position.equals(levelDefinition.cheese());
-  }
-
-  /**
-   * Returns the content rendered for the given position.
-   *
-   * <p>Start and cheese are reported before walls, although wall placement prevents protected-cell
-   * walls from existing.
-   *
-   * @param position cell to inspect
-   * @return render-independent content for the cell
-   */
+  /** Returns the content rendered for one grid position. */
   public CellContent cellContentAt(GridPosition position) {
     requireInsideGrid(position);
     if (position.equals(levelDefinition.mouseStart())) {
@@ -142,26 +145,84 @@ public record MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls
     if (position.equals(levelDefinition.cheese())) {
       return CellContent.CHEESE;
     }
-    if (walls.contains(position)) {
-      return CellContent.NORMAL_WALL;
-    }
-    return CellContent.EMPTY;
+    return switch (placedCells.get(position)) {
+      case WALL -> CellContent.NORMAL_WALL;
+      case SLOW_FLOOR -> CellContent.SLOW_FLOOR;
+      case null -> CellContent.EMPTY;
+    };
   }
 
-  /**
-   * Returns whether the mouse start can reach the cheese through open cells.
-   *
-   * @return true when at least one four-directional path exists
-   */
+  /** Returns whether the start remains connected to the cheese through walkable cells. */
   public boolean hasPathFromStartToCheese() {
-    return hasPathFromStartToCheese(levelDefinition, walls);
+    return hasPathFromStartToCheese(levelDefinition, placedCells);
   }
 
-  /**
-   * Validates that a runtime query position is inside this maze.
-   *
-   * @param position position to validate
-   */
+  /** Wall-only compatibility view retained until session and renderer migration is complete. */
+  public Set<GridPosition> walls() {
+    Set<GridPosition> walls = new HashSet<>();
+    placedCells.forEach(
+        (position, type) -> {
+          if (type == PlaceableCellType.WALL) {
+            walls.add(position);
+          }
+        });
+    return Set.copyOf(walls);
+  }
+
+  /** Wall-only compatibility query retained for existing simulations and UI code. */
+  public boolean hasWallAt(GridPosition position) {
+    requireInsideGrid(position);
+    return placedCells.get(position) == PlaceableCellType.WALL;
+  }
+
+  /** Wall-only compatibility placement retained during the ordered migration. */
+  public WallPlacementResult placeWall(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    if (position.isWithin(levelDefinition.gridSize()) && hasWallAt(position)) {
+      return WallPlacementResult.accepted(this, WallPlacementStatus.ALREADY_PRESENT);
+    }
+    MazeEditResult edit = placeOrReplace(PlaceableCellType.WALL, position);
+    return edit.accepted()
+        ? WallPlacementResult.accepted(edit.mazeState(), WallPlacementStatus.PLACED)
+        : WallPlacementResult.rejected(this, wallRejectionStatus(edit.status()));
+  }
+
+  /** Wall-only compatibility convenience that throws when placement is rejected. */
+  public MazeState withWall(GridPosition position) {
+    WallPlacementResult result = placeWall(position);
+    if (!result.accepted()) {
+      throw new IllegalArgumentException("wall placement rejected: " + result.status());
+    }
+    return result.mazeState();
+  }
+
+  /** Wall-only compatibility removal retained during the ordered migration. */
+  public MazeState withoutWall(GridPosition position) {
+    requireInsideGrid(position);
+    if (placedCells.get(position) != PlaceableCellType.WALL) {
+      return this;
+    }
+    return remove(position).mazeState();
+  }
+
+  /** Returns whether a position is reserved for the mouse start or cheese. */
+  public boolean isProtected(GridPosition position) {
+    requireInsideGrid(position);
+    return position.equals(levelDefinition.mouseStart())
+        || position.equals(levelDefinition.cheese());
+  }
+
+  private MazeEditStatus validateDestination(GridPosition position) {
+    if (!position.isWithin(levelDefinition.gridSize())) {
+      return MazeEditStatus.REJECTED_OUTSIDE_GRID;
+    }
+    if (position.equals(levelDefinition.mouseStart())
+        || position.equals(levelDefinition.cheese())) {
+      return MazeEditStatus.REJECTED_PROTECTED_CELL;
+    }
+    return null;
+  }
+
   private void requireInsideGrid(GridPosition position) {
     Objects.requireNonNull(position, "position");
     if (!position.isWithin(levelDefinition.gridSize())) {
@@ -169,44 +230,57 @@ public record MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls
     }
   }
 
-  /**
-   * Validates a wall supplied to the canonical constructor.
-   *
-   * @param levelDefinition level whose protected cells and bounds apply
-   * @param position wall position to validate
-   */
-  private static void validateWallPosition(LevelDefinition levelDefinition, GridPosition position) {
-    Objects.requireNonNull(position, "position");
+  private static Map<GridPosition, PlaceableCellType> wallCells(Set<GridPosition> walls) {
+    Objects.requireNonNull(walls, "walls");
+    Map<GridPosition, PlaceableCellType> cells = new HashMap<>();
+    for (GridPosition wall : walls) {
+      cells.put(Objects.requireNonNull(wall, "wall"), PlaceableCellType.WALL);
+    }
+    return cells;
+  }
+
+  private static void validatePlacedCell(
+      LevelDefinition levelDefinition, GridPosition position, PlaceableCellType type) {
+    Objects.requireNonNull(position, "placed cell position");
+    Objects.requireNonNull(type, "placed cell type");
     if (!position.isWithin(levelDefinition.gridSize())) {
-      throw new IllegalArgumentException("wall position must be inside the grid");
+      throw new IllegalArgumentException("placed cell must be inside the grid");
     }
     if (position.equals(levelDefinition.mouseStart())
         || position.equals(levelDefinition.cheese())) {
-      throw new IllegalArgumentException("wall position must not be protected");
+      throw new IllegalArgumentException("placed cell must not be protected");
     }
   }
 
-  /**
-   * Runs breadth-first search from mouse start to cheese.
-   *
-   * @param levelDefinition level geometry and endpoints
-   * @param walls blocked cells to avoid
-   * @return true when the cheese can be reached orthogonally
-   */
+  private static Map<PlaceableCellType, CellSupply> deriveRemainingSupplies(
+      LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
+    EnumMap<PlaceableCellType, CellSupply> remaining = new EnumMap<>(PlaceableCellType.class);
+    for (PlaceableCellType type : PlaceableCellType.values()) {
+      remaining.put(type, levelDefinition.supplyFor(type));
+    }
+    for (PlaceableCellType type : placedCells.values()) {
+      CellSupply supply = remaining.get(type);
+      if (!supply.available()) {
+        throw new IllegalArgumentException("placed cells exceed authored supply for " + type);
+      }
+      remaining.put(type, supply.consume());
+    }
+    return Map.copyOf(remaining);
+  }
+
   private static boolean hasPathFromStartToCheese(
-      LevelDefinition levelDefinition, Set<GridPosition> walls) {
+      LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
     Queue<GridPosition> frontier = new ArrayDeque<>();
     Set<GridPosition> visited = new HashSet<>();
     frontier.add(levelDefinition.mouseStart());
     visited.add(levelDefinition.mouseStart());
-
     while (!frontier.isEmpty()) {
       GridPosition current = frontier.remove();
       if (current.equals(levelDefinition.cheese())) {
         return true;
       }
       for (GridPosition neighbor : neighbors(current)) {
-        if (isOpen(levelDefinition, walls, neighbor) && visited.add(neighbor)) {
+        if (isOpen(levelDefinition, placedCells, neighbor) && visited.add(neighbor)) {
           frontier.add(neighbor);
         }
       }
@@ -214,12 +288,6 @@ public record MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls
     return false;
   }
 
-  /**
-   * Returns the four orthogonal neighbors around a position.
-   *
-   * @param position center cell
-   * @return up, down, left, and right neighbors
-   */
   private static Set<GridPosition> neighbors(GridPosition position) {
     return Set.of(
         new GridPosition(position.row() - 1, position.column()),
@@ -228,19 +296,21 @@ public record MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls
         new GridPosition(position.row(), position.column() + 1));
   }
 
-  /**
-   * Returns whether a position can be visited by pathfinding.
-   *
-   * @param levelDefinition level bounds and protected endpoints
-   * @param walls blocked cells
-   * @param position candidate position
-   * @return true when the cell is inside the grid and not blocked
-   */
   private static boolean isOpen(
-      LevelDefinition levelDefinition, Set<GridPosition> walls, GridPosition position) {
+      LevelDefinition levelDefinition,
+      Map<GridPosition, PlaceableCellType> placedCells,
+      GridPosition position) {
     return position.isWithin(levelDefinition.gridSize())
-        && (position.equals(levelDefinition.mouseStart())
-            || position.equals(levelDefinition.cheese())
-            || !walls.contains(position));
+        && placedCells.get(position) != PlaceableCellType.WALL;
+  }
+
+  private static WallPlacementStatus wallRejectionStatus(MazeEditStatus status) {
+    return switch (status) {
+      case REJECTED_OUTSIDE_GRID -> WallPlacementStatus.REJECTED_OUTSIDE_GRID;
+      case REJECTED_PROTECTED_CELL -> WallPlacementStatus.REJECTED_PROTECTED_CELL;
+      case REJECTED_EXHAUSTED_SUPPLY -> WallPlacementStatus.REJECTED_EXHAUSTED_SUPPLY;
+      case REJECTED_BLOCKS_PATH -> WallPlacementStatus.REJECTED_BLOCKS_PATH;
+      default -> throw new IllegalArgumentException("unexpected wall edit status: " + status);
+    };
   }
 }

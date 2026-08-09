@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.level;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
@@ -24,6 +25,7 @@ public final class Levels {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
+          PlaceableCellSupply.releasedDefaults(),
           MouseBehavior.RANDOM,
           1L);
 
@@ -39,6 +41,7 @@ public final class Levels {
           Duration.ofSeconds(6),
           Duration.ofSeconds(15),
           Duration.ofMillis(250),
+          PlaceableCellSupply.releasedDefaults(),
           MouseBehavior.RANDOM,
           38L);
 
@@ -54,6 +57,7 @@ public final class Levels {
           Duration.ofSeconds(6),
           Duration.ofSeconds(8),
           Duration.ofMillis(250),
+          PlaceableCellSupply.releasedDefaults(),
           MouseBehavior.LEFT_PRIORITY,
           53L);
 

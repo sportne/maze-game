@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -291,6 +292,7 @@ final class MilestoneFourCellDesignTest {
             TARGET,
             TIMEOUT,
             MOVE_INTERVAL,
+            PlaceableCellSupply.releasedDefaults(),
             behavior,
             seed);
     MazeState productionMaze = new MazeState(level, PASSING_WALLS);

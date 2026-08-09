@@ -124,6 +124,7 @@ public final class MazeGameRenderer {
         switch (content) {
           case EMPTY -> CELL_OPEN;
           case NORMAL_WALL -> CELL_WALL;
+          case SLOW_FLOOR -> CELL_OPEN;
           case MOUSE_START -> CELL_START;
           case CHEESE -> CELL_OPEN;
         };

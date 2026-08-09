@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -359,6 +360,7 @@ final class MilestoneThreeLevelDesignTest {
         PROPOSED_LEVEL.targetSolveTime(),
         maximumSolveTime,
         PROPOSED_LEVEL.mouseMoveInterval(),
+        PROPOSED_LEVEL.placeableCellSupplies(),
         PROPOSED_LEVEL.mouseBehavior(),
         PROPOSED_LEVEL.randomSeed());
   }
@@ -374,6 +376,7 @@ final class MilestoneThreeLevelDesignTest {
         Duration.ofSeconds(1),
         Duration.ofSeconds(2),
         MOVE_INTERVAL,
+        PlaceableCellSupply.releasedDefaults(),
         MouseBehavior.LEFT_PRIORITY,
         1L);
   }

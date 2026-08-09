@@ -13,6 +13,9 @@ public enum CellContent {
   /** A player-placed normal wall that blocks mouse movement. */
   NORMAL_WALL,
 
+  /** A player-placed walkable floor that delays the next mouse decision. */
+  SLOW_FLOOR,
+
   /** The fixed cell where the mouse begins a run. */
   MOUSE_START,
 
