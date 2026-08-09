@@ -63,7 +63,7 @@ The exact mechanic and gesture contract is recorded in
 3. [M4-03: Apply Slow Floor timing to both mouse simulations](done/milestone-4-03-slow-floor-simulation.md)
 4. [M4-04: Integrate selected tools and atomic edits into the build session](done/milestone-4-04-session-editing.md)
 5. [M4-05: Render the responsive palette and support select-then-place](done/milestone-4-05-palette-placement.md)
-6. [M4-06: Add drag-from-palette placement](milestone-4-06-palette-drag.md)
+6. [M4-06: Add drag-from-palette placement](done/milestone-4-06-palette-drag.md)
 7. [M4-07: Reposition placed cells by drag](milestone-4-07-cell-repositioning.md)
 8. [M4-08: Add the fourth authored level and progression](milestone-4-08-fourth-level.md)
 9. [M4-09: Extend cross-platform release coverage](milestone-4-09-release-coverage.md)

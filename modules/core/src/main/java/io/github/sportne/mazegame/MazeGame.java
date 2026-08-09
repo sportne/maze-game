@@ -19,17 +19,22 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.assets.AssetPaths;
 import io.github.sportne.mazegame.assets.BackgroundMusicController;
 import io.github.sportne.mazegame.assets.MouseSpriteSheet;
+import io.github.sportne.mazegame.input.BuildGestureController;
+import io.github.sportne.mazegame.input.BuildGestureState;
 import io.github.sportne.mazegame.input.GameInputAction;
 import io.github.sportne.mazegame.input.GameInputRouter;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.persistence.LibGdxBestResultStore;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
+import io.github.sportne.mazegame.render.PaletteDragPreview;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.CellPaletteState;
@@ -37,6 +42,7 @@ import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Main libGDX application for Maze Game.
@@ -61,6 +67,9 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Current mutable gameplay session. */
   private final GameSession session;
+
+  /** Controller-owned transient state for one active palette pointer gesture. */
+  private final BuildGestureController buildGestureController = new BuildGestureController();
 
   /** Controller for optional background music. */
   private final BackgroundMusicController backgroundMusicController;
@@ -305,6 +314,7 @@ public final class MazeGame extends ApplicationAdapter {
    */
   @Override
   public void resize(int width, int height) {
+    cancelBuildGesture();
     if (viewport != null) {
       viewport.update(width, height, true);
       updateProjectionMatrices();
@@ -314,6 +324,7 @@ public final class MazeGame extends ApplicationAdapter {
   /** Pauses gameplay updates and active music while the application is backgrounded. */
   @Override
   public void pause() {
+    cancelBuildGesture();
     paused = true;
     backgroundMusicController.pause();
   }
@@ -454,6 +465,11 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   public void updateGame(float deltaSeconds) {
+    if (gamePhase() == GamePhase.BUILDING
+        && buildGestureController.state().isPresent()
+        && deltaSeconds >= session.buildTimeRemainingSeconds()) {
+      cancelBuildGesture();
+    }
     session.updateGame(deltaSeconds);
   }
 
@@ -472,11 +488,17 @@ public final class MazeGame extends ApplicationAdapter {
    * @param deltaSeconds elapsed frame time in seconds
    */
   void updateBuildTimer(float deltaSeconds) {
+    if (gamePhase() == GamePhase.BUILDING
+        && buildGestureController.state().isPresent()
+        && deltaSeconds >= session.buildTimeRemainingSeconds()) {
+      cancelBuildGesture();
+    }
     session.updateBuildTimer(deltaSeconds);
   }
 
   /** Starts the mouse run from the current maze if the player is still building. */
   void startRun() {
+    cancelBuildGesture();
     session.startRun();
   }
 
@@ -522,6 +544,131 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
+   * Starts a palette gesture or dispatches a non-palette press through normal click routing.
+   *
+   * @param screenX CSS-pixel x coordinate from the left edge
+   * @param screenY CSS-pixel y coordinate from the top edge
+   * @param pointer pointer id
+   * @param button libGDX mouse button code
+   * @param screenWidth logical screen width
+   * @param screenHeight logical screen height
+   * @return true when the press is consumed
+   */
+  public boolean handlePointerDown(
+      int screenX, int screenY, int pointer, int button, int screenWidth, int screenHeight) {
+    activateAudioFromGesture();
+    if (buildGestureController.state().isPresent()) {
+      return true;
+    }
+    if (gamePhase() == GamePhase.BUILDING && button == Input.Buttons.LEFT) {
+      ScreenLayout layout = screenLayout(GamePhase.BUILDING, screenWidth, screenHeight);
+      Optional<PlaceableCellType> paletteType =
+          GameInputRouter.paletteTypeAt(layout, screenX, screenHeight - screenY);
+      if (paletteType.isPresent()) {
+        return buildGestureController.press(pointer, paletteType.get(), screenX, screenY, 1.0F);
+      }
+    }
+    return handleScreenClick(screenX, screenY, button, screenWidth, screenHeight);
+  }
+
+  /**
+   * Updates the owning palette pointer.
+   *
+   * @param screenX CSS-pixel x coordinate from the left edge
+   * @param screenY CSS-pixel y coordinate from the top edge
+   * @param pointer pointer id
+   * @return true when the pointer owns the gesture
+   */
+  public boolean handlePointerDragged(int screenX, int screenY, int pointer) {
+    return buildGestureController.move(pointer, screenX, screenY, 1.0F);
+  }
+
+  /**
+   * Completes selection or placement for the owning palette pointer.
+   *
+   * @param screenX CSS-pixel x coordinate from the left edge
+   * @param screenY CSS-pixel y coordinate from the top edge
+   * @param pointer pointer id
+   * @param screenWidth logical screen width
+   * @param screenHeight logical screen height
+   * @return exact placement result, or empty for selection, cancellation, or a non-owner
+   */
+  public Optional<MazeEditResult> handlePointerUp(
+      int screenX, int screenY, int pointer, int screenWidth, int screenHeight) {
+    Optional<BuildGestureState> released =
+        buildGestureController.release(pointer, screenX, screenY, 1.0F);
+    if (released.isEmpty() || gamePhase() != GamePhase.BUILDING) {
+      return Optional.empty();
+    }
+    BuildGestureState gesture = released.get();
+    if (!gesture.dragThresholdCrossed()) {
+      session.selectCellType(gesture.originType());
+      return Optional.empty();
+    }
+    ScreenLayout layout = screenLayout(GamePhase.BUILDING, screenWidth, screenHeight);
+    Optional<GridPosition> destination =
+        GameInputRouter.gridPositionAt(
+            layout.bounds(MazeGameLayout.GAME_GRID),
+            screenX,
+            screenHeight - screenY,
+            session.levelDefinition().gridSize());
+    if (destination.isEmpty()) {
+      return Optional.empty();
+    }
+    session.selectCellType(gesture.originType());
+    return session.placeOrReplaceCell(destination.get());
+  }
+
+  /** Clears active palette preview and pointer ownership without editing. */
+  public void cancelBuildGesture() {
+    buildGestureController.cancel();
+  }
+
+  /**
+   * Returns the active controller state for lifecycle and debug verification.
+   *
+   * @return active palette gesture, or empty while idle
+   */
+  public Optional<BuildGestureState> buildGestureState() {
+    return buildGestureController.state();
+  }
+
+  /**
+   * Builds the current palette preview for a logical screen size.
+   *
+   * @param screenWidth logical screen width
+   * @param screenHeight logical screen height
+   * @return preview with domain-validity feedback, or null before the drag threshold
+   */
+  PaletteDragPreview paletteDragPreview(int screenWidth, int screenHeight) {
+    Optional<BuildGestureState> active = buildGestureController.state();
+    if (active.isEmpty()
+        || !active.get().dragThresholdCrossed()
+        || gamePhase() != GamePhase.BUILDING) {
+      return null;
+    }
+    BuildGestureState gesture = active.get();
+    ScreenLayout layout = screenLayout(GamePhase.BUILDING, screenWidth, screenHeight);
+    Optional<GridPosition> destination =
+        GameInputRouter.gridPositionAt(
+            layout.bounds(MazeGameLayout.GAME_GRID),
+            gesture.currentX(),
+            screenHeight - gesture.currentY(),
+            session.levelDefinition().gridSize());
+    boolean valid =
+        destination
+            .flatMap(position -> session.previewPlaceOrReplaceCell(gesture.originType(), position))
+            .map(result -> result.status().accepted())
+            .orElse(false);
+    return new PaletteDragPreview(
+        gesture.originType(),
+        gesture.currentX(),
+        screenHeight - gesture.currentY(),
+        destination.orElse(null),
+        valid);
+  }
+
+  /**
    * Returns the declared screen layout for an external debug harness.
    *
    * @param phase phase to describe
@@ -544,7 +691,10 @@ public final class MazeGame extends ApplicationAdapter {
       case OPEN_SETTINGS -> openSettings();
       case QUIT -> runtimeConfiguration.exitAction().run();
       case BACK_TO_MAIN_MENU -> session.returnToMainMenu();
-      case BACK_TO_LEVEL_SELECT -> session.returnToLevelSelect();
+      case BACK_TO_LEVEL_SELECT -> {
+        cancelBuildGesture();
+        session.returnToLevelSelect();
+      }
       case TOGGLE_AUDIO -> toggleAudio();
       case SELECT_LEVEL -> startLevel(action.levelId());
       case SELECT_LOCKED_LEVEL, IGNORED_GRID_CLICK, NONE -> {
@@ -563,11 +713,13 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Resets the current level to a fresh build phase attempt. */
   void retryLevel() {
+    cancelBuildGesture();
     session.retryLevel();
   }
 
   /** Replays the completed maze from the same deterministic seed. */
   void replayRun() {
+    cancelBuildGesture();
     session.replayRun();
   }
 
@@ -609,6 +761,12 @@ public final class MazeGame extends ApplicationAdapter {
    * @return render snapshot for the current game state
    */
   private GameRenderSnapshot renderSnapshot() {
+    PaletteDragPreview preview = null;
+    if (viewport != null) {
+      preview =
+          paletteDragPreview(
+              Math.round(viewport.getWorldWidth()), Math.round(viewport.getWorldHeight()));
+    }
     return new GameRenderSnapshot(
         gamePhase(),
         session.levelDefinition(),
@@ -620,6 +778,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.bestResult(),
         session.levelProgress(),
         session.paletteState(),
+        preview,
         audioEnabled(),
         resultPassed(),
         hasNextLevel());
@@ -713,7 +872,7 @@ public final class MazeGame extends ApplicationAdapter {
     }
   }
 
-  /** Input adapter that forwards desktop clicks into testable screen-click handling. */
+  /** Input adapter that forwards pointer lifecycle events into testable gesture handling. */
   private final class BuildInputProcessor extends InputAdapter {
     /**
      * Handles one mouse-button press from libGDX.
@@ -726,18 +885,61 @@ public final class MazeGame extends ApplicationAdapter {
      */
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-      if (viewport == null) {
+      PointerPosition position = pointerPosition(screenX, screenY);
+      if (position == null) {
         return false;
+      }
+      return handlePointerDown(
+          position.x(),
+          position.y(),
+          pointer,
+          button,
+          position.screenWidth(),
+          position.screenHeight());
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+      PointerPosition position = pointerPosition(screenX, screenY);
+      return position != null && handlePointerDragged(position.x(), position.y(), pointer);
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+      PointerPosition position = pointerPosition(screenX, screenY);
+      if (position == null) {
+        return false;
+      }
+      boolean consumed =
+          buildGestureController.owns(pointer) || buildGestureController.state().isPresent();
+      handlePointerUp(
+          position.x(), position.y(), pointer, position.screenWidth(), position.screenHeight());
+      return consumed;
+    }
+
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+      boolean consumed = buildGestureController.owns(pointer);
+      if (consumed) {
+        cancelBuildGesture();
+      }
+      return consumed;
+    }
+
+    private PointerPosition pointerPosition(int screenX, int screenY) {
+      if (viewport == null) {
+        return null;
       }
       Vector2 worldPosition = viewport.unproject(new Vector2(screenX, screenY));
       int worldWidth = Math.round(viewport.getWorldWidth());
       int worldHeight = Math.round(viewport.getWorldHeight());
-      return handleScreenClick(
+      return new PointerPosition(
           Math.round(worldPosition.x),
           Math.round(worldHeight - worldPosition.y),
-          button,
           worldWidth,
           worldHeight);
     }
   }
+
+  private record PointerPosition(int x, int y, int screenWidth, int screenHeight) {}
 }

@@ -62,8 +62,10 @@ public final class Lwjgl3Launcher {
    * @return the running libGDX application
    */
   private static Lwjgl3Application createApplication(String[] args) {
-    return new Lwjgl3Application(
-        new MazeGame(runtimeConfiguration(args)), defaultConfiguration(args));
+    MazeGame game = new MazeGame(runtimeConfiguration(args));
+    Lwjgl3ApplicationConfiguration configuration = defaultConfiguration(args);
+    configuration.setWindowListener(closeThroughApplicationExit(game));
+    return new Lwjgl3Application(game, configuration);
   }
 
   /**
@@ -232,6 +234,10 @@ public final class Lwjgl3Launcher {
    * @return listener that requests a libGDX application exit and cancels native immediate close
    */
   static Lwjgl3WindowListener closeThroughApplicationExit() {
+    return closeThroughApplicationExit(null);
+  }
+
+  private static Lwjgl3WindowListener closeThroughApplicationExit(MazeGame game) {
     return new Lwjgl3WindowListener() {
       @Override
       public void created(Lwjgl3Window window) {}
@@ -243,7 +249,11 @@ public final class Lwjgl3Launcher {
       public void maximized(boolean isMaximized) {}
 
       @Override
-      public void focusLost() {}
+      public void focusLost() {
+        if (game != null) {
+          game.cancelBuildGesture();
+        }
+      }
 
       @Override
       public void focusGained() {}

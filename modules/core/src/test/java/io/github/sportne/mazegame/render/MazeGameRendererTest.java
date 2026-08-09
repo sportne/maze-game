@@ -363,6 +363,49 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void rendersClampedPaletteDragWithDistinctValidAndRejectedShapeFeedback() {
+    GridPosition destination = new GridPosition(2, 2);
+    PaletteDragPreview validPreview =
+        new PaletteDragPreview(PlaceableCellType.WALL, -50.0F, -50.0F, destination, true);
+    PaletteDragPreview rejectedPreview =
+        new PaletteDragPreview(PlaceableCellType.WALL, 1400.0F, 900.0F, destination, false);
+    RecordingShapeRenderer validShapes = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer rejectedShapes = allocate(RecordingShapeRenderer.class);
+
+    renderer(allocate(RecordingSpriteBatch.class), validShapes, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshotWithPreview(validPreview));
+    renderer(allocate(RecordingSpriteBatch.class), rejectedShapes, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshotWithPreview(rejectedPreview));
+
+    assertEquals(10, previewLineCount(validShapes));
+    assertEquals(10, previewLineCount(rejectedShapes));
+    assertFalse(validShapes.recordedLines().equals(rejectedShapes.recordedLines()));
+    assertEquals(
+        new ScreenRectangle(0.0F, 0.0F, 28.0F, 28.0F),
+        MazeGameRenderer.dragIconBounds(
+            new ScreenRectangle(0.0F, 0.0F, 100.0F, 100.0F), validPreview));
+    assertEquals(
+        new ScreenRectangle(72.0F, 72.0F, 28.0F, 28.0F),
+        MazeGameRenderer.dragIconBounds(
+            new ScreenRectangle(0.0F, 0.0F, 100.0F, 100.0F), rejectedPreview));
+  }
+
+  @Test
+  void outsidePaletteDragRendersOnlyClampedTypePreview() {
+    RecordingShapeRenderer baseline = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer previewShapes = allocate(RecordingShapeRenderer.class);
+    renderer(allocate(RecordingSpriteBatch.class), baseline, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
+    renderer(allocate(RecordingSpriteBatch.class), previewShapes, recordingFont())
+        .render(
+            layout(GamePhase.BUILDING),
+            snapshotWithPreview(
+                new PaletteDragPreview(PlaceableCellType.SLOW_FLOOR, 10.0F, 10.0F, null, false)));
+
+    assertEquals(baseline.rectLines + 6, previewShapes.rectLines);
+  }
+
+  @Test
   void compactPresentationUsesLabelsThatFitNarrowCardsAndActions() {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer =
@@ -654,6 +697,35 @@ final class MazeGameRendererTest {
         1L);
   }
 
+  private static GameRenderSnapshot snapshotWithPreview(PaletteDragPreview preview) {
+    return new GameRenderSnapshot(
+        GamePhase.BUILDING,
+        LEVEL,
+        MazeState.empty(LEVEL),
+        30.0F,
+        null,
+        0.0F,
+        null,
+        null,
+        List.of(),
+        List.of(),
+        preview,
+        true,
+        false,
+        false);
+  }
+
+  private static int previewLineCount(RecordingShapeRenderer shapes) {
+    return shapes.rectLines - snapshotBaselineLineCount();
+  }
+
+  private static int snapshotBaselineLineCount() {
+    RecordingShapeRenderer baseline = allocate(RecordingShapeRenderer.class);
+    renderer(allocate(RecordingSpriteBatch.class), baseline, recordingFont())
+        .render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
+    return baseline.rectLines;
+  }
+
   private static <T> T allocate(Class<T> type) {
     try {
       Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
@@ -720,6 +792,7 @@ final class MazeGameRendererTest {
     private int endCount;
     private int rects;
     private int rectLines;
+    private List<RecordedLine> lines = new ArrayList<>();
 
     @Override
     public void begin(ShapeType shapeType) {
@@ -737,13 +810,23 @@ final class MazeGameRendererTest {
     @Override
     public void rectLine(float x1, float y1, float x2, float y2, float width) {
       rectLines++;
+      recordedLines().add(new RecordedLine(x1, y1, x2, y2, width));
     }
 
     @Override
     public void end() {
       endCount++;
     }
+
+    private List<RecordedLine> recordedLines() {
+      if (lines == null) {
+        lines = new ArrayList<>();
+      }
+      return lines;
+    }
   }
+
+  private record RecordedLine(float x1, float y1, float x2, float y2, float width) {}
 
   private static final class RecordingFont extends BitmapFont {
     private List<String> text = new ArrayList<>();

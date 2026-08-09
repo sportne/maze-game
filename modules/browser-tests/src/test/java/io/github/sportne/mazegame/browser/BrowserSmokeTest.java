@@ -236,6 +236,9 @@ final class BrowserSmokeTest {
     page.waitForTimeout(100.0);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
+    controls.dragPaletteToCell(
+        GamePhase.BUILDING, Levels.milestoneThree(), false, PlaceableCellType.WALL, EDITED_CELL);
+    assertWallCell(page, controls.cellCenter(Levels.milestoneThree(), EDITED_CELL));
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -355,6 +358,15 @@ final class BrowserSmokeTest {
         primaryControls.waitForButton(
             GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
 
+        primaryControls.cancelPaletteDragAtCell(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        primaryControls.dragPaletteWithSecondaryCancellation(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
+        assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+
         primaryControls.clickButton(
             GamePhase.BUILDING,
             Levels.milestoneOne(),
@@ -366,12 +378,8 @@ final class BrowserSmokeTest {
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(
             new Page.ScreenshotOptions().setPath(paletteScreenshotPath(screenshotPath)));
-        primaryControls.clickButton(
-            GamePhase.BUILDING,
-            Levels.milestoneOne(),
-            false,
-            MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
-        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        primaryControls.dragPaletteToCell(
+            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
         assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
         resizeAndAssert(page, rotated);
         rotatedControls.waitForButton(
@@ -742,6 +750,118 @@ final class BrowserSmokeTest {
 
     private void clickCell(LevelDefinition level, GridPosition position) {
       click(cellCenter(level, position));
+    }
+
+    private void dragPaletteToCell(
+        GamePhase phase,
+        LevelDefinition level,
+        boolean hasNextLevel,
+        PlaceableCellType type,
+        GridPosition position) {
+      ScreenPoint start =
+          BrowserGameScenario.buttonCenter(
+              width, height, phase, level, hasNextLevel, MazeGameLayout.paletteItemId(type));
+      ScreenPoint destination = cellCenter(level, position);
+      if (touch) {
+        dispatchTouchDrag(start, destination);
+      } else {
+        page.mouse().move(start.x(), start.y());
+        page.mouse().down();
+        page.mouse()
+            .move(
+                destination.x(),
+                destination.y(),
+                new com.microsoft.playwright.Mouse.MoveOptions().setSteps(6));
+        page.mouse().up();
+      }
+      page.waitForTimeout(100.0);
+    }
+
+    private void dispatchTouchDrag(ScreenPoint start, ScreenPoint destination) {
+      dispatchTouchGesture(start, destination, "touchend");
+    }
+
+    private void cancelPaletteDragAtCell(
+        GamePhase phase,
+        LevelDefinition level,
+        boolean hasNextLevel,
+        PlaceableCellType type,
+        GridPosition position) {
+      ScreenPoint start =
+          BrowserGameScenario.buttonCenter(
+              width, height, phase, level, hasNextLevel, MazeGameLayout.paletteItemId(type));
+      dispatchTouchGesture(start, cellCenter(level, position), "touchcancel");
+    }
+
+    private void dragPaletteWithSecondaryCancellation(
+        GamePhase phase,
+        LevelDefinition level,
+        boolean hasNextLevel,
+        PlaceableCellType type,
+        GridPosition position) {
+      ScreenPoint start =
+          BrowserGameScenario.buttonCenter(
+              width, height, phase, level, hasNextLevel, MazeGameLayout.paletteItemId(type));
+      ScreenPoint destination = cellCenter(level, position);
+      page.evaluate(
+          "points => {"
+              + "const canvas = document.querySelector('canvas');"
+              + "const touch = (id, x, y) => new Touch({identifier: id, target: canvas,"
+              + "clientX: x, clientY: y, pageX: x, pageY: y, screenX: x, screenY: y,"
+              + "radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1});"
+              + "const send = (name, active, changed) => canvas.dispatchEvent(new TouchEvent(name,"
+              + "{touches: active, targetTouches: active, changedTouches: changed,"
+              + "bubbles: true, cancelable: true}));"
+              + "const outside = touch(31, 1, 1);"
+              + "const owner = touch(17, points.startX, points.startY);"
+              + "send('touchstart', [outside, owner], [outside, owner]);"
+              + "const moved = touch(17, points.endX, points.endY);"
+              + "send('touchmove', [outside, moved], [moved]);"
+              + "send('touchcancel', [outside], [moved]);"
+              + "const replacement = touch(19, points.startX, points.startY);"
+              + "send('touchstart', [outside, replacement], [replacement]);"
+              + "const replacementMoved = touch(19, points.endX, points.endY);"
+              + "send('touchmove', [outside, replacementMoved], [replacementMoved]);"
+              + "const second = touch(29, points.startX + 4, points.startY);"
+              + "send('touchstart', [outside, replacementMoved, second], [second]);"
+              + "send('touchcancel', [outside, replacementMoved], [second]);"
+              + "send('touchend', [outside], [replacementMoved]);"
+              + "send('touchcancel', [], [outside]);"
+              + "}",
+          Map.of(
+              "startX", start.x(),
+              "startY", start.y(),
+              "endX", destination.x(),
+              "endY", destination.y()));
+      page.waitForTimeout(100.0);
+    }
+
+    private void dispatchTouchGesture(
+        ScreenPoint start, ScreenPoint destination, String completionEvent) {
+      page.evaluate(
+          "points => {"
+              + "const canvas = document.querySelector('canvas');"
+              + "const touch = (x, y) => new Touch({identifier: 17, target: canvas,"
+              + "clientX: x, clientY: y, pageX: x, pageY: y, screenX: x, screenY: y,"
+              + "radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1});"
+              + "const send = (name, active, changed) => canvas.dispatchEvent(new TouchEvent(name,"
+              + "{touches: active, targetTouches: active, changedTouches: changed,"
+              + "bubbles: true, cancelable: true}));"
+              + "const first = touch(points.startX, points.startY);"
+              + "send('touchstart', [first], [first]);"
+              + "for (let step = 1; step <= 6; step++) {"
+              + "const x = points.startX + (points.endX - points.startX) * step / 6;"
+              + "const y = points.startY + (points.endY - points.startY) * step / 6;"
+              + "const moved = touch(x, y); send('touchmove', [moved], [moved]);}"
+              + "const last = touch(points.endX, points.endY);"
+              + "send(points.completionEvent, [], [last]);"
+              + "}",
+          Map.of(
+              "startX", start.x(),
+              "startY", start.y(),
+              "endX", destination.x(),
+              "endY", destination.y(),
+              "completionEvent", completionEvent));
     }
 
     private ScreenPoint cellCenter(LevelDefinition level, GridPosition position) {

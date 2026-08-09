@@ -24,6 +24,7 @@ import java.util.Objects;
  * @param bestResult best saved result for the current level, or null when none exists
  * @param levelProgress authored level presentation state in catalog order
  * @param paletteState authored and remaining build-palette state in display order
+ * @param paletteDragPreview active palette drag preview, or null
  * @param audioEnabled whether session audio is enabled
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
@@ -39,6 +40,7 @@ public record GameRenderSnapshot(
     BestResult bestResult,
     List<LevelProgress> levelProgress,
     List<CellPaletteState> paletteState,
+    PaletteDragPreview paletteDragPreview,
     boolean audioEnabled,
     boolean resultPassed,
     boolean hasNextLevel) {
@@ -49,6 +51,38 @@ public record GameRenderSnapshot(
     Objects.requireNonNull(mazeState, "mazeState");
     levelProgress = List.copyOf(levelProgress);
     paletteState = List.copyOf(paletteState);
+  }
+
+  /** Creates a snapshot with palette data and no active drag for compatibility fixtures. */
+  public GameRenderSnapshot(
+      GamePhase phase,
+      LevelDefinition levelDefinition,
+      MazeState mazeState,
+      float buildTimeRemainingSeconds,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemainingSeconds,
+      MouseRunResult mouseRunResult,
+      BestResult bestResult,
+      List<LevelProgress> levelProgress,
+      List<CellPaletteState> paletteState,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    this(
+        phase,
+        levelDefinition,
+        mazeState,
+        buildTimeRemainingSeconds,
+        rejectedPosition,
+        rejectedFlashRemainingSeconds,
+        mouseRunResult,
+        bestResult,
+        levelProgress,
+        paletteState,
+        null,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel);
   }
 
   /** Creates a snapshot without palette data for non-building and compatibility fixtures. */
@@ -76,6 +110,7 @@ public record GameRenderSnapshot(
         bestResult,
         levelProgress,
         List.of(),
+        null,
         audioEnabled,
         resultPassed,
         hasNextLevel);

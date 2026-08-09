@@ -1,6 +1,8 @@
 # M4-06: Add Drag-From-Palette Placement
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-05
 

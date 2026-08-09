@@ -70,10 +70,9 @@ public final class GameInputRouter {
 
   private static GameInputAction routeBuildControls(
       ScreenLayout layout, int screenX, float screenYFromBottom) {
-    for (PlaceableCellType type : PlaceableCellType.values()) {
-      if (contains(layout, MazeGameLayout.paletteItemId(type), screenX, screenYFromBottom)) {
-        return GameInputAction.selectCellType(type);
-      }
+    Optional<PlaceableCellType> paletteType = paletteTypeAt(layout, screenX, screenYFromBottom);
+    if (paletteType.isPresent()) {
+      return GameInputAction.selectCellType(paletteType.get());
     }
     if (contains(layout, MazeGameLayout.BUILD_BACK, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.BACK_TO_LEVEL_SELECT);
@@ -166,11 +165,38 @@ public final class GameInputRouter {
   }
 
   private static boolean contains(
-      ScreenLayout layout, String elementId, int screenX, float screenYFromBottom) {
+      ScreenLayout layout, String elementId, float screenX, float screenYFromBottom) {
     return layout.bounds(elementId).contains(screenX, screenYFromBottom);
   }
 
-  private static Optional<GridPosition> gridPositionAt(
+  /**
+   * Returns the palette type under a bottom-left screen coordinate.
+   *
+   * @param layout current build layout
+   * @param pointX x coordinate from the left edge
+   * @param pointY y coordinate from the bottom edge
+   * @return palette type at the coordinate, or empty outside palette items
+   */
+  public static Optional<PlaceableCellType> paletteTypeAt(
+      ScreenLayout layout, float pointX, float pointY) {
+    for (PlaceableCellType type : PlaceableCellType.values()) {
+      if (contains(layout, MazeGameLayout.paletteItemId(type), pointX, pointY)) {
+        return Optional.of(type);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the grid position under a bottom-left screen coordinate.
+   *
+   * @param grid grid bounds
+   * @param pointX x coordinate from the left edge
+   * @param pointY y coordinate from the bottom edge
+   * @param gridSize authored grid dimensions
+   * @return grid position, or empty outside the grid
+   */
+  public static Optional<GridPosition> gridPositionAt(
       ScreenRectangle grid, float pointX, float pointY, GridSize gridSize) {
     float cellSize = grid.width() / gridSize.columns();
     if (pointX < grid.x() || pointY < grid.y() || pointX >= grid.right() || pointY >= grid.top()) {

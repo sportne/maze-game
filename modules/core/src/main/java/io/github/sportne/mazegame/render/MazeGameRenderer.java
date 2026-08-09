@@ -58,6 +58,12 @@ public final class MazeGameRenderer {
   /** High-contrast non-color mark drawn over a rejected destination. */
   private static final Color REJECTED_MARK = new Color(Color.BLACK);
 
+  /** Preview border for a destination that would accept the dragged type. */
+  private static final Color DRAG_VALID = new Color(0.45F, 0.90F, 0.55F, 1.0F);
+
+  /** Preview border for a destination that would reject the dragged type. */
+  private static final Color DRAG_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
+
   /** Grid line color drawn over cell fills. */
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
 
@@ -170,6 +176,7 @@ public final class MazeGameRenderer {
     drawCellSprites(grid, snapshot.levelDefinition());
     drawRejectedMark(grid, snapshot);
     drawMouse(grid, snapshot);
+    drawPaletteDragPreview(layout, grid, snapshot);
     drawControls(layout, snapshot);
     drawGameplayText(layout, snapshot);
   }
@@ -328,6 +335,79 @@ public final class MazeGameRenderer {
     float bottom =
         grid.y() + (levelDefinition.gridSize().rows() - 1 - position.row()) * cellSize + inset;
     return new ScreenRectangle(left, bottom, cellSize - 2.0F * inset, cellSize - 2.0F * inset);
+  }
+
+  private void drawPaletteDragPreview(
+      ScreenLayout layout, ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    PaletteDragPreview preview = snapshot.paletteDragPreview();
+    if (preview == null || snapshot.phase() != GamePhase.BUILDING) {
+      return;
+    }
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    if (preview.destination() != null) {
+      drawDragDestination(grid, snapshot.levelDefinition(), preview);
+    }
+    drawDragIcon(layout.viewport(), preview);
+    shapeRenderer.end();
+  }
+
+  private void drawDragDestination(
+      ScreenRectangle grid, LevelDefinition levelDefinition, PaletteDragPreview preview) {
+    ScreenRectangle mark = insetCellBounds(grid, levelDefinition, preview.destination(), 4.0F);
+    shapeRenderer.setColor(preview.validDestination() ? DRAG_VALID : DRAG_REJECTED);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.y(), 4.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.top(), 4.0F);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.x(), mark.top(), 4.0F);
+    shapeRenderer.rectLine(mark.right(), mark.y(), mark.right(), mark.top(), 4.0F);
+    if (preview.validDestination()) {
+      shapeRenderer.rectLine(
+          mark.x() + mark.width() * 0.20F,
+          mark.y() + mark.height() * 0.48F,
+          mark.x() + mark.width() * 0.43F,
+          mark.y() + mark.height() * 0.24F,
+          4.0F);
+      shapeRenderer.rectLine(
+          mark.x() + mark.width() * 0.43F,
+          mark.y() + mark.height() * 0.24F,
+          mark.x() + mark.width() * 0.80F,
+          mark.y() + mark.height() * 0.76F,
+          4.0F);
+    } else {
+      shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.top(), 4.0F);
+      shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.y(), 4.0F);
+    }
+  }
+
+  private void drawDragIcon(ScreenRectangle viewportBounds, PaletteDragPreview preview) {
+    ScreenRectangle icon = dragIconBounds(viewportBounds, preview);
+    shapeRenderer.setColor(preview.type() == PlaceableCellType.WALL ? CELL_WALL : CELL_SLOW_FLOOR);
+    shapeRenderer.rect(icon.x(), icon.y(), icon.width(), icon.height());
+    shapeRenderer.setColor(preview.type() == PlaceableCellType.WALL ? GRID_LINE : SLOW_FLOOR_MARK);
+    shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.y(), 3.0F);
+    shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.top(), 3.0F);
+    shapeRenderer.rectLine(icon.x(), icon.y(), icon.x(), icon.top(), 3.0F);
+    shapeRenderer.rectLine(icon.right(), icon.y(), icon.right(), icon.top(), 3.0F);
+    if (preview.type() == PlaceableCellType.SLOW_FLOOR) {
+      shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.top(), 3.0F);
+      shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.y(), 3.0F);
+    }
+  }
+
+  static ScreenRectangle dragIconBounds(
+      ScreenRectangle viewportBounds, PaletteDragPreview preview) {
+    float size = 28.0F;
+    float left =
+        clamp(preview.pointerX() - size / 2.0F, viewportBounds.x(), viewportBounds.right() - size);
+    float proposedBottom = preview.pointerY() + 24.0F;
+    if (proposedBottom + size > viewportBounds.top()) {
+      proposedBottom = preview.pointerY() - size - 24.0F;
+    }
+    float bottom = clamp(proposedBottom, viewportBounds.y(), viewportBounds.top() - size);
+    return new ScreenRectangle(left, bottom, size, size);
+  }
+
+  private static float clamp(float value, float minimum, float maximum) {
+    return Math.max(minimum, Math.min(value, maximum));
   }
 
   private TextureRegion mouseSprite(GameRenderSnapshot snapshot) {

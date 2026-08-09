@@ -371,6 +371,23 @@ public final class GameSession {
   }
 
   /**
+   * Evaluates a palette placement without publishing maze, inventory, or feedback changes.
+   *
+   * @param type palette type being previewed
+   * @param position proposed destination
+   * @return domain result against the current state, or empty outside the build phase
+   */
+  public Optional<MazeEditResult> previewPlaceOrReplaceCell(
+      PlaceableCellType type, GridPosition position) {
+    Objects.requireNonNull(type, "type");
+    Objects.requireNonNull(position, "position");
+    if (gamePhase != GamePhase.BUILDING) {
+      return Optional.empty();
+    }
+    return Optional.of(mazeState.placeOrReplace(type, position));
+  }
+
+  /**
    * Removes any placed type from one grid cell during the build phase.
    *
    * @param position cell to clear
