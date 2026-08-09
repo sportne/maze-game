@@ -1,6 +1,6 @@
 # Maze Game
 
-Small Java/libGDX maze game.
+Small Java/libGDX maze game @ https://sportne.github.io/maze-game/.
 
 The supported build baseline is Gradle 9.5.1, Java 21, and libGDX 1.14.2. The playable browser
 module uses gdx-teavm 1.6.1, which embeds TeaVM 0.15.0. TeaVM JavaScript generation currently runs
