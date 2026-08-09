@@ -1,6 +1,8 @@
 # M3-08: Define Milestone 4's Cell Inventory and Building Interactions
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M3-07
 
@@ -65,3 +67,18 @@ task-card set without implementing it prematurely or coupling it to Scout's rele
   compatibility with both mouse types.
 - Confirm all generated links resolve and the parent roadmap presents Milestone 4 consistently.
 - Run the repository's full quality and release gates for the planning commit.
+
+## Completion Notes
+
+- The accepted initial placeable types are Wall and Slow Floor. Slow Floor is walkable and adds one
+  movement interval after entry without changing either mouse's route choice or move count.
+- The design specifies explicit finite/infinite authoring, atomic place/replace/remove/move semantics,
+  exhausted-tool recovery, responsive palette rules, pointer cancellation, and compatibility with
+  all three released levels.
+- [`docs/milestone-4-cell-building-design.md`](../../docs/milestone-4-cell-building-design.md),
+  [`roadmap/milestone-4.md`](../milestone-4.md), and M4-01 through M4-10 form the reviewed
+  implementation plan.
+- An independent reviewer examined every generated card for sequencing, testability, simplicity,
+  compatibility, and release coverage. All review findings were resolved before archival.
+- Changed/new link checks and the full `spotlessCheck qualityGate pagesBuild nativeImage` release gate
+  passed before review; post-review checks were repeated before commit.

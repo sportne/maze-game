@@ -63,15 +63,15 @@ The complete behavior specification is recorded in
 5. [M3-05: Give Scout a unique visual and UI identity](done/milestone-3-05-scout-presentation.md)
 6. [M3-06: Extend cross-platform release coverage](done/milestone-3-06-release-coverage.md)
 7. [M3-07: Playtest, tune, and release Milestone 3](done/milestone-3-07-playtest-release.md)
-8. [M3-08: Define Milestone 4](milestone-3-08-define-milestone-4.md)
+8. [M3-08: Define Milestone 4](done/milestone-3-08-define-milestone-4.md)
 
 M3-08 is non-gating follow-up planning for the next milestone. Milestone 3 product work is complete
 after M3-07; the final card turns the accepted Milestone 4 direction into a reviewed task-card set.
 
 ## Future Direction
 
-Milestone 4 will replace the single implicit wall tool with authored grid-cell types whose per-level
-availability may be finite or infinite. Players can drag a type from a bottom palette or select it
-and then click cells, and can drag placed cells around the grid before starting the mouse. M3-08 will
-specify inventory accounting, validation, responsive input, domain modeling, testing, and release
-tasks without implementing them during Milestone 3.
+Milestone 4 replaces the single implicit wall tool with Wall and Slow Floor, each with finite or
+infinite authored availability. Players can drag a type from a bottom palette or select it and then
+click cells, and can drag placed cells around the grid before starting the mouse. The accepted
+[Milestone 4 plan](milestone-4.md) specifies inventory accounting, validation, responsive input,
+domain modeling, testing, and release tasks without implementing them during M3-08.

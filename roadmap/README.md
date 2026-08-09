@@ -82,21 +82,23 @@ See [Milestone 3](milestone-3.md), the accepted
 
 Status: complete.
 
-### Milestone 4 Candidate: Inventory-Based Block Building
+### Milestone 4: Inventory-Based Cell Building
 
-Add authored grid-cell types with finite or infinite per-level supplies. Players can drag types from
-a bottom palette or select and place them, then drag placed cells around the grid before the mouse
-starts. This changes both game rules and input behavior and should be evaluated only after Scout can
-be understood independently.
+Add Wall and Slow Floor with finite or infinite per-level supplies. Players can drag types from a
+bottom palette or select and place them, then drag placed cells around the grid before the mouse
+starts. Slow Floor delays either existing mouse without changing its route choice.
 
-Status: direction captured; detailed planning deferred to M3-08.
+See [Milestone 4](milestone-4.md) and the accepted
+[cell-building design](../docs/milestone-4-cell-building-design.md).
+
+Status: planned.
 
 ## Deferred Ideas
 
-These remain outside the currently planned Milestone 3 work and captured Milestone 4 direction:
+These remain outside the planned Milestone 4 scope:
 
-- Grid progression beyond the three authored levels.
-- Cell types beyond the initial set to be accepted during M3-08 planning.
+- Grid progression beyond the four authored levels planned through Milestone 4.
+- Cell types beyond Wall and Slow Floor.
 - Additional mouse types beyond Random and Scout.
 - Multiple mice and multiple start locations.
 - Retro/pixel visual style.
@@ -119,3 +121,7 @@ Completed task cards are retained in the [done archive](done/README.md).
   initial player-facing UI gives no description of its search behavior.
 - A level is passed when the mouse exceeds the target time, whether it eventually reaches the cheese or times out.
 - The next level option only appears when a next level exists.
+- Milestone 4 adds Wall and Slow Floor only; Slow Floor adds one movement interval after entry without
+  changing route choice or move count.
+- Each level explicitly authors finite or infinite supply for every placeable type.
+- Palette drag and select-then-place use one atomic edit, and existing-item drag never changes inventory.

@@ -48,6 +48,8 @@ metrics, compatibility evidence, constraints, and regression baseline.
 The [Milestone 3 release baseline](docs/milestone-3-release.md) records the accepted levels,
 playtest evidence, mobile behavior, and known constraints. The earlier
 [Milestone 2 baseline](docs/milestone-2-release.md) remains as release history.
+The planned [Milestone 4 roadmap](roadmap/milestone-4.md) defines the next inventory-based Wall and
+Slow Floor building system; no Milestone 4 production code has been added yet.
 
 `assets/audio/exploreMaze_T1.mp3` plays as looping background music by default. In environments
 without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
