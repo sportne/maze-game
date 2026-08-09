@@ -32,11 +32,14 @@ public enum GameInputActionType {
   /** Leave an unstarted level attempt and return to level selection. */
   BACK_TO_LEVEL_SELECT,
 
-  /** Toggle the wall at the clicked grid cell. */
-  TOGGLE_WALL,
+  /** Select a placeable cell type from the build palette. */
+  SELECT_CELL_TYPE,
 
-  /** Clear a wall at the clicked grid cell. */
-  CLEAR_WALL,
+  /** Apply the selected type to a clicked grid cell. */
+  PLACE_OR_REPLACE_CELL,
+
+  /** Remove any placeable type from a clicked grid cell. */
+  REMOVE_CELL,
 
   /** Consume a build-grid click whose mouse button has no game effect. */
   IGNORED_GRID_CLICK,

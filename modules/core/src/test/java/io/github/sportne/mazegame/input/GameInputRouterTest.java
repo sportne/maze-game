@@ -9,6 +9,7 @@ import com.badlogic.gdx.Input;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.Levels;
@@ -121,10 +122,23 @@ final class GameInputRouterTest {
             GRID_SIZE,
             LEVEL_PROGRESS);
 
-    assertEquals(GameInputActionType.TOGGLE_WALL, place.type());
+    assertEquals(GameInputActionType.PLACE_OR_REPLACE_CELL, place.type());
     assertEquals(new GridPosition(2, 2), place.position());
-    assertEquals(GameInputActionType.CLEAR_WALL, clear.type());
+    assertEquals(GameInputActionType.REMOVE_CELL, clear.type());
     assertEquals(new GridPosition(2, 2), clear.position());
+  }
+
+  @Test
+  void routesBothBuildPaletteTypesWithoutTreatingExhaustionAsUnselectable() {
+    GameInputAction wall =
+        click(GamePhase.BUILDING, MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
+    GameInputAction slowFloor =
+        click(GamePhase.BUILDING, MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+
+    assertEquals(GameInputActionType.SELECT_CELL_TYPE, wall.type());
+    assertEquals(PlaceableCellType.WALL, wall.cellType());
+    assertEquals(GameInputActionType.SELECT_CELL_TYPE, slowFloor.type());
+    assertEquals(PlaceableCellType.SLOW_FLOOR, slowFloor.cellType());
   }
 
   @Test
@@ -217,7 +231,7 @@ final class GameInputRouterTest {
   void cellActionsRequireCellPayloads() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.TOGGLE_WALL, null, null));
+        () -> new GameInputAction(GameInputActionType.PLACE_OR_REPLACE_CELL, null, null));
   }
 
   @Test
@@ -242,6 +256,22 @@ final class GameInputRouterTest {
     assertEquals(
         Levels.milestoneTwo().id(),
         GameInputAction.selectLevel(Levels.milestoneTwo().id()).levelId());
+  }
+
+  @Test
+  void paletteSelectionRequiresOnlyAPlaceableType() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new GameInputAction(GameInputActionType.SELECT_CELL_TYPE, null, null, null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new GameInputAction(
+                GameInputActionType.RETRY, null, null, PlaceableCellType.SLOW_FLOOR));
+
+    assertEquals(
+        PlaceableCellType.SLOW_FLOOR,
+        GameInputAction.selectCellType(PlaceableCellType.SLOW_FLOOR).cellType());
   }
 
   @Test

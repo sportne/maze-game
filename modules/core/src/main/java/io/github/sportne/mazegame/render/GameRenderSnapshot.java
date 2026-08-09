@@ -5,6 +5,7 @@ import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.Objects;
  * @param mouseRunResult latest mouse result, or null before a run starts
  * @param bestResult best saved result for the current level, or null when none exists
  * @param levelProgress authored level presentation state in catalog order
+ * @param paletteState authored and remaining build-palette state in display order
  * @param audioEnabled whether session audio is enabled
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
@@ -36,6 +38,7 @@ public record GameRenderSnapshot(
     MouseRunResult mouseRunResult,
     BestResult bestResult,
     List<LevelProgress> levelProgress,
+    List<CellPaletteState> paletteState,
     boolean audioEnabled,
     boolean resultPassed,
     boolean hasNextLevel) {
@@ -45,5 +48,36 @@ public record GameRenderSnapshot(
     Objects.requireNonNull(levelDefinition, "levelDefinition");
     Objects.requireNonNull(mazeState, "mazeState");
     levelProgress = List.copyOf(levelProgress);
+    paletteState = List.copyOf(paletteState);
+  }
+
+  /** Creates a snapshot without palette data for non-building and compatibility fixtures. */
+  public GameRenderSnapshot(
+      GamePhase phase,
+      LevelDefinition levelDefinition,
+      MazeState mazeState,
+      float buildTimeRemainingSeconds,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemainingSeconds,
+      MouseRunResult mouseRunResult,
+      BestResult bestResult,
+      List<LevelProgress> levelProgress,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    this(
+        phase,
+        levelDefinition,
+        mazeState,
+        buildTimeRemainingSeconds,
+        rejectedPosition,
+        rejectedFlashRemainingSeconds,
+        mouseRunResult,
+        bestResult,
+        levelProgress,
+        List.of(),
+        audioEnabled,
+        resultPassed,
+        hasNextLevel);
   }
 }

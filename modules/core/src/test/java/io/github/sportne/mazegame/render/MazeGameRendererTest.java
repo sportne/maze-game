@@ -17,7 +17,11 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.level.MouseBehavior;
@@ -25,6 +29,7 @@ import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
 import java.lang.reflect.Field;
@@ -32,6 +37,7 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameRendererTest {
@@ -282,6 +288,78 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Pass this level to unlock the next"));
     assertTrue(shapeRenderer.rects >= 50);
     assertTrue(shapeRenderer.rectLines >= 20);
+  }
+
+  @Test
+  void rendersSelectedExhaustedPaletteStateAndMarkedSlowFloorWithoutColorOnlyCues() {
+    LevelDefinition level = paletteLevel();
+    GridPosition slowFloor = new GridPosition(2, 1);
+    MazeState maze = new MazeState(level, Map.of(slowFloor, PlaceableCellType.SLOW_FLOOR));
+    List<CellPaletteState> palette =
+        List.of(
+            new CellPaletteState(
+                PlaceableCellType.WALL, CellSupply.infinite(), CellSupply.infinite(), false),
+            new CellPaletteState(
+                PlaceableCellType.SLOW_FLOOR, CellSupply.finite(1), CellSupply.finite(0), true));
+    RecordingShapeRenderer shapes = allocate(RecordingShapeRenderer.class);
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer = renderer(allocate(RecordingSpriteBatch.class), shapes, font);
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.BUILDING,
+            level,
+            maze,
+            25.0F,
+            null,
+            0.0F,
+            null,
+            null,
+            List.of(),
+            palette,
+            true,
+            false,
+            false);
+
+    renderer.render(
+        MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, level.gridSize()), snapshot);
+
+    assertEquals(
+        new Color(0.62F, 0.36F, 0.08F, 1.0F),
+        MazeGameRenderer.cellColor(maze, null, 0.0F, slowFloor));
+    assertTrue(font.capturedText().contains("Wall inf"));
+    assertTrue(font.capturedText().contains("* Slow 0 OUT"));
+    assertEquals("* Slow 0 OUT", MazeGameRenderer.paletteLabel(palette.get(1)));
+    assertTrue(shapes.rectLines >= 34, "infinite supply has a drawn infinity mark");
+  }
+
+  @Test
+  void rendersRejectedDestinationWithNonColorMarker() {
+    GridPosition rejected = new GridPosition(2, 2);
+    RecordingShapeRenderer withoutMarker = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer withMarker = allocate(RecordingShapeRenderer.class);
+    MazeGameRenderer withoutRenderer =
+        renderer(allocate(RecordingSpriteBatch.class), withoutMarker, recordingFont());
+    MazeGameRenderer withRenderer =
+        renderer(allocate(RecordingSpriteBatch.class), withMarker, recordingFont());
+
+    withoutRenderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
+    withRenderer.render(
+        layout(GamePhase.BUILDING),
+        new GameRenderSnapshot(
+            GamePhase.BUILDING,
+            LEVEL,
+            MazeState.empty(LEVEL),
+            30.0F,
+            rejected,
+            0.4F,
+            null,
+            null,
+            List.of(),
+            true,
+            false,
+            false));
+
+    assertEquals(withoutMarker.rectLines + 6, withMarker.rectLines);
   }
 
   @Test
@@ -556,6 +634,24 @@ final class MazeGameRendererTest {
     return List.of(
         new LevelProgress(Levels.milestoneOne(), true, firstBestResult),
         new LevelProgress(Levels.milestoneTwo(), false, null));
+  }
+
+  private static LevelDefinition paletteLevel() {
+    return new LevelDefinition(
+        "palette-render",
+        "Palette Render",
+        GridSize.square(5),
+        new GridPosition(4, 2),
+        new GridPosition(0, 2),
+        Duration.ofSeconds(25),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(10),
+        Duration.ofMillis(250),
+        List.of(
+            PlaceableCellSupply.infinite(PlaceableCellType.WALL),
+            PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 1)),
+        MouseBehavior.RANDOM,
+        1L);
   }
 
   private static <T> T allocate(Class<T> type) {

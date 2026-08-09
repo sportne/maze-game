@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
@@ -101,6 +102,43 @@ final class MazeGameLayoutTest {
     assertEquals(
         new ScreenRectangle(454.0F, 41.5F, 180.0F, 44.0F),
         layout.bounds(MazeGameLayout.BUILD_BACK));
+    assertEquals(
+        new ScreenRectangle(474.0F, 89.5F, 160.0F, 44.0F),
+        layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
+    assertEquals(
+        new ScreenRectangle(646.0F, 89.5F, 160.0F, 44.0F),
+        layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
+  }
+
+  @Test
+  void paletteUsesTheBottomRegionWithoutOverlappingGridOrActions() {
+    for (int[] viewport :
+        List.of(
+            new int[] {1280, 720},
+            new int[] {390, 844},
+            new int[] {844, 286},
+            new int[] {756, 286})) {
+      ScreenLayout layout =
+          MazeGameLayout.forPhase(
+              GamePhase.BUILDING,
+              viewport[0],
+              viewport[1],
+              Levels.milestoneThree().gridSize(),
+              false,
+              3,
+              false);
+      ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
+      ScreenRectangle wall = layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
+      ScreenRectangle slow =
+          layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+
+      assertFalse(wall.overlaps(slow));
+      assertFalse(wall.overlaps(grid));
+      assertFalse(slow.overlaps(grid));
+      assertTrue(wall.width() >= 44.0F && wall.height() >= 44.0F);
+      assertTrue(slow.width() >= 44.0F && slow.height() >= 44.0F);
+      assertTrue(LayoutValidator.validate(layout).isEmpty());
+    }
   }
 
   private static void assertMobileTargets(GamePhase phase, int width, int height) {
@@ -239,6 +277,8 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.BUILD_TITLE,
                 MazeGameLayout.BUILD_STATUS,
                 MazeGameLayout.BUILD_INSTRUCTIONS,
+                MazeGameLayout.paletteItemId(PlaceableCellType.WALL),
+                MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR),
                 MazeGameLayout.BUILD_BACK,
                 MazeGameLayout.BUILD_START)),
         Arguments.of(

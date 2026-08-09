@@ -5,6 +5,9 @@ import java.util.List;
 
 /** Validates declared screen layout contracts. */
 public final class LayoutValidator {
+  private static final float MINIMUM_TOUCH_TARGET = 44.0F;
+  private static final float MINIMUM_GRID_CELL = 32.0F;
+
   /** Prevents instantiation of this utility. */
   private LayoutValidator() {}
 
@@ -38,6 +41,24 @@ public final class LayoutValidator {
           new LayoutIssue(
               LayoutIssueType.OUTSIDE_VIEWPORT,
               element.id() + " extends outside the viewport in " + layout.phase()));
+    }
+    if (element.kind() == LayoutElementKind.BUTTON
+        && (element.bounds().width() < MINIMUM_TOUCH_TARGET
+            || element.bounds().height() < MINIMUM_TOUCH_TARGET)) {
+      issues.add(
+          new LayoutIssue(
+              LayoutIssueType.TOUCH_TARGET_TOO_SMALL,
+              element.id() + " is smaller than 44x44 in " + layout.phase()));
+    }
+    if (element.kind() == LayoutElementKind.GRID && layout.gridSize() != null) {
+      float cellWidth = element.bounds().width() / layout.gridSize().columns();
+      float cellHeight = element.bounds().height() / layout.gridSize().rows();
+      if (cellWidth < MINIMUM_GRID_CELL || cellHeight < MINIMUM_GRID_CELL) {
+        issues.add(
+            new LayoutIssue(
+                LayoutIssueType.GRID_CELL_TOO_SMALL,
+                element.id() + " has cells smaller than 32x32 in " + layout.phase()));
+      }
     }
   }
 

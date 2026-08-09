@@ -36,6 +36,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M4-02: Add authored supplies and transactional maze inventory](milestone-4-02-domain-inventory.md)
 - [M4-03: Apply Slow Floor timing to both mouse simulations](milestone-4-03-slow-floor-simulation.md)
 - [M4-04: Integrate selected tools and atomic edits into the build session](milestone-4-04-session-editing.md)
+- [M4-05: Render the responsive palette and support select-then-place](milestone-4-05-palette-placement.md)
 
 ## TeaVM and GitHub Pages
 

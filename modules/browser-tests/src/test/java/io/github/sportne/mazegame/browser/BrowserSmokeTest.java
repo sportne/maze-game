@@ -25,6 +25,7 @@ import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
@@ -227,6 +228,14 @@ final class BrowserSmokeTest {
         GamePhase.RESULT, Levels.milestoneThree(), false, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
         GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+    controls.clickButton(
+        GamePhase.BUILDING,
+        Levels.milestoneThree(),
+        false,
+        MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+    page.waitForTimeout(100.0);
+    page.screenshot(
+        new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -346,6 +355,22 @@ final class BrowserSmokeTest {
         primaryControls.waitForButton(
             GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
 
+        primaryControls.clickButton(
+            GamePhase.BUILDING,
+            Levels.milestoneOne(),
+            false,
+            MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        page.waitForTimeout(600.0);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(paletteScreenshotPath(screenshotPath)));
+        primaryControls.clickButton(
+            GamePhase.BUILDING,
+            Levels.milestoneOne(),
+            false,
+            MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
         primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
         assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
         resizeAndAssert(page, rotated);
@@ -422,6 +447,15 @@ final class BrowserSmokeTest {
     String reportName =
         fileName.endsWith(".png") ? fileName.substring(0, fileName.length() - 4) : fileName;
     return screenshotPath.resolveSibling(reportName + "-failure");
+  }
+
+  private static Path paletteScreenshotPath(Path screenshotPath) {
+    String fileName = Objects.requireNonNull(screenshotPath.getFileName()).toString();
+    String paletteName =
+        fileName.endsWith(".png")
+            ? fileName.substring(0, fileName.length() - 4) + "-palette.png"
+            : fileName + "-palette.png";
+    return screenshotPath.resolveSibling(paletteName);
   }
 
   private static void resizeAndAssert(Page page, MobileViewport viewport) {

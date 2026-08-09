@@ -4,6 +4,7 @@ import com.badlogic.gdx.Input;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.state.GamePhase;
@@ -69,6 +70,11 @@ public final class GameInputRouter {
 
   private static GameInputAction routeBuildControls(
       ScreenLayout layout, int screenX, float screenYFromBottom) {
+    for (PlaceableCellType type : PlaceableCellType.values()) {
+      if (contains(layout, MazeGameLayout.paletteItemId(type), screenX, screenYFromBottom)) {
+        return GameInputAction.selectCellType(type);
+      }
+    }
     if (contains(layout, MazeGameLayout.BUILD_BACK, screenX, screenYFromBottom)) {
       return GameInputAction.of(GameInputActionType.BACK_TO_LEVEL_SELECT);
     }
@@ -151,10 +157,10 @@ public final class GameInputRouter {
       return GameInputAction.NONE;
     }
     if (button == Input.Buttons.LEFT) {
-      return GameInputAction.cell(GameInputActionType.TOGGLE_WALL, position.get());
+      return GameInputAction.cell(GameInputActionType.PLACE_OR_REPLACE_CELL, position.get());
     }
     if (button == Input.Buttons.RIGHT) {
-      return GameInputAction.cell(GameInputActionType.CLEAR_WALL, position.get());
+      return GameInputAction.cell(GameInputActionType.REMOVE_CELL, position.get());
     }
     return GameInputAction.of(GameInputActionType.IGNORED_GRID_CLICK);
   }

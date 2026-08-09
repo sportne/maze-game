@@ -32,8 +32,10 @@ import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
+import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameSession;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -144,9 +146,17 @@ public final class MazeGame extends ApplicationAdapter {
       Music backgroundMusic,
       MazeGameRuntimeConfiguration runtimeConfiguration,
       BestResultStore bestResultStore) {
+    this(backgroundMusic, runtimeConfiguration, new GameSession(bestResultStore));
+  }
+
+  /** Creates the game around an explicit session for application-boundary tests. */
+  MazeGame(
+      Music backgroundMusic,
+      MazeGameRuntimeConfiguration runtimeConfiguration,
+      GameSession gameSession) {
     this.runtimeConfiguration =
         Objects.requireNonNull(runtimeConfiguration, "runtimeConfiguration");
-    this.session = new GameSession(bestResultStore);
+    this.session = Objects.requireNonNull(gameSession, "gameSession");
     this.backgroundMusicController =
         new BackgroundMusicController(runtimeConfiguration.audioAvailable());
     if (backgroundMusic != null) {
@@ -376,6 +386,11 @@ public final class MazeGame extends ApplicationAdapter {
     return session.mazeState();
   }
 
+  /** Returns immutable build-palette state in authored order. */
+  public List<CellPaletteState> paletteState() {
+    return session.paletteState();
+  }
+
   /**
    * Returns the best saved result for the current level.
    *
@@ -536,8 +551,9 @@ public final class MazeGame extends ApplicationAdapter {
         // Recognized but intentionally state-neutral actions.
       }
       case START_RUN -> startRun();
-      case TOGGLE_WALL -> handleGridClick(action.position(), Input.Buttons.LEFT);
-      case CLEAR_WALL -> handleGridClick(action.position(), Input.Buttons.RIGHT);
+      case SELECT_CELL_TYPE -> session.selectCellType(action.cellType());
+      case PLACE_OR_REPLACE_CELL -> session.placeOrReplaceCell(action.position());
+      case REMOVE_CELL -> session.removeCell(action.position());
       case RETRY -> retryLevel();
       case REPLAY -> replayRun();
       case NEXT_LEVEL -> session.nextLevelId().ifPresent(this::startLevel);
@@ -603,6 +619,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.mouseRunResult(),
         session.bestResult(),
         session.levelProgress(),
+        session.paletteState(),
         audioEnabled(),
         resultPassed(),
         hasNextLevel());

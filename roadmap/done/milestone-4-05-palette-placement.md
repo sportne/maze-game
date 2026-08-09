@@ -1,6 +1,8 @@
 # M4-05: Render the Responsive Palette and Support Select-Then-Place
 
-Status: pending
+Status: complete
+
+Archived: yes
 
 Depends on: M4-04
 

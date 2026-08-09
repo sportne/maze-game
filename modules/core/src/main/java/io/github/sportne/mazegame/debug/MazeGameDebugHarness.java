@@ -5,6 +5,7 @@ import io.github.sportne.mazegame.MazeGame;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.time.Duration;
@@ -117,6 +118,14 @@ public final class MazeGameDebugHarness {
    */
   public MazeGameDebugHarness rightClickCell(GridPosition position) {
     clickCell(position, Input.Buttons.RIGHT);
+    return this;
+  }
+
+  /** Selects one placeable type through its declared build-palette control. */
+  public MazeGameDebugHarness clickPaletteItem(PlaceableCellType type) {
+    clickButton(
+        currentScreenLayout(GamePhase.BUILDING).bounds(MazeGameLayout.paletteItemId(type)),
+        Input.Buttons.LEFT);
     return this;
   }
 
@@ -302,7 +311,8 @@ public final class MazeGameDebugHarness {
         game.mouseRunResult(),
         game.bestResult(),
         game.resultPassed(),
-        game.hasNextLevel());
+        game.hasNextLevel(),
+        game.paletteState());
   }
 
   /**

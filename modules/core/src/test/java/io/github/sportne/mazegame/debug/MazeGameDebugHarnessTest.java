@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.result.BestResult;
@@ -49,6 +50,39 @@ final class MazeGameDebugHarnessTest {
 
     harness.rightClickCell(wall);
     assertTrue(harness.snapshot().mazeState().walls().isEmpty());
+  }
+
+  @Test
+  void snapshotExposesPaletteSelectionAndExhaustedReleasedSupply() {
+    MazeGameDebugHarness harness = new MazeGameDebugHarness();
+
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
+
+    assertTrue(
+        harness.snapshot().paletteState().stream()
+            .anyMatch(
+                state ->
+                    state.type() == PlaceableCellType.SLOW_FLOOR
+                        && state.selected()
+                        && !state.available()));
+  }
+
+  @Test
+  void compatibilitySnapshotConstructorDefaultsToEmptyPalette() {
+    MazeGameDebugSnapshot current = new MazeGameDebugHarness().snapshot();
+
+    MazeGameDebugSnapshot compatible =
+        new MazeGameDebugSnapshot(
+            current.gamePhase(),
+            current.mazeState(),
+            current.buildTimeRemainingSeconds(),
+            current.rejectedPosition(),
+            current.mouseRunResult(),
+            current.bestResult(),
+            current.resultPassed(),
+            current.hasNextLevel());
+
+    assertTrue(compatible.paletteState().isEmpty());
   }
 
   @Test

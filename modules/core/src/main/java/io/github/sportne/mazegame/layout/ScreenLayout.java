@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.layout;
 
+import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.util.List;
 import java.util.Objects;
@@ -11,9 +12,15 @@ import java.util.Optional;
  * @param phase phase this layout represents
  * @param viewport screen rectangle that contains the layout
  * @param elements declared frontend elements
+ * @param gridSize playable grid dimensions used for minimum-cell validation, or null when unknown
  */
 public record ScreenLayout(
-    GamePhase phase, ScreenRectangle viewport, List<LayoutElement> elements) {
+    GamePhase phase, ScreenRectangle viewport, List<LayoutElement> elements, GridSize gridSize) {
+  /** Creates a layout without grid-size metadata for isolated layout fixtures. */
+  public ScreenLayout(GamePhase phase, ScreenRectangle viewport, List<LayoutElement> elements) {
+    this(phase, viewport, elements, null);
+  }
+
   /** Creates a layout with an immutable element list. */
   public ScreenLayout {
     Objects.requireNonNull(phase, "phase");

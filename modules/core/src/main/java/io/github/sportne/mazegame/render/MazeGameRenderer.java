@@ -9,11 +9,13 @@ import com.badlogic.gdx.utils.Align;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
 import java.time.Duration;
@@ -32,6 +34,9 @@ public final class MazeGameRenderer {
   /** Muted fill for unavailable level cards. */
   private static final Color LOCKED_BUTTON = new Color(0.10F, 0.11F, 0.13F, 1.0F);
 
+  /** Fill used for the selected palette item. */
+  private static final Color SELECTED_BUTTON = new Color(0.20F, 0.32F, 0.44F, 1.0F);
+
   /** Fill color for empty walkable cells. */
   private static final Color CELL_OPEN = new Color(Color.BLACK);
 
@@ -43,6 +48,15 @@ public final class MazeGameRenderer {
 
   /** Fill color for player-placed wall cells. */
   private static final Color CELL_WALL = new Color(Color.WHITE);
+
+  /** Amber fill for the walkable Slow Floor cell. */
+  private static final Color CELL_SLOW_FLOOR = new Color(0.62F, 0.36F, 0.08F, 1.0F);
+
+  /** High-contrast non-color mark for Slow Floor cells and palette icons. */
+  private static final Color SLOW_FLOOR_MARK = new Color(1.0F, 0.88F, 0.54F, 1.0F);
+
+  /** High-contrast non-color mark drawn over a rejected destination. */
+  private static final Color REJECTED_MARK = new Color(Color.BLACK);
 
   /** Grid line color drawn over cell fills. */
   private static final Color GRID_LINE = new Color(0.28F, 0.31F, 0.36F, 1.0F);
@@ -124,7 +138,7 @@ public final class MazeGameRenderer {
         switch (content) {
           case EMPTY -> CELL_OPEN;
           case NORMAL_WALL -> CELL_WALL;
-          case SLOW_FLOOR -> CELL_OPEN;
+          case SLOW_FLOOR -> CELL_SLOW_FLOOR;
           case MOUSE_START -> CELL_START;
           case CHEESE -> CELL_OPEN;
         };
@@ -152,7 +166,9 @@ public final class MazeGameRenderer {
     }
     ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
     drawGrid(grid, snapshot);
+    drawSlowFloorMarks(grid, snapshot);
     drawCellSprites(grid, snapshot.levelDefinition());
+    drawRejectedMark(grid, snapshot);
     drawMouse(grid, snapshot);
     drawControls(layout, snapshot);
     drawGameplayText(layout, snapshot);
@@ -259,6 +275,61 @@ public final class MazeGameRenderer {
         mouseSprite(snapshot));
   }
 
+  private void drawSlowFloorMarks(ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    float cellSize = grid.width() / snapshot.levelDefinition().gridSize().columns();
+    float inset = Math.max(5.0F, cellSize * 0.24F);
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    shapeRenderer.setColor(SLOW_FLOOR_MARK);
+    snapshot
+        .mazeState()
+        .placedCells()
+        .forEach(
+            (position, type) -> {
+              if (type == PlaceableCellType.SLOW_FLOOR) {
+                ScreenRectangle mark =
+                    insetCellBounds(grid, snapshot.levelDefinition(), position, inset);
+                shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.top(), 2.0F);
+                shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.y(), 2.0F);
+                shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.top(), 2.0F);
+                shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.y(), 2.0F);
+              }
+            });
+    shapeRenderer.end();
+  }
+
+  private void drawRejectedMark(ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    GridPosition position = snapshot.rejectedPosition();
+    if (position == null
+        || snapshot.rejectedFlashRemainingSeconds() <= 0.0F
+        || position.row() < 0
+        || position.row() >= snapshot.levelDefinition().gridSize().rows()
+        || position.column() < 0
+        || position.column() >= snapshot.levelDefinition().gridSize().columns()) {
+      return;
+    }
+    float cellSize = grid.width() / snapshot.levelDefinition().gridSize().columns();
+    float inset = Math.max(4.0F, cellSize * 0.18F);
+    ScreenRectangle mark = insetCellBounds(grid, snapshot.levelDefinition(), position, inset);
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    shapeRenderer.setColor(REJECTED_MARK);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.top(), 4.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.y(), 4.0F);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.y(), 3.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.top(), 3.0F);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.x(), mark.top(), 3.0F);
+    shapeRenderer.rectLine(mark.right(), mark.y(), mark.right(), mark.top(), 3.0F);
+    shapeRenderer.end();
+  }
+
+  private static ScreenRectangle insetCellBounds(
+      ScreenRectangle grid, LevelDefinition levelDefinition, GridPosition position, float inset) {
+    float cellSize = grid.width() / levelDefinition.gridSize().columns();
+    float left = grid.x() + position.column() * cellSize + inset;
+    float bottom =
+        grid.y() + (levelDefinition.gridSize().rows() - 1 - position.row()) * cellSize + inset;
+    return new ScreenRectangle(left, bottom, cellSize - 2.0F * inset, cellSize - 2.0F * inset);
+  }
+
   private TextureRegion mouseSprite(GameRenderSnapshot snapshot) {
     return switch (snapshot.levelDefinition().mouseBehavior()) {
       case RANDOM -> mouseSprite;
@@ -321,6 +392,10 @@ public final class MazeGameRenderer {
     if (snapshot.phase() == GamePhase.BUILDING) {
       drawButton(layout.bounds(MazeGameLayout.BUILD_BACK));
       drawButton(layout.bounds(MazeGameLayout.BUILD_START));
+      for (CellPaletteState paletteItem : snapshot.paletteState()) {
+        drawPaletteItem(
+            layout.bounds(MazeGameLayout.paletteItemId(paletteItem.type())), paletteItem);
+      }
     } else if (snapshot.phase() == GamePhase.RESULT) {
       drawButton(layout.bounds(MazeGameLayout.RESULT_RETRY));
       drawButton(layout.bounds(MazeGameLayout.RESULT_REPLAY));
@@ -339,15 +414,61 @@ public final class MazeGameRenderer {
     drawButton(bounds, unlocked ? BUTTON : LOCKED_BUTTON);
   }
 
+  private void drawPaletteItem(ScreenRectangle bounds, CellPaletteState state) {
+    Color fill = state.selected() ? SELECTED_BUTTON : state.available() ? BUTTON : LOCKED_BUTTON;
+    drawButton(bounds, fill, state.selected() ? 4.0F : 2.0F);
+    ScreenRectangle icon = paletteIconBounds(bounds);
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    if (state.type() == PlaceableCellType.WALL) {
+      shapeRenderer.setColor(CELL_WALL);
+      shapeRenderer.rect(icon.x(), icon.y(), icon.width(), icon.height());
+      shapeRenderer.setColor(GRID_LINE);
+      shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.y(), 2.0F);
+      shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.top(), 2.0F);
+      shapeRenderer.rectLine(icon.x(), icon.y(), icon.x(), icon.top(), 2.0F);
+      shapeRenderer.rectLine(icon.right(), icon.y(), icon.right(), icon.top(), 2.0F);
+    } else {
+      shapeRenderer.setColor(CELL_SLOW_FLOOR);
+      shapeRenderer.rect(icon.x(), icon.y(), icon.width(), icon.height());
+      shapeRenderer.setColor(SLOW_FLOOR_MARK);
+      shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.top(), 2.0F);
+      shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.y(), 2.0F);
+      shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.y(), 2.0F);
+      shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.top(), 2.0F);
+    }
+    if (state.remainingSupply().isInfinite()) {
+      drawInfinityMark(bounds);
+    }
+    shapeRenderer.end();
+  }
+
+  private void drawInfinityMark(ScreenRectangle bounds) {
+    float centerX = bounds.right() - 19.0F;
+    float centerY = bounds.y() + bounds.height() / 2.0F;
+    float left = centerX - 8.0F;
+    float right = centerX + 8.0F;
+    float top = centerY + 5.0F;
+    float bottom = centerY - 5.0F;
+    shapeRenderer.setColor(TEXT);
+    shapeRenderer.rectLine(left, bottom, centerX, top, 2.0F);
+    shapeRenderer.rectLine(centerX, top, right, bottom, 2.0F);
+    shapeRenderer.rectLine(left, top, centerX, bottom, 2.0F);
+    shapeRenderer.rectLine(centerX, bottom, right, top, 2.0F);
+  }
+
   private void drawButton(ScreenRectangle bounds, Color fill) {
+    drawButton(bounds, fill, 2.0F);
+  }
+
+  private void drawButton(ScreenRectangle bounds, Color fill, float borderWidth) {
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     shapeRenderer.setColor(fill);
     shapeRenderer.rect(bounds.x(), bounds.y(), bounds.width(), bounds.height());
     shapeRenderer.setColor(BUTTON_BORDER);
-    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.right(), bounds.y(), 2.0F);
-    shapeRenderer.rectLine(bounds.x(), bounds.top(), bounds.right(), bounds.top(), 2.0F);
-    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.x(), bounds.top(), 2.0F);
-    shapeRenderer.rectLine(bounds.right(), bounds.y(), bounds.right(), bounds.top(), 2.0F);
+    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.right(), bounds.y(), borderWidth);
+    shapeRenderer.rectLine(bounds.x(), bounds.top(), bounds.right(), bounds.top(), borderWidth);
+    shapeRenderer.rectLine(bounds.x(), bounds.y(), bounds.x(), bounds.top(), borderWidth);
+    shapeRenderer.rectLine(bounds.right(), bounds.y(), bounds.right(), bounds.top(), borderWidth);
     shapeRenderer.end();
   }
 
@@ -389,6 +510,18 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     drawCenteredText("Back", layout.bounds(MazeGameLayout.BUILD_BACK));
     drawCenteredText("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START));
+    for (CellPaletteState paletteItem : snapshot.paletteState()) {
+      ScreenRectangle bounds = layout.bounds(MazeGameLayout.paletteItemId(paletteItem.type()));
+      ScreenRectangle labelBounds =
+          new ScreenRectangle(
+              bounds.x() + 38.0F,
+              bounds.y(),
+              Math.max(
+                  1.0F,
+                  bounds.width() - (paletteItem.remainingSupply().isInfinite() ? 72.0F : 42.0F)),
+              bounds.height());
+      drawCenteredText(paletteLabel(paletteItem), labelBounds);
+    }
   }
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
@@ -456,6 +589,23 @@ public final class MazeGameRenderer {
 
   static String resultActionLabel(float width, String fullLabel, String compactLabel) {
     return width < 110.0F ? compactLabel : fullLabel;
+  }
+
+  static String paletteLabel(CellPaletteState state) {
+    String name = state.type() == PlaceableCellType.WALL ? "Wall" : "Slow";
+    String count =
+        state.remainingSupply().isInfinite()
+            ? "inf"
+            : Integer.toString(state.remainingSupply().finiteCount().orElseThrow());
+    String selection = state.selected() ? "* " : "";
+    String exhausted = state.available() ? "" : " OUT";
+    return selection + name + " " + count + exhausted;
+  }
+
+  private static ScreenRectangle paletteIconBounds(ScreenRectangle bounds) {
+    float size = Math.min(24.0F, bounds.height() - 16.0F);
+    return new ScreenRectangle(
+        bounds.x() + 10.0F, bounds.y() + (bounds.height() - size) / 2.0F, size, size);
   }
 
   private static String noNextLevelText(GameRenderSnapshot snapshot) {
