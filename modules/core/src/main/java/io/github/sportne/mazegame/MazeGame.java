@@ -62,6 +62,9 @@ public final class MazeGame extends ApplicationAdapter {
   /** Desktop window title and in-game title text. */
   private static final String TITLE = "Maze Game";
 
+  /** Pointer dwell time before an icon-only palette item reveals its tooltip. */
+  private static final float PALETTE_TOOLTIP_DELAY_SECONDS = 0.5F;
+
   /** Platform capabilities and services supplied by the active launcher. */
   private final MazeGameRuntimeConfiguration runtimeConfiguration;
 
@@ -109,6 +112,12 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Whether lifecycle callbacks have paused gameplay updates. */
   private boolean paused;
+
+  /** Palette type currently under the desktop pointer, or null outside the palette. */
+  private PlaceableCellType hoveredPaletteType;
+
+  /** Seconds the desktop pointer has continuously hovered the current palette type. */
+  private float paletteHoverSeconds;
 
   /** Creates the game with default platform services. */
   public MazeGame() {
@@ -476,6 +485,17 @@ public final class MazeGame extends ApplicationAdapter {
       cancelBuildGesture();
     }
     session.updateGame(deltaSeconds);
+    updatePaletteHover(deltaSeconds);
+  }
+
+  private void updatePaletteHover(float deltaSeconds) {
+    if (gamePhase() != GamePhase.BUILDING || buildGestureController.state().isPresent()) {
+      clearPaletteHover();
+      return;
+    }
+    if (hoveredPaletteType != null) {
+      paletteHoverSeconds += Math.max(0.0F, deltaSeconds);
+    }
   }
 
   /**
@@ -534,6 +554,7 @@ public final class MazeGame extends ApplicationAdapter {
   public boolean handleScreenClick(
       int screenX, int screenY, int button, int screenWidth, int screenHeight) {
     activateAudioFromGesture();
+    clearPaletteHover();
     ScreenLayout layout = screenLayout(gamePhase(), screenWidth, screenHeight);
     GameInputAction action =
         GameInputRouter.route(
@@ -562,6 +583,7 @@ public final class MazeGame extends ApplicationAdapter {
   public boolean handlePointerDown(
       int screenX, int screenY, int pointer, int button, int screenWidth, int screenHeight) {
     activateAudioFromGesture();
+    clearPaletteHover();
     if (buildGestureController.state().isPresent()) {
       return true;
     }
@@ -602,7 +624,46 @@ public final class MazeGame extends ApplicationAdapter {
    * @return true when the pointer owns the gesture
    */
   public boolean handlePointerDragged(int screenX, int screenY, int pointer) {
+    clearPaletteHover();
     return buildGestureController.move(pointer, screenX, screenY, 1.0F);
+  }
+
+  /**
+   * Tracks desktop-pointer hover over the icon-only build palette.
+   *
+   * @return true when the pointer is over a palette item
+   */
+  public boolean handlePointerMoved(int screenX, int screenY, int screenWidth, int screenHeight) {
+    if (gamePhase() != GamePhase.BUILDING || buildGestureController.state().isPresent()) {
+      clearPaletteHover();
+      return false;
+    }
+    Optional<PlaceableCellType> candidate =
+        GameInputRouter.paletteTypeAt(
+            screenLayout(GamePhase.BUILDING, screenWidth, screenHeight),
+            screenX,
+            screenHeight - screenY);
+    PlaceableCellType nextType = candidate.orElse(null);
+    if (nextType != hoveredPaletteType) {
+      hoveredPaletteType = nextType;
+      paletteHoverSeconds = 0.0F;
+    }
+    return candidate.isPresent();
+  }
+
+  /** Returns the palette type whose half-second hover tooltip is currently visible. */
+  public Optional<PlaceableCellType> paletteTooltipType() {
+    return gamePhase() == GamePhase.BUILDING
+            && hoveredPaletteType != null
+            && paletteHoverSeconds >= PALETTE_TOOLTIP_DELAY_SECONDS
+            && buildGestureController.state().isEmpty()
+        ? Optional.of(hoveredPaletteType)
+        : Optional.empty();
+  }
+
+  private void clearPaletteHover() {
+    hoveredPaletteType = null;
+    paletteHoverSeconds = 0.0F;
   }
 
   /**
@@ -653,6 +714,7 @@ public final class MazeGame extends ApplicationAdapter {
   /** Clears active build preview and pointer ownership without editing. */
   public void cancelBuildGesture() {
     buildGestureController.cancel();
+    clearPaletteHover();
   }
 
   /**
@@ -819,6 +881,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.levelProgress(),
         session.paletteState(),
         preview,
+        paletteTooltipType().orElse(null),
         audioEnabled(),
         resultPassed(),
         hasNextLevel());
@@ -964,6 +1027,14 @@ public final class MazeGame extends ApplicationAdapter {
         cancelBuildGesture();
       }
       return consumed;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+      PointerPosition position = pointerPosition(screenX, screenY);
+      return position != null
+          && handlePointerMoved(
+              position.x(), position.y(), position.screenWidth(), position.screenHeight());
     }
 
     private PointerPosition pointerPosition(int screenX, int screenY) {

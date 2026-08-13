@@ -684,7 +684,7 @@ final class GameSessionTest {
     session.retryLevel();
     assertEquals(Levels.milestoneFour(), session.levelDefinition());
     assertTrue(session.mazeState().placedCells().isEmpty());
-    assertEquals(CellSupply.finite(3), session.mazeState().remainingSupply(PlaceableCellType.WALL));
+    assertEquals(CellSupply.finite(4), session.mazeState().remainingSupply(PlaceableCellType.WALL));
     assertEquals(
         CellSupply.finite(3), session.mazeState().remainingSupply(PlaceableCellType.SLOW_FLOOR));
     assertEquals(Optional.of(PlaceableCellType.WALL), session.selectedCellType());

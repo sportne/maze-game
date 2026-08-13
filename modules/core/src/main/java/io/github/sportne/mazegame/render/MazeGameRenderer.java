@@ -182,6 +182,7 @@ public final class MazeGameRenderer {
     drawPaletteDragPreview(layout, grid, snapshot);
     drawControls(layout, snapshot);
     drawGameplayText(layout, snapshot);
+    drawPaletteTooltip(layout, snapshot);
   }
 
   private void drawMainMenu(ScreenLayout layout) {
@@ -538,24 +539,12 @@ public final class MazeGameRenderer {
       shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.y(), 2.0F);
       shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.top(), 2.0F);
     }
-    if (state.remainingSupply().isInfinite()) {
-      drawInfinityMark(bounds);
+    if (!state.available()) {
+      shapeRenderer.setColor(TEXT);
+      shapeRenderer.rectLine(
+          icon.x() - 2.0F, icon.top() + 2.0F, icon.right() + 2.0F, icon.y() - 2.0F, 3.0F);
     }
     shapeRenderer.end();
-  }
-
-  private void drawInfinityMark(ScreenRectangle bounds) {
-    float centerX = bounds.right() - 19.0F;
-    float centerY = bounds.y() + bounds.height() / 2.0F;
-    float left = centerX - 8.0F;
-    float right = centerX + 8.0F;
-    float top = centerY + 5.0F;
-    float bottom = centerY - 5.0F;
-    shapeRenderer.setColor(TEXT);
-    shapeRenderer.rectLine(left, bottom, centerX, top, 2.0F);
-    shapeRenderer.rectLine(centerX, top, right, bottom, 2.0F);
-    shapeRenderer.rectLine(left, top, centerX, bottom, 2.0F);
-    shapeRenderer.rectLine(centerX, bottom, right, top, 2.0F);
   }
 
   private void drawButton(ScreenRectangle bounds, Color fill) {
@@ -610,18 +599,44 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     drawCenteredText("Back", layout.bounds(MazeGameLayout.BUILD_BACK));
     drawCenteredText("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START));
-    for (CellPaletteState paletteItem : snapshot.paletteState()) {
-      ScreenRectangle bounds = layout.bounds(MazeGameLayout.paletteItemId(paletteItem.type()));
-      ScreenRectangle labelBounds =
-          new ScreenRectangle(
-              bounds.x() + 38.0F,
-              bounds.y(),
-              Math.max(
-                  1.0F,
-                  bounds.width() - (paletteItem.remainingSupply().isInfinite() ? 72.0F : 42.0F)),
-              bounds.height());
-      drawCenteredText(paletteLabel(paletteItem), labelBounds);
+  }
+
+  private void drawPaletteTooltip(ScreenLayout layout, GameRenderSnapshot snapshot) {
+    PlaceableCellType type = snapshot.paletteTooltipType();
+    if (snapshot.phase() != GamePhase.BUILDING || type == null) {
+      return;
     }
+    CellPaletteState state =
+        snapshot.paletteState().stream()
+            .filter(item -> item.type() == type)
+            .findFirst()
+            .orElse(null);
+    if (state == null) {
+      return;
+    }
+    ScreenRectangle tooltip =
+        paletteTooltipBounds(layout.viewport(), layout.bounds(MazeGameLayout.paletteItemId(type)));
+    drawButton(tooltip, BUTTON, 2.0F);
+    spriteBatch.begin();
+    font.setColor(TEXT);
+    drawCenteredText(paletteLabel(state), tooltip);
+    spriteBatch.end();
+  }
+
+  static ScreenRectangle paletteTooltipBounds(
+      ScreenRectangle viewport, ScreenRectangle paletteItem) {
+    float margin = 8.0F;
+    float width = Math.min(176.0F, viewport.width() - 2.0F * margin);
+    float height = 36.0F;
+    float x =
+        Math.max(
+            viewport.x() + margin,
+            Math.min(
+                paletteItem.x() + (paletteItem.width() - width) / 2.0F,
+                viewport.right() - width - margin));
+    float above = paletteItem.top() + margin;
+    float y = above + height <= viewport.top() - margin ? above : paletteItem.y() - height - margin;
+    return new ScreenRectangle(x, y, width, height);
   }
 
   static String buildInstructions(GameRenderSnapshot snapshot) {
@@ -714,7 +729,10 @@ public final class MazeGameRenderer {
   private static ScreenRectangle paletteIconBounds(ScreenRectangle bounds) {
     float size = Math.min(24.0F, bounds.height() - 16.0F);
     return new ScreenRectangle(
-        bounds.x() + 10.0F, bounds.y() + (bounds.height() - size) / 2.0F, size, size);
+        bounds.x() + (bounds.width() - size) / 2.0F,
+        bounds.y() + (bounds.height() - size) / 2.0F,
+        size,
+        size);
   }
 
   private static String noNextLevelText(GameRenderSnapshot snapshot) {

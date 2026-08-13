@@ -87,6 +87,29 @@ final class MazeGamePaletteTest {
     assertEquals(PlaceableCellType.WALL, game.mazeState().placedCellAt(FIRST));
   }
 
+  @Test
+  void paletteTooltipAppearsAfterHalfSecondAndResetsOnExitOrInteraction() {
+    MazeGame game = finiteGame();
+
+    assertTrue(moveToPalette(game, PlaceableCellType.WALL));
+    game.updateGame(0.49F);
+    assertTrue(game.paletteTooltipType().isEmpty());
+    game.updateGame(0.02F);
+    assertEquals(PlaceableCellType.WALL, game.paletteTooltipType().orElseThrow());
+
+    assertTrue(moveToPalette(game, PlaceableCellType.SLOW_FLOOR));
+    assertTrue(game.paletteTooltipType().isEmpty());
+    game.updateGame(0.5F);
+    assertEquals(PlaceableCellType.SLOW_FLOOR, game.paletteTooltipType().orElseThrow());
+
+    assertFalse(game.handlePointerMoved(0, 0, WIDTH, HEIGHT));
+    assertTrue(game.paletteTooltipType().isEmpty());
+    assertTrue(moveToPalette(game, PlaceableCellType.WALL));
+    game.updateGame(0.5F);
+    clickPalette(game, PlaceableCellType.WALL);
+    assertTrue(game.paletteTooltipType().isEmpty());
+  }
+
   private static MazeGame finiteGame() {
     LevelDefinition level =
         new LevelDefinition(
@@ -122,6 +145,17 @@ final class MazeGamePaletteTest {
         game.debugScreenLayout(GamePhase.BUILDING, WIDTH, HEIGHT)
             .bounds(MazeGameLayout.paletteItemId(type)),
         Input.Buttons.LEFT);
+  }
+
+  private static boolean moveToPalette(MazeGame game, PlaceableCellType type) {
+    ScreenRectangle bounds =
+        game.debugScreenLayout(GamePhase.BUILDING, WIDTH, HEIGHT)
+            .bounds(MazeGameLayout.paletteItemId(type));
+    return game.handlePointerMoved(
+        Math.round(bounds.x() + bounds.width() / 2.0F),
+        Math.round(HEIGHT - bounds.y() - bounds.height() / 2.0F),
+        WIDTH,
+        HEIGHT);
   }
 
   private static void clickCell(MazeGame game, GridPosition position, int button) {

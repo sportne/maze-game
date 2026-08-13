@@ -241,6 +241,30 @@ final class BrowserSmokeTest {
     page.waitForTimeout(100.0);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
+    if (!touchInput()) {
+      BufferedImage paletteWithoutTooltip = screenshot(page);
+      controls.hoverButton(
+          GamePhase.BUILDING,
+          Levels.milestoneThree(),
+          false,
+          MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+      BufferedImage paletteWithTooltip = screenshot(page);
+      ScreenRectangle tooltip =
+          paletteTooltipBounds(
+              MazeGameLayout.forPhase(
+                      GamePhase.BUILDING,
+                      VIEWPORT_WIDTH,
+                      VIEWPORT_HEIGHT,
+                      Levels.milestoneThree().gridSize())
+                  .bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
+      assertFalse(
+          lightPixelSignature(paletteWithoutTooltip, tooltip)
+              == lightPixelSignature(paletteWithTooltip, tooltip),
+          "expected delayed palette tooltip after desktop hover");
+      page.screenshot(
+          new Page.ScreenshotOptions()
+              .setPath(reportDirectory.resolve("desktop-palette-tooltip.png")));
+    }
     controls.dragPaletteToCell(
         GamePhase.BUILDING, Levels.milestoneThree(), false, PlaceableCellType.WALL, EDITED_CELL);
     assertWallCell(page, controls.cellCenter(Levels.milestoneThree(), EDITED_CELL));
@@ -706,6 +730,16 @@ final class BrowserSmokeTest {
     return signature[0];
   }
 
+  private static ScreenRectangle paletteTooltipBounds(ScreenRectangle paletteItem) {
+    float width = 176.0F;
+    float height = 36.0F;
+    return new ScreenRectangle(
+        paletteItem.x() + (paletteItem.width() - width) / 2.0F,
+        paletteItem.top() + 8.0F,
+        width,
+        height);
+  }
+
   private static int blueMarkerPixelCount(BufferedImage image, ScreenRectangle region) {
     int[] count = {0};
     forEachPixel(
@@ -870,6 +904,15 @@ final class BrowserSmokeTest {
       int originalColor = pixelColor(page, point.x(), point.y());
       click(point);
       waitForPixelChange(page, point.x(), point.y(), originalColor);
+    }
+
+    private void hoverButton(
+        GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId) {
+      ScreenPoint point = buttonCenter(phase, level, hasNextLevel, elementId);
+      page.mouse().move(1.0, 1.0);
+      page.waitForTimeout(50.0);
+      page.mouse().move(point.x(), point.y());
+      page.waitForTimeout(600.0);
     }
 
     @Override

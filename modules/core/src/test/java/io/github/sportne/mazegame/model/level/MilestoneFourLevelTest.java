@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 final class MilestoneFourLevelTest {
   private static final LevelDefinition LEVEL = Levels.milestoneFour();
   private static final Set<GridPosition> PASSING_WALLS = positions(0, 0, 1, 1, 2, 2);
+  private static final Set<GridPosition> WALL_ONLY_FALLBACK = positions(3, 1, 0, 0, 1, 1, 2, 2);
   private static final Set<GridPosition> PASSING_SLOW_FLOORS = positions(6, 2, 6, 1, 6, 0);
   private static final Set<GridPosition> TIMEOUT_WALLS = positions(0, 1, 1, 2, 2, 1);
   private static final Set<GridPosition> TIMEOUT_SLOW_FLOORS = positions(1, 0, 2, 0, 1, 3);
@@ -40,14 +41,14 @@ final class MilestoneFourLevelTest {
     assertEquals(Duration.ofMillis(5500), LEVEL.targetSolveTime());
     assertEquals(Duration.ofMillis(6500), LEVEL.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), LEVEL.mouseMoveInterval());
-    assertEquals(CellSupply.finite(3), LEVEL.supplyFor(PlaceableCellType.WALL));
+    assertEquals(CellSupply.finite(4), LEVEL.supplyFor(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(3), LEVEL.supplyFor(PlaceableCellType.SLOW_FLOOR));
     assertEquals(MouseBehavior.LEFT_PRIORITY, LEVEL.mouseBehavior());
     assertEquals(53L, LEVEL.randomSeed());
   }
 
   @Test
-  void emptyWallOnlyAndSlowOnlyProductionFixturesFailWhileCombinedPasses() {
+  void emptyThreeWallAndSlowOnlyProductionFixturesFailWhileFourWallAndCombinedPass() {
     assertRun(
         MazeState.empty(LEVEL),
         new MouseRunResult(
@@ -64,8 +65,16 @@ final class MilestoneFourLevelTest {
             LEVEL.cheese(), Duration.ofMillis(3750), 12, MouseRunStatus.REACHED_CHEESE),
         false);
 
+    MazeState wallOnlyFallback = maze(WALL_ONLY_FALLBACK, Set.of());
+    assertEquals(CellSupply.finite(0), wallOnlyFallback.remainingSupply(PlaceableCellType.WALL));
+    assertRun(
+        wallOnlyFallback,
+        new MouseRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(6), 24, MouseRunStatus.REACHED_CHEESE),
+        true);
+
     MazeState passing = maze(PASSING_WALLS, PASSING_SLOW_FLOORS);
-    assertEquals(CellSupply.finite(0), passing.remainingSupply(PlaceableCellType.WALL));
+    assertEquals(CellSupply.finite(1), passing.remainingSupply(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(0), passing.remainingSupply(PlaceableCellType.SLOW_FLOOR));
     assertRun(
         passing,

@@ -302,7 +302,7 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void rendersSelectedExhaustedPaletteStateAndMarkedSlowFloorWithoutColorOnlyCues() {
+  void rendersIconOnlyPaletteAndShowsItsTextOnlyInDelayedTooltip() {
     LevelDefinition level = paletteLevel();
     GridPosition slowFloor = new GridPosition(2, 1);
     MazeState maze = new MazeState(level, Map.of(slowFloor, PlaceableCellType.SLOW_FLOOR));
@@ -337,10 +337,49 @@ final class MazeGameRendererTest {
     assertEquals(
         new Color(0.62F, 0.36F, 0.08F, 1.0F),
         MazeGameRenderer.cellColor(maze, null, 0.0F, slowFloor));
-    assertTrue(font.capturedText().contains("Wall inf"));
-    assertTrue(font.capturedText().contains("* Slow 0 OUT"));
+    assertFalse(font.capturedText().contains("Wall inf"));
+    assertFalse(font.capturedText().contains("* Slow 0 OUT"));
     assertEquals("* Slow 0 OUT", MazeGameRenderer.paletteLabel(palette.get(1)));
-    assertTrue(shapes.rectLines >= 34, "infinite supply has a drawn infinity mark");
+    assertTrue(shapes.rectLines >= 30, "exhausted icon has a non-color strike mark");
+
+    RecordingFont tooltipFont = recordingFont();
+    GameRenderSnapshot tooltipSnapshot =
+        new GameRenderSnapshot(
+            GamePhase.BUILDING,
+            level,
+            maze,
+            25.0F,
+            null,
+            0.0F,
+            null,
+            null,
+            List.of(),
+            palette,
+            null,
+            PlaceableCellType.SLOW_FLOOR,
+            true,
+            false,
+            false);
+    renderer(
+            allocate(RecordingSpriteBatch.class),
+            allocate(RecordingShapeRenderer.class),
+            tooltipFont)
+        .render(
+            MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, level.gridSize()),
+            tooltipSnapshot);
+
+    assertTrue(tooltipFont.capturedText().contains("* Slow 0 OUT"));
+  }
+
+  @Test
+  void paletteTooltipStaysWithinTheViewport() {
+    ScreenRectangle viewport = new ScreenRectangle(0.0F, 0.0F, 390.0F, 286.0F);
+    ScreenRectangle leftItem = new ScreenRectangle(0.0F, 240.0F, 56.0F, 44.0F);
+    ScreenRectangle bounds = MazeGameRenderer.paletteTooltipBounds(viewport, leftItem);
+
+    assertTrue(bounds.fitsWithin(viewport));
+    assertEquals(8.0F, bounds.x());
+    assertTrue(bounds.top() <= leftItem.y());
   }
 
   @Test

@@ -103,10 +103,10 @@ final class MazeGameLayoutTest {
         new ScreenRectangle(454.0F, 41.5F, 180.0F, 44.0F),
         layout.bounds(MazeGameLayout.BUILD_BACK));
     assertEquals(
-        new ScreenRectangle(474.0F, 89.5F, 160.0F, 44.0F),
+        new ScreenRectangle(578.0F, 89.5F, 56.0F, 44.0F),
         layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
     assertEquals(
-        new ScreenRectangle(646.0F, 89.5F, 160.0F, 44.0F),
+        new ScreenRectangle(646.0F, 89.5F, 56.0F, 44.0F),
         layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
   }
 

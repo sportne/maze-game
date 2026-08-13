@@ -75,7 +75,7 @@ public final class Levels {
           Duration.ofMillis(6500),
           Duration.ofMillis(250),
           List.of(
-              PlaceableCellSupply.finite(PlaceableCellType.WALL, 3),
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 4),
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
           MouseBehavior.LEFT_PRIORITY,
           53L);

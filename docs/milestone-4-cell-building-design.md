@@ -21,8 +21,9 @@ one-way, teleport, trap, damage, mouse-specific, or player-authored start/cheese
 Milestone 2 physical-phone review established that direct tap-again clearing is preferable to a
 separate mobile clear mode and that 44-pixel controls plus 32-pixel grid cells are the usable minimums.
 Milestone 3 phone review removed verbose level/build hints and added Back from an abandoned build.
-Those findings favor a persistent, compact palette with direct manipulation and short labels rather
-than modal tool screens, long instructions, or hidden gestures.
+Those findings favor a persistent, compact palette with direct manipulation rather than modal tool
+screens, long instructions, or hidden gestures. Each palette item now keeps only its icon visible;
+desktop pointer hover reveals the item name and supply after a half-second dwell.
 
 The released build phase still offers only unlimited normal walls, so it cannot author scarcity or a
 walkable delay. Repositioning currently requires clearing and replacing, which is needlessly costly
@@ -47,7 +48,7 @@ protected and cannot contain a player item.
 Every level explicitly authors one supply for each supported placeable type:
 
 - `finite(n)` accepts any integer `n >= 0`.
-- `infinite()` has no remaining count and renders with the infinity symbol plus a text fallback.
+- `infinite()` has no remaining count and is reported as `inf` in the delayed palette tooltip.
 - Missing, duplicate, negative, or unknown entries are invalid authored data.
 - Catalog order is also palette order unless a later accepted requirement needs separate ordering.
 
@@ -152,18 +153,22 @@ that same type removes it.
 
 ## Responsive Palette Contract
 
-The palette is a bottom-screen build control, not an overlay on the grid. Each item shows a non-color
-icon, short label, and `n` or infinity supply; selection uses border/shape as well as color. Interactive
-targets remain at least 44 by 44 CSS pixels and grid cells remain at least 32 by 32 at the released
-reference viewports.
+The palette is a bottom-screen build control, not an overlay on the grid. Each item normally shows
+only its non-color icon. A desktop pointer that remains over an item for 500 milliseconds opens a
+bounded tooltip containing the same selected-state, item-name, supply, and exhausted text formerly
+drawn beside the icon. Moving to another item restarts the delay; leaving the item or starting an
+interaction dismisses the tooltip. Selection uses border/shape as well as color, and exhaustion adds
+a strike through the icon so neither state relies on hidden text. Interactive targets remain at
+least 44 by 44 CSS pixels and grid cells remain at least 32 by 32 at the released reference
+viewports.
 
 - Desktop and portrait place the palette below the grid and above the Back/Start action row.
 - Constrained and safe landscape use a single bottom strip for the palette while keeping Back/Start
   in the side panel; the grid may shrink only as far as the existing cell-size minimum.
 - Safe-area insets apply to the palette and action controls.
 - The initial two-type palette must fit without horizontal scrolling or a drawer.
-- Drag previews clamp to the viewport, never obscure the supply label permanently, and show valid or
-  rejected destination feedback without relying on color alone.
+- Drag previews and hover tooltips clamp to the viewport and show valid or rejected feedback without
+  relying on color alone.
 
 If the two types cannot fit a supported viewport with these minimums, the layout fails validation
 rather than silently shrinking targets.
@@ -185,18 +190,16 @@ rather than silently shrinking targets.
 
 ## Required Design Evidence
 
-M4-01 must establish a new level through deterministic fixtures before production authoring. Evidence
-must include empty, deliberate pass, insufficient-inventory, replacement, Slow Floor timing, timeout,
-Random/Scout comparison, whole-duration/chunked updates, and at least one solution using both types.
-It must also confirm that the new level is not solvable merely by recreating an earlier unlimited-wall
-strategy.
+The deterministic fixtures must include empty, deliberate mixed-type and four-Wall fallback passes,
+insufficient inventory, replacement, Slow Floor timing, timeout, Random/Scout comparison, and
+whole-duration/chunked updates. Exhaustive evidence must cover every legal layout through the current
+finite Wall supply so future balance changes cannot silently invalidate the fallback contract.
 
-## Accepted Level 4 Parameters
+## Current Level 4 Parameters
 
-M4-01 accepts a 7x7 fourth level with Scout, bottom-center start `(6,3)`, top-center cheese `(0,3)`,
-a 25-second build time, 250-millisecond movement interval, 5.5-second target, 6.5-second timeout,
-three Walls, and three Slow Floors. The stable production id will be `milestone-4`; production
-authoring remains deferred to M4-08.
+Level 4 is a 7x7 level with Scout, bottom-center start `(6,3)`, top-center cheese `(0,3)`, a
+25-second build time, 250-millisecond movement interval, 5.5-second target, 6.5-second timeout, four
+Walls, and three Slow Floors. The stable production id is `milestone-4`.
 
 The accepted passing edit uses Walls at `(0,0)`, `(1,1)`, and `(2,2)`, with Slow Floors at `(6,2)`,
 `(6,1)`, and `(6,0)`:
@@ -220,11 +223,14 @@ W . . C . . .
 
 The 20 moves occur at 0.25, 0.75, 1.25, 1.75, then every 0.25 seconds through 5.75 seconds.
 The three Slow Floor waits add 0.75 seconds without changing the route or move count. Empty finishes
-in 3.0 seconds, Slow-Floor-only in 3.75 seconds, and the same Walls without Slow Floor in 5.0
-seconds, so each fails. Exhaustively evaluating every legal layout with zero through three Walls
-finds 5.5 seconds as the maximum and no timeout, which does not exceed the target; the finite Wall
-supply therefore cannot recreate an earlier unlimited-Wall pass. Test-side editing evidence also
-exercises infinite-Wall/zero-Slow-Floor authoring as the released-level compatibility case.
+in 3.0 seconds, Slow-Floor-only in 3.75 seconds, and the illustrated three-Wall layout without Slow
+Floor in 5.0 seconds, so each fails. The original three-Wall supply was increased to four after
+playtest feedback that the level was too difficult. Exhaustively evaluating every legal layout with
+zero through four Walls now proves the fourth Wall can create a passing fallback: adding `(3,1)` to
+the three illustrated Walls reaches the cheese in 6.0 seconds, and the longest legal wall-only run
+reaches the cheese in 6.5 seconds. The illustrated mixed-type solution remains a deliberate
+5.75-second route. Test-side editing evidence also exercises
+infinite-Wall/zero-Slow-Floor authoring as the released-level compatibility case.
 
 A timeout fixture uses Walls at `(0,1)`, `(1,2)`, `(2,1)` and Slow Floors at `(1,0)`, `(2,0)`,
 `(1,3)`. Scout enters the final Slow Floor at 6.25 seconds, then its pending extra wait reaches the

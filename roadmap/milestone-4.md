@@ -20,10 +20,11 @@ released win condition or mouse identities.
   occupied cell atomically replaces it.
 - Existing items can be dragged only to empty cells. Invalid and cancelled moves preserve the source
   and all inventory counts.
-- The palette is visible at the bottom of every build layout and uses 44-pixel minimum targets plus
-  non-color selection and availability cues.
-- Milestone 4 adds one authored level with finite Wall and Slow Floor supplies that teaches both
-  types; released levels provide the infinite-Wall compatibility case. It does not add another mouse.
+- The palette is visible at the bottom of every build layout and uses icon-only 44-pixel minimum
+  targets, half-second desktop hover tooltips, and non-color selection and availability cues.
+- Milestone 4 adds one authored level with finite Wall and Slow Floor supplies that demonstrates both
+  types while allowing a four-Wall fallback; released levels provide the infinite-Wall compatibility
+  case. It does not add another mouse.
 
 The exact mechanic and gesture contract is recorded in
 [`docs/milestone-4-cell-building-design.md`](../docs/milestone-4-cell-building-design.md).
@@ -51,8 +52,8 @@ The exact mechanic and gesture contract is recorded in
   and 756x286 safe landscape with current minimum target and cell sizes.
 - Released levels, progression, best results, random paths, Scout traces, retry, replay, and reload
   remain compatible.
-- A balanced fourth level requires deliberate use of both accepted cell types and remains fair on a
-  physical phone in portrait and landscape.
+- A balanced fourth level supports the deliberate mixed-type route plus a four-Wall fallback and
+  remains fair on a physical phone in portrait and landscape.
 - JavaScript, WebAssembly, live Pages, branded Safari, native packaging, formatting, static analysis,
   coverage, architecture, and browser evidence remain green.
 

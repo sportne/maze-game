@@ -34,10 +34,11 @@ final class MilestoneFourCellDesignTest {
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
   private static final Duration TARGET = Duration.ofMillis(5500);
   private static final Duration TIMEOUT = Duration.ofMillis(6500);
-  private static final int WALL_SUPPLY = 3;
+  private static final int WALL_SUPPLY = 4;
   private static final int SLOW_FLOOR_SUPPLY = 3;
 
   private static final Set<GridPosition> PASSING_WALLS = positions(0, 0, 1, 1, 2, 2);
+  private static final Set<GridPosition> WALL_ONLY_FALLBACK = positions(0, 0, 1, 1, 2, 2, 3, 1);
   private static final Set<GridPosition> PASSING_SLOW_FLOORS = positions(6, 2, 6, 1, 6, 0);
   private static final Set<GridPosition> TIMEOUT_WALLS = positions(0, 1, 1, 2, 2, 1);
   private static final Set<GridPosition> TIMEOUT_SLOW_FLOORS = positions(1, 0, 2, 0, 1, 3);
@@ -64,7 +65,7 @@ final class MilestoneFourCellDesignTest {
     assertEquals(START, board.start());
     assertEquals(CHEESE, board.cheese());
     assertEquals(
-        Map.of(CellType.WALL, Supply.finite(0), CellType.SLOW_FLOOR, Supply.finite(0)),
+        Map.of(CellType.WALL, Supply.finite(1), CellType.SLOW_FLOOR, Supply.finite(0)),
         board.remaining());
     assertTrue(board.hasPath());
     assertEquals(PASSING_TRACE, run.trace());
@@ -98,7 +99,7 @@ final class MilestoneFourCellDesignTest {
   }
 
   @Test
-  void noLegalLayoutWithinTheFiniteWallSupplyExceedsTheTarget() {
+  void fourthWallProvidesAPlayableWallOnlyFallback() {
     List<GridPosition> editable = editablePositions();
     List<RunResult> results = new ArrayList<>();
     for (int wallCount = 0; wallCount <= WALL_SUPPLY; wallCount++) {
@@ -107,15 +108,22 @@ final class MilestoneFourCellDesignTest {
 
     assertFalse(results.isEmpty());
     assertTrue(results.stream().allMatch(result -> result.status() == RunStatus.REACHED_CHEESE));
-    assertTrue(results.stream().noneMatch(MilestoneFourCellDesignTest::passed));
     assertEquals(
-        TARGET, results.stream().map(RunResult::elapsed).max(Duration::compareTo).orElseThrow());
+        TIMEOUT, results.stream().map(RunResult::elapsed).max(Duration::compareTo).orElseThrow());
+    assertTrue(results.stream().anyMatch(MilestoneFourCellDesignTest::passed));
+    RunResult fallback =
+        ReferenceSimulation.scout(board(WALL_ONLY_FALLBACK, Set.of())).update(TIMEOUT).result();
+    assertEquals(
+        new RunResult(CHEESE, Duration.ofSeconds(6), 24, RunStatus.REACHED_CHEESE), fallback);
+    assertTrue(passed(fallback));
   }
 
   @Test
   void inventoryRejectsInsufficientSupplyAndRecordsReplacementTransitions() {
-    ReferenceBoard full = acceptedBoard();
-    EditResult exhausted = full.placeOrReplace(CellType.WALL, position(4, 4));
+    EditResult fourthWall = acceptedBoard().placeOrReplace(CellType.WALL, position(4, 4));
+    assertTrue(fourthWall.accepted());
+    ReferenceBoard full = fourthWall.board();
+    EditResult exhausted = full.placeOrReplace(CellType.WALL, position(4, 5));
 
     assertFalse(exhausted.accepted());
     assertEquals(EditStatus.EXHAUSTED, exhausted.status());
@@ -131,16 +139,16 @@ final class MilestoneFourCellDesignTest {
 
     assertEquals(EditStatus.PLACED, placedWall.status());
     assertEquals(
-        Map.of(CellType.WALL, Supply.finite(2), CellType.SLOW_FLOOR, Supply.finite(3)),
+        Map.of(CellType.WALL, Supply.finite(3), CellType.SLOW_FLOOR, Supply.finite(3)),
         placedWall.board().remaining());
     assertEquals(EditStatus.REPLACED, replaced.status());
     assertEquals(CellType.SLOW_FLOOR, replaced.board().cells().get(position(4, 4)));
     assertEquals(
-        Map.of(CellType.WALL, Supply.finite(3), CellType.SLOW_FLOOR, Supply.finite(2)),
+        Map.of(CellType.WALL, Supply.finite(4), CellType.SLOW_FLOOR, Supply.finite(2)),
         replaced.board().remaining());
     assertEquals(EditStatus.REMOVED, recovered.status());
     assertEquals(
-        Map.of(CellType.WALL, Supply.finite(3), CellType.SLOW_FLOOR, Supply.finite(3)),
+        Map.of(CellType.WALL, Supply.finite(4), CellType.SLOW_FLOOR, Supply.finite(3)),
         recovered.board().remaining());
   }
 
@@ -184,7 +192,7 @@ final class MilestoneFourCellDesignTest {
       assertSame(board, result.board());
     }
     assertEquals(
-        Map.of(CellType.WALL, Supply.finite(3), CellType.SLOW_FLOOR, Supply.finite(3)),
+        Map.of(CellType.WALL, Supply.finite(4), CellType.SLOW_FLOOR, Supply.finite(3)),
         board.remaining());
   }
 

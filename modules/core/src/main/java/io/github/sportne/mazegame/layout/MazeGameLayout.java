@@ -119,8 +119,8 @@ public final class MazeGameLayout {
   /** Pixel height of the primary build-phase button. */
   private static final float BUILD_BUTTON_HEIGHT = 44.0F;
 
-  /** Maximum width of one build-palette item. */
-  private static final float PALETTE_ITEM_WIDTH = 160.0F;
+  /** Width of one compact icon-only build-palette item. */
+  private static final float PALETTE_ITEM_WIDTH = 56.0F;
 
   /** Minimum height of one build-palette item. */
   private static final float PALETTE_ITEM_HEIGHT = 44.0F;
