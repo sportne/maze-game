@@ -521,6 +521,7 @@ public final class MazeGameRenderer {
     Color fill = state.selected() ? SELECTED_BUTTON : state.available() ? BUTTON : LOCKED_BUTTON;
     drawButton(bounds, fill, state.selected() ? 4.0F : 2.0F);
     ScreenRectangle icon = paletteIconBounds(bounds);
+    ScreenRectangle supplyBadge = paletteSupplyBadgeBounds(icon);
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
     if (state.type() == PlaceableCellType.WALL) {
       shapeRenderer.setColor(CELL_WALL);
@@ -539,12 +540,46 @@ public final class MazeGameRenderer {
       shapeRenderer.rectLine(icon.x(), icon.y(), icon.right(), icon.y(), 2.0F);
       shapeRenderer.rectLine(icon.x(), icon.top(), icon.right(), icon.top(), 2.0F);
     }
+    drawPaletteSupplyBadgeShape(supplyBadge, state);
     if (!state.available()) {
       shapeRenderer.setColor(TEXT);
       shapeRenderer.rectLine(
           icon.x() - 2.0F, icon.top() + 2.0F, icon.right() + 2.0F, icon.y() - 2.0F, 3.0F);
     }
     shapeRenderer.end();
+    String badgeLabel = paletteSupplyBadgeLabel(state);
+    if (!badgeLabel.isEmpty()) {
+      spriteBatch.begin();
+      font.setColor(TEXT);
+      drawCenteredText(badgeLabel, supplyBadge);
+      spriteBatch.end();
+    }
+  }
+
+  private void drawPaletteSupplyBadgeShape(ScreenRectangle badge, CellPaletteState state) {
+    shapeRenderer.setColor(GRID_LINE);
+    shapeRenderer.rect(badge.x(), badge.y(), badge.width(), badge.height());
+    shapeRenderer.setColor(TEXT);
+    shapeRenderer.rectLine(badge.x(), badge.y(), badge.right(), badge.y(), 1.5F);
+    shapeRenderer.rectLine(badge.x(), badge.top(), badge.right(), badge.top(), 1.5F);
+    shapeRenderer.rectLine(badge.x(), badge.y(), badge.x(), badge.top(), 1.5F);
+    shapeRenderer.rectLine(badge.right(), badge.y(), badge.right(), badge.top(), 1.5F);
+    if (state.remainingSupply().isInfinite()) {
+      drawInfinityMark(badge);
+    }
+  }
+
+  private void drawInfinityMark(ScreenRectangle bounds) {
+    float centerX = bounds.x() + bounds.width() / 2.0F;
+    float centerY = bounds.y() + bounds.height() / 2.0F;
+    float left = centerX - 6.0F;
+    float right = centerX + 6.0F;
+    float top = centerY + 3.5F;
+    float bottom = centerY - 3.5F;
+    shapeRenderer.rectLine(left, bottom, centerX, top, 1.5F);
+    shapeRenderer.rectLine(centerX, top, right, bottom, 1.5F);
+    shapeRenderer.rectLine(left, top, centerX, bottom, 1.5F);
+    shapeRenderer.rectLine(centerX, bottom, right, top, 1.5F);
   }
 
   private void drawButton(ScreenRectangle bounds, Color fill) {
@@ -726,6 +761,12 @@ public final class MazeGameRenderer {
     return selection + name + " " + count + exhausted;
   }
 
+  static String paletteSupplyBadgeLabel(CellPaletteState state) {
+    return state.remainingSupply().isInfinite()
+        ? ""
+        : Integer.toString(state.remainingSupply().finiteCount().orElseThrow());
+  }
+
   private static ScreenRectangle paletteIconBounds(ScreenRectangle bounds) {
     float size = Math.min(24.0F, bounds.height() - 16.0F);
     return new ScreenRectangle(
@@ -733,6 +774,11 @@ public final class MazeGameRenderer {
         bounds.y() + (bounds.height() - size) / 2.0F,
         size,
         size);
+  }
+
+  static ScreenRectangle paletteSupplyBadgeBounds(ScreenRectangle icon) {
+    float size = 18.0F;
+    return new ScreenRectangle(icon.right() - 9.0F, icon.y() - 7.0F, size, size);
   }
 
   private static String noNextLevelText(GameRenderSnapshot snapshot) {

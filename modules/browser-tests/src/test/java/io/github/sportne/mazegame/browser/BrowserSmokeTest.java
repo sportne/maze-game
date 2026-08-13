@@ -241,6 +241,7 @@ final class BrowserSmokeTest {
     page.waitForTimeout(100.0);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
+    assertPaletteSupplyBadges(page, Levels.milestoneThree());
     if (!touchInput()) {
       BufferedImage paletteWithoutTooltip = screenshot(page);
       controls.hoverButton(
@@ -728,6 +729,55 @@ final class BrowserSmokeTest {
           signature[0] *= 0x100000001b3L;
         });
     return signature[0];
+  }
+
+  private static void assertPaletteSupplyBadges(Page page, LevelDefinition level)
+      throws IOException {
+    BufferedImage image = screenshot(page);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(
+            GamePhase.BUILDING, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, level.gridSize());
+    ScreenRectangle wallBadge =
+        paletteSupplyBadgeBounds(
+            layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
+    ScreenRectangle slowFloorBadge =
+        paletteSupplyBadgeBounds(
+            layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
+
+    assertTrue(lightPixelCount(image, inset(wallBadge, 3.0F)) > 0, "expected infinity badge");
+    assertTrue(lightPixelCount(image, inset(slowFloorBadge, 3.0F)) > 0, "expected numeric badge");
+    assertFalse(
+        lightPixelSignature(image, inset(wallBadge, 3.0F))
+            == lightPixelSignature(image, inset(slowFloorBadge, 3.0F)),
+        "infinity and numeric supply badges should be visually distinct");
+  }
+
+  private static ScreenRectangle paletteSupplyBadgeBounds(ScreenRectangle paletteItem) {
+    float iconSize = Math.min(24.0F, paletteItem.height() - 16.0F);
+    float iconX = paletteItem.x() + (paletteItem.width() - iconSize) / 2.0F;
+    float iconY = paletteItem.y() + (paletteItem.height() - iconSize) / 2.0F;
+    return new ScreenRectangle(iconX + iconSize - 9.0F, iconY - 7.0F, 18.0F, 18.0F);
+  }
+
+  private static ScreenRectangle inset(ScreenRectangle bounds, float amount) {
+    return new ScreenRectangle(
+        bounds.x() + amount,
+        bounds.y() + amount,
+        bounds.width() - 2.0F * amount,
+        bounds.height() - 2.0F * amount);
+  }
+
+  private static int lightPixelCount(BufferedImage image, ScreenRectangle region) {
+    int[] count = {0};
+    forEachPixel(
+        image,
+        region,
+        color -> {
+          if (red(color) >= 120 && green(color) >= 120 && blue(color) >= 120) {
+            count[0]++;
+          }
+        });
+    return count[0];
   }
 
   private static ScreenRectangle paletteTooltipBounds(ScreenRectangle paletteItem) {

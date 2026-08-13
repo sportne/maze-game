@@ -22,8 +22,9 @@ Milestone 2 physical-phone review established that direct tap-again clearing is 
 separate mobile clear mode and that 44-pixel controls plus 32-pixel grid cells are the usable minimums.
 Milestone 3 phone review removed verbose level/build hints and added Back from an abandoned build.
 Those findings favor a persistent, compact palette with direct manipulation rather than modal tool
-screens, long instructions, or hidden gestures. Each palette item now keeps only its icon visible;
-desktop pointer hover reveals the item name and supply after a half-second dwell.
+screens, long instructions, or hidden gestures. Each palette item keeps a compact icon and supply
+badge visible; desktop pointer hover reveals the item name and full supply text after a half-second
+dwell.
 
 The released build phase still offers only unlimited normal walls, so it cannot author scarcity or a
 walkable delay. Repositioning currently requires clearing and replacing, which is needlessly costly
@@ -154,8 +155,10 @@ that same type removes it.
 ## Responsive Palette Contract
 
 The palette is a bottom-screen build control, not an overlay on the grid. Each item normally shows
-only its non-color icon. A desktop pointer that remains over an item for 500 milliseconds opens a
-bounded tooltip containing the same selected-state, item-name, supply, and exhausted text formerly
+its non-color icon with a bottom-right supply badge: a number for finite remaining supply or a
+line-drawn infinity symbol for unlimited supply. A desktop pointer that remains over an item for
+500 milliseconds opens a bounded tooltip containing the same selected-state, item-name, supply, and
+exhausted text formerly
 drawn beside the icon. Moving to another item restarts the delay; leaving the item or starting an
 interaction dismisses the tooltip. Selection uses border/shape as well as color, and exhaustion adds
 a strike through the icon so neither state relies on hidden text. Interactive targets remain at

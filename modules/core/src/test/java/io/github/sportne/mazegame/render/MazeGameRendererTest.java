@@ -302,7 +302,7 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void rendersIconOnlyPaletteAndShowsItsTextOnlyInDelayedTooltip() {
+  void rendersCompactPaletteSupplyBadgesAndShowsDescriptionOnlyInDelayedTooltip() {
     LevelDefinition level = paletteLevel();
     GridPosition slowFloor = new GridPosition(2, 1);
     MazeState maze = new MazeState(level, Map.of(slowFloor, PlaceableCellType.SLOW_FLOOR));
@@ -339,8 +339,18 @@ final class MazeGameRendererTest {
         MazeGameRenderer.cellColor(maze, null, 0.0F, slowFloor));
     assertFalse(font.capturedText().contains("Wall inf"));
     assertFalse(font.capturedText().contains("* Slow 0 OUT"));
+    assertTrue(font.capturedText().contains("0"));
     assertEquals("* Slow 0 OUT", MazeGameRenderer.paletteLabel(palette.get(1)));
-    assertTrue(shapes.rectLines >= 30, "exhausted icon has a non-color strike mark");
+    assertEquals("", MazeGameRenderer.paletteSupplyBadgeLabel(palette.get(0)));
+    assertEquals("0", MazeGameRenderer.paletteSupplyBadgeLabel(palette.get(1)));
+    assertEquals(
+        "4",
+        MazeGameRenderer.paletteSupplyBadgeLabel(
+            new CellPaletteState(
+                PlaceableCellType.SLOW_FLOOR, CellSupply.finite(4), CellSupply.finite(4), false)));
+    assertTrue(
+        shapes.rectLines >= 42,
+        "supply badges include an infinity mark and exhausted icon has a strike mark");
 
     RecordingFont tooltipFont = recordingFont();
     GameRenderSnapshot tooltipSnapshot =
@@ -380,6 +390,17 @@ final class MazeGameRendererTest {
     assertTrue(bounds.fitsWithin(viewport));
     assertEquals(8.0F, bounds.x());
     assertTrue(bounds.top() <= leftItem.y());
+  }
+
+  @Test
+  void supplyBadgeOverlapsTheIconsBottomRightCorner() {
+    ScreenRectangle icon = new ScreenRectangle(16.0F, 10.0F, 24.0F, 24.0F);
+    ScreenRectangle badge = MazeGameRenderer.paletteSupplyBadgeBounds(icon);
+
+    assertTrue(badge.x() < icon.right());
+    assertTrue(badge.right() > icon.right());
+    assertTrue(badge.y() < icon.y());
+    assertTrue(badge.top() > icon.y());
   }
 
   @Test
