@@ -1,7 +1,7 @@
 # Milestone 3 Release Baseline
 
 Milestone 3 is the three-level Maze Game release. The player must delay each mouse beyond the
-target time while preserving at least one path to the cheese. The third level introduces Scout, a
+target time while preserving at least one path to the goal. The third level introduces Scout, a
 visually distinct deterministic mouse whose search behavior is learned by watching its runs rather
 than by reading an explanation before play.
 
@@ -18,8 +18,9 @@ move count in the current browser profile. Retry starts a new build, replay repe
 run, and next-level navigation appears only when another authored level exists.
 
 Scout starts facing north and uses one deterministic relative-direction priority internally. The
-production UI deliberately does not state that order. Its blue cap and high-contrast star badge
-distinguish it from the random mouse without relying on color alone or visually revealing the rule.
+production UI deliberately does not state that order. Scout uses the basic squirrel and an acorn;
+Random uses the classic mouse and cheese. Their silhouettes distinguish the behaviors without
+relying on color alone or visually revealing Scout's rule.
 The complete engineering rule, comparison evidence, and accepted traces are in the
 [Scout design record](milestone-3-mouse-design.md).
 

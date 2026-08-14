@@ -44,11 +44,11 @@ final class MazeGameRuntimeConfigurationTest {
             true,
             true);
 
-    configuration.assetResolver().resolve("mouse-sprites.png");
+    configuration.assetResolver().resolve("processed/classic-mouse.png");
     configuration.afterRenderHook().afterRender(0.5F);
     configuration.exitAction().run();
 
-    assertEquals("mouse-sprites.png", resolvedPath.get());
+    assertEquals("processed/classic-mouse.png", resolvedPath.get());
     assertEquals(0.5F, renderedDelta.get());
     assertTrue(exitRequested.get());
     assertFalse(configuration.quitAvailable());

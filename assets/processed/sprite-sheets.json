@@ -1,0 +1,32 @@
+{
+  "cellSize": 128,
+  "contentBounds": 112,
+  "safeInset": 8,
+  "maximumColors": 256,
+  "dithering": false,
+  "quantizer": "pngquant 3.0.3",
+  "losslessOptimizer": "oxipng 8.0.0 max",
+  "directionColumns": ["front", "back", "left", "right"],
+  "sheets": {
+    "basic-characters.png": {
+      "source": "../basic-character-sprites.png",
+      "rows": ["rabbit", "hamster", "raccoon", "squirrel"]
+    },
+    "advanced-characters.png": {
+      "source": "../advanced-character-sprites.png",
+      "rows": ["wizard-rabbit", "chef-hamster", "detective-raccoon", "explorer-squirrel"]
+    },
+    "advanced-mice.png": {
+      "source": "../advanced-mouse-sprites.png",
+      "rows": ["farmer", "raincoat", "pirate", "winter"]
+    },
+    "classic-mouse.png": {
+      "source": "../mouse-sprites.png",
+      "rows": ["classic"]
+    },
+    "goals.png": {
+      "source": "../goal-sprites.png",
+      "columns": ["cheese", "carrot", "sunflower-seed", "trash-can", "acorn"]
+    }
+  }
+}

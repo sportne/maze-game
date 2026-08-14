@@ -14,9 +14,11 @@ description = 'TeaVM browser launcher for Maze Game.'
 
 def webAssetsDirectory = layout.buildDirectory.dir('generated/web-assets')
 def prepareWebAssets = tasks.register('prepareWebAssets', Sync) {
+    dependsOn rootProject.tasks.named('verifyProcessedSpriteSheets')
     from(rootProject.file('assets')) {
-        include 'mouse-sprites.png'
-        include 'scout-mouse.png'
+        include 'processed/classic-mouse.png'
+        include 'processed/basic-characters.png'
+        include 'processed/goals.png'
         include 'audio/exploreMaze_T1.mp3'
     }
     into webAssetsDirectory
@@ -138,8 +140,9 @@ def verifyWasmArtifact = tasks.register('verifyWasmArtifact') {
             'app.wasm',
             'app.wasm-runtime.js',
             'styles.css',
-            'assets/mouse-sprites.png',
-            'assets/scout-mouse.png',
+            'assets/processed/classic-mouse.png',
+            'assets/processed/basic-characters.png',
+            'assets/processed/goals.png',
             'assets/audio/exploreMaze_T1.mp3',
         ]
         def missingFiles = requiredFiles.findAll { relativePath ->

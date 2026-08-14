@@ -12,7 +12,7 @@ Milestone 3 introduces **Scout**, a deterministic mouse that internally prefers 
 The exact order is deliberately not shown before play. Level-selection cards retain the simple
 level-name and best-result format used by earlier levels, and the build screen identifies Scout by
 name without describing its search. The player discovers the preference by watching runs while
-still trying to delay the mouse and preserve a valid path to the cheese. Result feedback may prompt
+still trying to delay the mouse and preserve a valid path to the goal. Result feedback may prompt
 the player to watch Scout's choices at intersections, but must not state the order.
 
 ## Complete Decision Rules
@@ -135,10 +135,10 @@ configuration.
 
 ## Visual Identity
 
-Scout uses a new mouse sprite compatible with the current pixel-art presentation and transparent
-asset pipeline. It keeps a recognizable mouse silhouette but adds a blue cap with a high-contrast
-star badge. The cap/badge makes Scout distinguishable without relying only on color and does not
-reveal the turning preference; the existing random mouse retains its red scarf and current sprite.
+Scout uses the basic squirrel from the normalized character sheet, paired with an acorn goal. Its
+silhouette distinguishes Scout without relying only on color and does not reveal the turning
+preference. Random behavior uses the classic mouse paired with cheese. Both identities come from
+the checked-in processed sprite pipeline rather than one-off derivatives.
 
 Build, running, and result presentation identify the active mouse by the player-facing name. Level
 selection intentionally uses the same concise level-name and best-result structure for every card.

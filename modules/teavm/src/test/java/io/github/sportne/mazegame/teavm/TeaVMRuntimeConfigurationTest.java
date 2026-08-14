@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Test;
 final class TeaVMRuntimeConfigurationTest {
   @Test
   void createsBrowserCapabilitiesAroundAssetResolver() {
-    FileHandle expectedAsset = new FileHandle("mouse-sprites.png");
+    FileHandle expectedAsset = new FileHandle("processed/classic-mouse.png");
     MazeGameRuntimeConfiguration configuration =
         TeaVMRuntimeConfiguration.create(ignoredPath -> expectedAsset, ignoredDelta -> {});
 
-    assertSame(expectedAsset, configuration.assetResolver().resolve("mouse-sprites.png"));
+    assertSame(expectedAsset, configuration.assetResolver().resolve("processed/classic-mouse.png"));
     assertFalse(configuration.quitAvailable());
     assertTrue(configuration.audioAvailable());
     assertTrue(configuration.audioRequiresUserGesture());

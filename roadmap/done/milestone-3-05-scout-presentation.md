@@ -8,6 +8,9 @@ Superseded presentation detail: M3-07 physical-device feedback simplified every 
 level name and best result and removed the pre-run search-pattern sentence. Scout remains identified
 by name and sprite without any behavioral description.
 
+Superseded asset detail: the later normalized sprite pipeline replaced the one-off blue-cap mouse
+with the basic squirrel and an acorn goal. This card retains the original acceptance history.
+
 Depends on: M3-04
 
 ## Goal

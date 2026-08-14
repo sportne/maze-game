@@ -34,6 +34,9 @@ jobs:
       - name: Fetch PMD submodule tags
         run: git -C tools/pmd fetch --tags --force origin
 
+      - name: Install sprite processing dependency
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends imagemagick
+
       - name: Cache Playwright browser
         uses: actions/cache@v4
         with:

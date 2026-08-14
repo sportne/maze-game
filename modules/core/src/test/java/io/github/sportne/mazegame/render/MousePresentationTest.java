@@ -13,8 +13,10 @@ final class MousePresentationTest {
     MousePresentation scout = MousePresentation.forBehavior(MouseBehavior.LEFT_PRIORITY);
 
     assertEquals("Mouse", random.name());
+    assertEquals("cheese", random.goalName());
     assertEquals("Milestone 1", random.levelTitle("Milestone 1"));
     assertEquals("Scout", scout.name());
+    assertEquals("acorn", scout.goalName());
     assertEquals("Milestone 3 | Scout", scout.levelTitle("Milestone 3"));
     assertEquals("Milestone 3 | Scout", scout.statusTitle("Milestone 3", 300.0F));
     assertEquals("Scout", scout.statusTitle("Milestone 3", 299.0F));

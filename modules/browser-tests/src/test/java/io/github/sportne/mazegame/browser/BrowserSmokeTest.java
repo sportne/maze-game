@@ -70,7 +70,12 @@ final class BrowserSmokeTest {
   private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
-      Set.of("styles.css", "mouse-sprites.png", "scout-mouse.png", "exploreMaze_T1.mp3");
+      Set.of(
+          "styles.css",
+          "classic-mouse.png",
+          "basic-characters.png",
+          "goals.png",
+          "exploreMaze_T1.mp3");
 
   @Test
   @Timeout(360)

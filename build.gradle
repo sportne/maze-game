@@ -30,6 +30,7 @@ tasks.register('qualityGate') {
     dependsOn tasks.named('webFormatCheck')
     dependsOn tasks.named('webMarkupCheck')
     dependsOn tasks.named('webStyleCheck')
+    dependsOn tasks.named('verifyProcessedSpriteSheets')
 }
 
 def webToolSources = files(
@@ -43,7 +44,94 @@ def npmInstall = tasks.register('npmInstall', Exec) {
     description = 'Installs pinned web quality tools from package-lock.json.'
     inputs.files 'package.json', 'package-lock.json'
     outputs.file 'node_modules/.package-lock.json'
-    commandLine 'npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund'
+    commandLine 'npm', 'ci', '--no-audit', '--no-fund'
+}
+
+def spriteSourceFiles = files(
+    'assets/basic-character-sprites.png',
+    'assets/advanced-character-sprites.png',
+    'assets/advanced-mouse-sprites.png',
+    'assets/goal-sprites.png',
+    'assets/mouse-sprites.png',
+)
+def processedSpriteDirectory = layout.projectDirectory.dir('assets/processed')
+def verificationSpriteDirectory = layout.buildDirectory.dir('tmp/verify-processed-sprites')
+def processedSpriteDirectoryFile = processedSpriteDirectory.asFile
+def verificationSpriteDirectoryFile = verificationSpriteDirectory.get().asFile
+def spriteProcessingEnvironment = providers.provider {
+    def operatingSystem = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+    def windows = operatingSystem.contains('windows')
+    def executableSuffix = windows ? '.cmd' : ''
+    [
+        PNGQUANT: layout.projectDirectory.file(
+                "node_modules/.bin/pngquant${executableSuffix}"
+                ).asFile.absolutePath,
+        OXIPNG: layout.projectDirectory.file(
+                "node_modules/.bin/oxipng${executableSuffix}"
+                ).asFile.absolutePath,
+    ]
+}
+
+def processSpriteSheets = tasks.register('processSpriteSheets', Exec) {
+    group = 'asset processing'
+    description = 'Regenerates optimized runtime sprite sheets from source masters.'
+    dependsOn npmInstall
+    inputs.files spriteSourceFiles
+    inputs.file 'tools/process_sprite_sheets.sh'
+    outputs.dir processedSpriteDirectory
+    environment spriteProcessingEnvironment.get()
+    commandLine 'bash', 'tools/process_sprite_sheets.sh'
+}
+
+def cleanVerificationSpriteSheets = tasks.register('cleanVerificationSpriteSheets', Delete) {
+    delete verificationSpriteDirectory
+}
+
+def generateVerificationSpriteSheets = tasks.register('generateVerificationSpriteSheets', Exec) {
+    dependsOn npmInstall
+    dependsOn cleanVerificationSpriteSheets
+    inputs.files spriteSourceFiles
+    inputs.file 'tools/process_sprite_sheets.sh'
+    outputs.dir verificationSpriteDirectory
+    environment spriteProcessingEnvironment.get()
+    commandLine(
+            'bash',
+            'tools/process_sprite_sheets.sh',
+            verificationSpriteDirectoryFile.absolutePath,
+            )
+}
+
+tasks.register('verifyProcessedSpriteSheets') {
+    group = 'verification'
+    description = 'Verifies checked-in sprite sheets match the reproducible asset pipeline.'
+    dependsOn generateVerificationSpriteSheets
+    mustRunAfter processSpriteSheets
+    inputs.dir processedSpriteDirectory
+    inputs.dir verificationSpriteDirectory
+    doLast {
+        def temporaryDirectory = verificationSpriteDirectoryFile
+        def checkedInDirectory = processedSpriteDirectoryFile
+        def generatedFiles = temporaryDirectory.listFiles().findAll {
+            it.isFile() && it.name.endsWith('.png')
+        }.collect { it.name }.sort()
+        def checkedInFiles = checkedInDirectory.listFiles().findAll {
+            it.isFile() && it.name.endsWith('.png')
+        }.collect { it.name }.sort()
+        if (generatedFiles != checkedInFiles) {
+            throw new GradleException(
+                    "Processed sprite file set is stale: expected ${generatedFiles}, found ${checkedInFiles}"
+                    )
+        }
+        generatedFiles.each { filename ->
+            def generated = new File(temporaryDirectory, filename)
+            def checkedIn = new File(checkedInDirectory, filename)
+            if (!Arrays.equals(generated.bytes, checkedIn.bytes)) {
+                throw new GradleException(
+                        "Processed sprite is stale: ${checkedIn}. Run ./gradlew processSpriteSheets."
+                        )
+            }
+        }
+    }
 }
 
 tasks.register('webFormatApply', Exec) {

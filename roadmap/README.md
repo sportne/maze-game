@@ -93,6 +93,15 @@ See [Milestone 4](milestone-4.md) and the accepted
 
 Status: planned.
 
+### Cross-Cutting Asset Delivery
+
+- [ASSET-01: Ship optional art separately and load it on demand](asset-01-lazy-delivery.md) is a
+  proposed, non-gating follow-up. It becomes a prerequisite when a future character, cosmetic, or
+  campaign feature selects any of the optional processed sprite atlases for runtime use.
+- [ASSET-02: Optimize and stream web music](asset-02-web-audio-delivery.md) is a proposed,
+  non-gating follow-up for selecting a short production loop, adding a modern browser format with
+  fallback, and bounding music transfer and decode costs.
+
 ## Deferred Ideas
 
 These remain outside the planned Milestone 4 scope:

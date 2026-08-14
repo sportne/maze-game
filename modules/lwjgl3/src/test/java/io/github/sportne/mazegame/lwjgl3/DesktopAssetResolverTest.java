@@ -21,26 +21,28 @@ final class DesktopAssetResolverTest {
 
   @Test
   void assetsWorkingDirectoryUsesRelativeName() throws IOException {
-    Files.createFile(temporaryDirectory.resolve("mouse-sprites.png"));
+    Files.createDirectory(temporaryDirectory.resolve("processed"));
+    Files.createFile(temporaryDirectory.resolve("processed/classic-mouse.png"));
 
     assertEquals(
-        Path.of("mouse-sprites.png"),
+        Path.of("processed", "classic-mouse.png"),
         DesktopAssetResolver.resolvedPath(
-            "mouse-sprites.png", null, temporaryDirectory.toString()));
+            "processed/classic-mouse.png", null, temporaryDirectory.toString()));
   }
 
   @Test
   void projectWorkingDirectoryUsesAssetsFallback() {
     assertEquals(
-        Path.of("assets", "mouse-sprites.png"),
+        Path.of("assets", "processed", "classic-mouse.png"),
         DesktopAssetResolver.resolvedPath(
-            "mouse-sprites.png", null, temporaryDirectory.toString()));
+            "processed/classic-mouse.png", null, temporaryDirectory.toString()));
   }
 
   @Test
   void blankAssetsDirectoryUsesNormalFallback() {
     assertEquals(
-        Path.of("assets", "mouse-sprites.png"),
-        DesktopAssetResolver.resolvedPath("mouse-sprites.png", " ", temporaryDirectory.toString()));
+        Path.of("assets", "processed", "classic-mouse.png"),
+        DesktopAssetResolver.resolvedPath(
+            "processed/classic-mouse.png", " ", temporaryDirectory.toString()));
   }
 }

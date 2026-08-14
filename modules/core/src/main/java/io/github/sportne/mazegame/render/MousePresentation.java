@@ -4,12 +4,13 @@ import io.github.sportne.mazegame.model.level.MouseBehavior;
 import java.util.Objects;
 
 /** Player-facing identity for one authored mouse behavior. */
-record MousePresentation(String name, boolean distinctIdentity) {
-  private static final MousePresentation RANDOM = new MousePresentation("Mouse", false);
-  private static final MousePresentation SCOUT = new MousePresentation("Scout", true);
+record MousePresentation(String name, String goalName, boolean distinctIdentity) {
+  private static final MousePresentation RANDOM = new MousePresentation("Mouse", "cheese", false);
+  private static final MousePresentation SCOUT = new MousePresentation("Scout", "acorn", true);
 
   MousePresentation {
     Objects.requireNonNull(name, "name");
+    Objects.requireNonNull(goalName, "goalName");
   }
 
   /** Returns the closed presentation choice for an authored behavior. */

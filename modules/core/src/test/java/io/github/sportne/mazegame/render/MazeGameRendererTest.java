@@ -628,7 +628,7 @@ final class MazeGameRendererTest {
     renderer.render(
         scoutLayout(GamePhase.RESULT), scoutSnapshot(GamePhase.RESULT, result, progress));
 
-    assertTrue(font.capturedText().contains("Delay past 6.0s; keep a path to the cheese"));
+    assertTrue(font.capturedText().contains("Delay past 6.0s; keep a path to the acorn"));
     assertFalse(font.capturedText().contains("Scout follows a consistent search pattern"));
     assertTrue(font.capturedText().contains("Scout | 7.0s | >6.0s"));
     assertTrue(font.capturedText().contains("Scout | Success | >6.0s"));
@@ -637,7 +637,7 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void mouseSpriteSelectionUsesBehaviorInsteadOfLevelIdentity() {
+  void characterAndGoalSpriteSelectionUsesBehaviorInsteadOfLevelIdentity() {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     MazeGameRenderer renderer =
         renderer(spriteBatch, allocate(RecordingShapeRenderer.class), recordingFont());
@@ -649,6 +649,8 @@ final class MazeGameRendererTest {
 
     assertTrue(spriteBatch.drawnRegionXs().contains(10));
     assertFalse(spriteBatch.drawnRegionXs().contains(20));
+    assertTrue(spriteBatch.drawnRegionXs().contains(1));
+    assertFalse(spriteBatch.drawnRegionXs().contains(2));
 
     LevelDefinition scoutBehaviorOnFirstLevelIdentity =
         new LevelDefinition(
@@ -670,6 +672,7 @@ final class MazeGameRendererTest {
             Duration.ZERO,
             0,
             MouseRunStatus.RUNNING);
+    spriteBatch.drawnRegionXs().clear();
     renderer.render(
         MazeGameLayout.forPhase(
             GamePhase.MOUSE_RUNNING,
@@ -694,6 +697,9 @@ final class MazeGameRendererTest {
             false));
 
     assertTrue(spriteBatch.drawnRegionXs().contains(20));
+    assertFalse(spriteBatch.drawnRegionXs().contains(10));
+    assertTrue(spriteBatch.drawnRegionXs().contains(2));
+    assertFalse(spriteBatch.drawnRegionXs().contains(1));
   }
 
   @Test
@@ -706,6 +712,7 @@ final class MazeGameRendererTest {
                 allocate(RecordingShapeRenderer.class),
                 recordingFont(),
                 null,
+                sprite(2),
                 sprite(10),
                 sprite(20)));
   }
@@ -713,7 +720,7 @@ final class MazeGameRendererTest {
   private static MazeGameRenderer renderer(
       RecordingSpriteBatch spriteBatch, RecordingShapeRenderer shapeRenderer, RecordingFont font) {
     return new MazeGameRenderer(
-        spriteBatch, shapeRenderer, font, sprite(1), sprite(10), sprite(20));
+        spriteBatch, shapeRenderer, font, sprite(1), sprite(2), sprite(10), sprite(20));
   }
 
   private static TextureRegion sprite(int regionX) {

@@ -18,8 +18,8 @@ build interaction.
 - Passing Milestone 2 unlocks the third level, which stores an independent best passing result under
   the stable `milestone-3` id.
 - Existing levels retain the deterministic random mouse and their exact replay behavior.
-- Scout has a new sprite with a blue cap and high-contrast star badge, making it recognizable without
-  color alone while avoiding a visual spoiler.
+- Scout uses the basic squirrel paired with an acorn, making it recognizable without color alone
+  while avoiding a visual spoiler. Random behavior uses the classic mouse paired with cheese.
 - Level-selection cards show only the level name and best result. The build screen names Scout but
   provides no behavioral description. Result feedback may encourage watching intersections but does
   not disclose the priority order.

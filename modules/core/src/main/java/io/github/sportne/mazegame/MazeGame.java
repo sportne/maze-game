@@ -18,7 +18,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.sportne.mazegame.assets.AssetPaths;
 import io.github.sportne.mazegame.assets.BackgroundMusicController;
-import io.github.sportne.mazegame.assets.MouseSpriteSheet;
+import io.github.sportne.mazegame.assets.GameSpriteSheets;
 import io.github.sportne.mazegame.input.BuildGestureController;
 import io.github.sportne.mazegame.input.BuildGestureState;
 import io.github.sportne.mazegame.input.GameInputAction;
@@ -89,14 +89,20 @@ public final class MazeGame extends ApplicationAdapter {
   /** Viewport that keeps one game unit aligned with one logical screen pixel. */
   private Viewport viewport;
 
-  /** Texture loaded from the mouse/cheese sprite sheet asset. */
-  private Texture spriteSheet;
+  /** Texture loaded from the processed classic mouse sprite sheet. */
+  private Texture classicMouseSpriteSheet;
 
-  /** Texture loaded from Scout's distinct sprite asset. */
-  private Texture scoutTexture;
+  /** Texture loaded from the processed basic-character sprite sheet. */
+  private Texture basicCharacterSpriteSheet;
+
+  /** Texture loaded from the processed goal sprite sheet. */
+  private Texture goalSpriteSheet;
 
   /** Cropped cheese sprite drawn over the endpoint cell. */
   private TextureRegion cheeseSprite;
+
+  /** Cropped acorn sprite drawn as Scout's endpoint goal. */
+  private TextureRegion acornSprite;
 
   /** Cropped mouse sprite drawn at the current mouse position. */
   private TextureRegion mouseSprite;
@@ -223,8 +229,8 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return default sprite sheet asset path
    */
-  static String spriteSheetPath() {
-    return AssetPaths.spriteSheetPath();
+  static String classicMouseSpriteSheetPath() {
+    return AssetPaths.classicMouseSpriteSheetPath();
   }
 
   /**
@@ -232,8 +238,13 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return Scout sprite asset path
    */
-  static String scoutSpritePath() {
-    return AssetPaths.scoutSpritePath();
+  static String basicCharacterSpriteSheetPath() {
+    return AssetPaths.basicCharacterSpriteSheetPath();
+  }
+
+  /** Returns the asset-relative processed goal sprite-sheet path. */
+  static String goalSpriteSheetPath() {
+    return AssetPaths.goalSpriteSheetPath();
   }
 
   /**
@@ -285,16 +296,16 @@ public final class MazeGame extends ApplicationAdapter {
     resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     font = new BitmapFont();
     font.setColor(TEXT);
-    spriteSheet = new Texture(spriteSheetFile());
-    spriteSheet.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-    cheeseSprite = MouseSpriteSheet.cheese(spriteSheet);
-    mouseSprite = MouseSpriteSheet.mouse(spriteSheet);
-    scoutTexture = new Texture(scoutSpriteFile());
-    scoutTexture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-    scoutSprite = new TextureRegion(scoutTexture);
+    classicMouseSpriteSheet = loadNearestTexture(classicMouseSpriteSheetFile());
+    basicCharacterSpriteSheet = loadNearestTexture(basicCharacterSpriteSheetFile());
+    goalSpriteSheet = loadNearestTexture(goalSpriteSheetFile());
+    cheeseSprite = GameSpriteSheets.cheese(goalSpriteSheet);
+    acornSprite = GameSpriteSheets.acorn(goalSpriteSheet);
+    mouseSprite = GameSpriteSheets.randomMouse(classicMouseSpriteSheet);
+    scoutSprite = GameSpriteSheets.scoutSquirrel(basicCharacterSpriteSheet);
     renderer =
         new MazeGameRenderer(
-            spriteBatch, shapeRenderer, font, cheeseSprite, mouseSprite, scoutSprite);
+            spriteBatch, shapeRenderer, font, cheeseSprite, acornSprite, mouseSprite, scoutSprite);
     if (!runtimeConfiguration.audioRequiresUserGesture()) {
       startBackgroundMusic();
     }
@@ -362,17 +373,13 @@ public final class MazeGame extends ApplicationAdapter {
       font = null;
     }
     viewport = null;
-    if (spriteSheet != null) {
-      spriteSheet.dispose();
-      spriteSheet = null;
-      cheeseSprite = null;
-      mouseSprite = null;
-    }
-    if (scoutTexture != null) {
-      scoutTexture.dispose();
-      scoutTexture = null;
-      scoutSprite = null;
-    }
+    classicMouseSpriteSheet = disposeTexture(classicMouseSpriteSheet);
+    basicCharacterSpriteSheet = disposeTexture(basicCharacterSpriteSheet);
+    goalSpriteSheet = disposeTexture(goalSpriteSheet);
+    cheeseSprite = null;
+    acornSprite = null;
+    mouseSprite = null;
+    scoutSprite = null;
     renderer = null;
     if (shapeRenderer != null) {
       shapeRenderer.dispose();
@@ -936,8 +943,8 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return file handle resolved through the app's asset fallback rules
    */
-  private FileHandle spriteSheetFile() {
-    return runtimeConfiguration.assetResolver().resolve(spriteSheetPath());
+  private FileHandle classicMouseSpriteSheetFile() {
+    return runtimeConfiguration.assetResolver().resolve(classicMouseSpriteSheetPath());
   }
 
   /**
@@ -945,8 +952,26 @@ public final class MazeGame extends ApplicationAdapter {
    *
    * @return file handle resolved through the app's asset fallback rules
    */
-  private FileHandle scoutSpriteFile() {
-    return runtimeConfiguration.assetResolver().resolve(scoutSpritePath());
+  private FileHandle basicCharacterSpriteSheetFile() {
+    return runtimeConfiguration.assetResolver().resolve(basicCharacterSpriteSheetPath());
+  }
+
+  /** Returns a handle for the processed goal sprite sheet. */
+  private FileHandle goalSpriteSheetFile() {
+    return runtimeConfiguration.assetResolver().resolve(goalSpriteSheetPath());
+  }
+
+  private static Texture loadNearestTexture(FileHandle file) {
+    Texture texture = new Texture(file);
+    texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+    return texture;
+  }
+
+  private static Texture disposeTexture(Texture texture) {
+    if (texture != null) {
+      texture.dispose();
+    }
+    return null;
   }
 
   private static FileHandle resolveDefaultAsset(String assetPath) {

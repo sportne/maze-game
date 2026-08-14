@@ -49,14 +49,21 @@ final class SafariReleaseTest {
   private static final int REFERENCE_WIDTH = 1280;
   private static final int REFERENCE_HEIGHT = 720;
   private static final Set<String> JAVASCRIPT_ASSETS =
-      Set.of("app.js", "styles.css", "mouse-sprites.png", "scout-mouse.png", "exploreMaze_T1.mp3");
+      Set.of(
+          "app.js",
+          "styles.css",
+          "classic-mouse.png",
+          "basic-characters.png",
+          "goals.png",
+          "exploreMaze_T1.mp3");
   private static final Set<String> WEBASSEMBLY_ASSETS =
       Set.of(
           "app.wasm",
           "app.wasm-runtime.js",
           "styles.css",
-          "mouse-sprites.png",
-          "scout-mouse.png",
+          "classic-mouse.png",
+          "basic-characters.png",
+          "goals.png",
           "exploreMaze_T1.mp3");
 
   @Test

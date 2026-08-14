@@ -241,13 +241,18 @@ final class MazeGameTest {
   }
 
   @Test
-  void spriteSheetPathPointsAtTheBundledSheet() {
-    assertEquals("mouse-sprites.png", MazeGame.spriteSheetPath());
+  void classicMousePathPointsAtTheProcessedSheet() {
+    assertEquals("processed/classic-mouse.png", MazeGame.classicMouseSpriteSheetPath());
   }
 
   @Test
-  void scoutSpritePathPointsAtTheBundledScout() {
-    assertEquals("scout-mouse.png", MazeGame.scoutSpritePath());
+  void basicCharacterPathPointsAtTheProcessedSheet() {
+    assertEquals("processed/basic-characters.png", MazeGame.basicCharacterSpriteSheetPath());
+  }
+
+  @Test
+  void goalPathPointsAtTheProcessedSheet() {
+    assertEquals("processed/goals.png", MazeGame.goalSpriteSheetPath());
   }
 
   @Test

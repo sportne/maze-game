@@ -11,12 +11,17 @@ final class AssetPathsTest {
   }
 
   @Test
-  void spriteSheetPathPointsAtTheBundledSheet() {
-    assertEquals("mouse-sprites.png", AssetPaths.spriteSheetPath());
+  void classicMousePathPointsAtTheProcessedSheet() {
+    assertEquals("processed/classic-mouse.png", AssetPaths.classicMouseSpriteSheetPath());
   }
 
   @Test
-  void scoutSpritePathPointsAtTheDistinctBundledSprite() {
-    assertEquals("scout-mouse.png", AssetPaths.scoutSpritePath());
+  void basicCharacterPathPointsAtTheProcessedSheet() {
+    assertEquals("processed/basic-characters.png", AssetPaths.basicCharacterSpriteSheetPath());
+  }
+
+  @Test
+  void goalPathPointsAtTheProcessedSheet() {
+    assertEquals("processed/goals.png", AssetPaths.goalSpriteSheetPath());
   }
 }

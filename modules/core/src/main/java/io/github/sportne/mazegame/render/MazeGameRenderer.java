@@ -94,6 +94,9 @@ public final class MazeGameRenderer {
   /** Cropped cheese sprite drawn over the endpoint cell. */
   private final TextureRegion cheeseSprite;
 
+  /** Cropped acorn sprite drawn as Scout's endpoint goal. */
+  private final TextureRegion acornSprite;
+
   /** Cropped mouse sprite drawn at the current mouse position. */
   private final TextureRegion mouseSprite;
 
@@ -107,6 +110,7 @@ public final class MazeGameRenderer {
    * @param shapeRenderer primitive renderer
    * @param font bitmap font
    * @param cheeseSprite cheese sprite region
+   * @param acornSprite acorn sprite region
    * @param mouseSprite mouse sprite region
    * @param scoutSprite Scout sprite region
    */
@@ -115,12 +119,14 @@ public final class MazeGameRenderer {
       ShapeRenderer shapeRenderer,
       BitmapFont font,
       TextureRegion cheeseSprite,
+      TextureRegion acornSprite,
       TextureRegion mouseSprite,
       TextureRegion scoutSprite) {
     this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
     this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
     this.font = Objects.requireNonNull(font, "font");
     this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
+    this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
     this.mouseSprite = new TextureRegion(Objects.requireNonNull(mouseSprite, "mouseSprite"));
     this.scoutSprite = new TextureRegion(Objects.requireNonNull(scoutSprite, "scoutSprite"));
   }
@@ -176,7 +182,7 @@ public final class MazeGameRenderer {
     ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
     drawGrid(grid, snapshot);
     drawSlowFloorMarks(grid, snapshot);
-    drawCellSprites(grid, snapshot.levelDefinition());
+    drawCellSprites(grid, snapshot);
     drawRejectedMark(grid, snapshot);
     drawMouse(grid, snapshot);
     drawPaletteDragPreview(layout, grid, snapshot);
@@ -440,8 +446,14 @@ public final class MazeGameRenderer {
     };
   }
 
-  private void drawCellSprites(ScreenRectangle grid, LevelDefinition levelDefinition) {
-    drawSpriteInCell(grid, levelDefinition, levelDefinition.cheese(), cheeseSprite);
+  private void drawCellSprites(ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    LevelDefinition levelDefinition = snapshot.levelDefinition();
+    TextureRegion goalSprite =
+        switch (levelDefinition.mouseBehavior()) {
+          case RANDOM -> cheeseSprite;
+          case LEFT_PRIORITY -> acornSprite;
+        };
+    drawSpriteInCell(grid, levelDefinition, levelDefinition.cheese(), goalSprite);
   }
 
   private void drawSpriteInCell(
@@ -680,7 +692,9 @@ public final class MazeGameRenderer {
     if (snapshot.levelDefinition().supplyFor(PlaceableCellType.SLOW_FLOOR).available()) {
       return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
     }
-    return String.format(Locale.ROOT, "Delay past %s; keep a path to the cheese", target);
+    String goalName =
+        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()).goalName();
+    return String.format(Locale.ROOT, "Delay past %s; keep a path to the %s", target, goalName);
   }
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
