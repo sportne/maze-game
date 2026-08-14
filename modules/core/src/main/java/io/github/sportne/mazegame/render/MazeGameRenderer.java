@@ -12,8 +12,10 @@ import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelMouse;
 import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
+import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
@@ -282,14 +284,21 @@ public final class MazeGameRenderer {
   }
 
   private void drawMouse(ScreenRectangle grid, GameRenderSnapshot snapshot) {
-    if (snapshot.mouseRunResult() == null) {
+    if (snapshot.mouseRunResults().isEmpty()) {
+      if (snapshot.levelDefinition().mice().size() > 1) {
+        for (LevelMouse mouse : snapshot.levelDefinition().mice()) {
+          drawSpriteInCell(grid, snapshot.levelDefinition(), mouse.start(), mouseSprite(mouse));
+        }
+      }
       return;
     }
-    drawSpriteInCell(
-        grid,
-        snapshot.levelDefinition(),
-        snapshot.mouseRunResult().position(),
-        mouseSprite(snapshot));
+    for (int index = 0; index < snapshot.mouseRunResults().size(); index++) {
+      drawSpriteInCell(
+          grid,
+          snapshot.levelDefinition(),
+          snapshot.mouseRunResults().get(index).position(),
+          mouseSprite(snapshot.levelDefinition().mice().get(index)));
+    }
   }
 
   private void drawSlowFloorMarks(ScreenRectangle grid, GameRenderSnapshot snapshot) {
@@ -439,8 +448,8 @@ public final class MazeGameRenderer {
     return Math.max(minimum, Math.min(value, maximum));
   }
 
-  private TextureRegion mouseSprite(GameRenderSnapshot snapshot) {
-    return switch (snapshot.levelDefinition().mouseBehavior()) {
+  private TextureRegion mouseSprite(LevelMouse mouse) {
+    return switch (mouse.behavior()) {
       case RANDOM -> mouseSprite;
       case LEFT_PRIORITY -> scoutSprite;
     };
@@ -448,12 +457,14 @@ public final class MazeGameRenderer {
 
   private void drawCellSprites(ScreenRectangle grid, GameRenderSnapshot snapshot) {
     LevelDefinition levelDefinition = snapshot.levelDefinition();
-    TextureRegion goalSprite =
-        switch (levelDefinition.mouseBehavior()) {
-          case RANDOM -> cheeseSprite;
-          case LEFT_PRIORITY -> acornSprite;
-        };
-    drawSpriteInCell(grid, levelDefinition, levelDefinition.cheese(), goalSprite);
+    for (LevelMouse mouse : levelDefinition.mice()) {
+      TextureRegion goalSprite =
+          switch (mouse.behavior()) {
+            case RANDOM -> cheeseSprite;
+            case LEFT_PRIORITY -> acornSprite;
+          };
+      drawSpriteInCell(grid, levelDefinition, mouse.goal(), goalSprite);
+    }
   }
 
   private void drawSpriteInCell(
@@ -629,7 +640,7 @@ public final class MazeGameRenderer {
         MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior());
     font.setColor(TEXT);
     drawTextInRegion(
-        presentation.levelTitle(snapshot.levelDefinition().name()),
+        levelTitle(snapshot.levelDefinition(), presentation, false, Float.MAX_VALUE),
         layout.bounds(MazeGameLayout.BUILD_TITLE),
         0.0F);
     font.draw(
@@ -645,7 +656,9 @@ public final class MazeGameRenderer {
         textBaseline(layout.bounds(MazeGameLayout.BUILD_INSTRUCTIONS)));
     font.setColor(TEXT);
     drawCenteredText("Back", layout.bounds(MazeGameLayout.BUILD_BACK));
-    drawCenteredText("Start Mouse", layout.bounds(MazeGameLayout.BUILD_START));
+    drawCenteredText(
+        snapshot.levelDefinition().mice().size() > 1 ? "Start Mice" : "Start Mouse",
+        layout.bounds(MazeGameLayout.BUILD_START));
   }
 
   private void drawPaletteTooltip(ScreenLayout layout, GameRenderSnapshot snapshot) {
@@ -690,7 +703,11 @@ public final class MazeGameRenderer {
     String target =
         formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F);
     if (snapshot.levelDefinition().supplyFor(PlaceableCellType.SLOW_FLOOR).available()) {
-      return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
+      if (snapshot.levelDefinition().mice().size() == 1) {
+        return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
+      }
+      return String.format(
+          Locale.ROOT, "Tap or drag tools; delay both past %s; keep paths", target);
     }
     String goalName =
         MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()).goalName();
@@ -700,8 +717,11 @@ public final class MazeGameRenderer {
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     ScreenRectangle status = layout.bounds(MazeGameLayout.RUN_STATUS);
     String levelTitle =
-        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior())
-            .statusTitle(snapshot.levelDefinition().name(), status.width());
+        levelTitle(
+            snapshot.levelDefinition(),
+            MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()),
+            true,
+            status.width());
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
@@ -717,19 +737,18 @@ public final class MazeGameRenderer {
   private void drawResultText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     ScreenRectangle status = layout.bounds(MazeGameLayout.RESULT_STATUS);
     String levelTitle =
-        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior())
-            .statusTitle(snapshot.levelDefinition().name(), status.width());
+        levelTitle(
+            snapshot.levelDefinition(),
+            MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()),
+            true,
+            status.width());
     String outcome = snapshot.resultPassed() ? " | Success | >" : " | Failed | >";
     font.setColor(TEXT);
     font.draw(
         spriteBatch, levelTitle + outcome + targetText(snapshot), status.x(), textBaseline(status));
     font.draw(
         spriteBatch,
-        "Time: "
-            + String.format(
-                Locale.ROOT, "%.2fs", snapshot.mouseRunResult().elapsedTime().toMillis() / 1000.0F)
-            + "  Moves: "
-            + snapshot.mouseRunResult().moveCount(),
+        resultStats(snapshot),
         layout.bounds(MazeGameLayout.RESULT_STATS).x(),
         textBaseline(layout.bounds(MazeGameLayout.RESULT_STATS)));
     font.setColor(PANEL_TEXT);
@@ -869,10 +888,47 @@ public final class MazeGameRenderer {
 
   private static float runTimeRemaining(GameRenderSnapshot snapshot) {
     Duration elapsed =
-        snapshot.mouseRunResult() == null ? Duration.ZERO : snapshot.mouseRunResult().elapsedTime();
+        snapshot.mouseRunResults().stream()
+            .map(MouseRunResult::elapsedTime)
+            .max(Duration::compareTo)
+            .orElse(Duration.ZERO);
     long remainingMillis =
         Math.max(0L, snapshot.levelDefinition().maximumSolveTime().minus(elapsed).toMillis());
     return remainingMillis / 1000.0F;
+  }
+
+  private static String levelTitle(
+      LevelDefinition level,
+      MousePresentation presentation,
+      boolean compact,
+      float availableWidth) {
+    if (level.mice().size() > 1) {
+      return compact && availableWidth < 360.0F
+          ? "Mouse + Scout"
+          : String.format(Locale.ROOT, "%s | Mouse + Scout", level.name());
+    }
+    return compact
+        ? presentation.statusTitle(level.name(), availableWidth)
+        : presentation.levelTitle(level.name());
+  }
+
+  private static String resultStats(GameRenderSnapshot snapshot) {
+    if (snapshot.mouseRunResults().size() <= 1) {
+      return String.format(
+          Locale.ROOT,
+          "Time: %.2fs  Moves: %d",
+          snapshot.mouseRunResult().elapsedTime().toMillis() / 1000.0F,
+          snapshot.mouseRunResult().moveCount());
+    }
+    MouseRunResult random = snapshot.mouseRunResults().get(0);
+    MouseRunResult scout = snapshot.mouseRunResults().get(1);
+    return String.format(
+        Locale.ROOT,
+        "Mouse %.2fs/%d  Scout %.2fs/%d",
+        random.elapsedTime().toMillis() / 1000.0F,
+        random.moveCount(),
+        scout.elapsedTime().toMillis() / 1000.0F,
+        scout.moveCount());
   }
 
   private static String formatSeconds(float seconds) {

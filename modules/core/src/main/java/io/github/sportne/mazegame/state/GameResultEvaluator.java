@@ -2,6 +2,7 @@ package io.github.sportne.mazegame.state;
 
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import java.util.List;
 import java.util.Objects;
 
 /** Evaluates whether a completed mouse run satisfies the level target. */
@@ -25,5 +26,20 @@ public final class GameResultEvaluator {
       return false;
     }
     return mouseRunResult.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0;
+  }
+
+  /** Returns whether every mouse in a completed multi-mouse run exceeded the target. */
+  public static boolean passedAll(
+      GamePhase phase, List<MouseRunResult> mouseRunResults, LevelDefinition levelDefinition) {
+    Objects.requireNonNull(phase, "phase");
+    Objects.requireNonNull(mouseRunResults, "mouseRunResults");
+    Objects.requireNonNull(levelDefinition, "levelDefinition");
+    if (phase != GamePhase.RESULT
+        || mouseRunResults.size() != levelDefinition.mice().size()
+        || mouseRunResults.isEmpty()) {
+      return false;
+    }
+    return mouseRunResults.stream()
+        .allMatch(result -> result.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0);
   }
 }

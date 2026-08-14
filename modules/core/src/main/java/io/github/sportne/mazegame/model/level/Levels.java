@@ -80,9 +80,36 @@ public final class Levels {
           MouseBehavior.LEFT_PRIORITY,
           53L);
 
+  /** Fifth 7x7 level combining Random and Scout with distinct starts and goals. */
+  private static final LevelDefinition MILESTONE_FIVE =
+      new LevelDefinition(
+          "milestone-5",
+          "Milestone 5",
+          GridSize.square(7),
+          new GridPosition(6, 0),
+          new GridPosition(3, 3),
+          Duration.ofSeconds(25),
+          Duration.ofSeconds(5),
+          Duration.ofSeconds(10),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 5),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 4)),
+          MouseBehavior.RANDOM,
+          23L,
+          List.of(
+              new LevelMouse(
+                  new GridPosition(6, 0), new GridPosition(3, 3), MouseBehavior.RANDOM, 23L),
+              new LevelMouse(
+                  new GridPosition(1, 4),
+                  new GridPosition(2, 4),
+                  MouseBehavior.LEFT_PRIORITY,
+                  53L)));
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
-      new LevelCatalog(List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE, MILESTONE_FOUR));
+      new LevelCatalog(
+          List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE, MILESTONE_FOUR, MILESTONE_FIVE));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -121,6 +148,11 @@ public final class Levels {
    */
   public static LevelDefinition milestoneFour() {
     return MILESTONE_FOUR;
+  }
+
+  /** Returns the fifth authored level featuring both Random and Scout. */
+  public static LevelDefinition milestoneFive() {
+    return MILESTONE_FIVE;
   }
 
   /**

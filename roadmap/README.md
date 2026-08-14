@@ -24,11 +24,11 @@ The first milestone is intentionally small: one 5x5 level, normal wall placement
 
 1. Start a level.
 2. Player has a limited build timer to place walls.
-3. Each attempted wall placement must preserve at least one path from mouse start to cheese.
+3. Each attempted wall placement must preserve a path from every mouse start to its matching goal.
 4. Invalid wall placements are rejected immediately and briefly highlighted light red.
 5. The player may start the mouse early, or the mouse starts automatically when the build timer expires.
 6. During the mouse run, editing is locked.
-7. The mouse moves according to the level's AI behavior until it reaches the cheese or times out.
+7. Each mouse moves according to its authored AI behavior until it reaches its goal or times out.
 8. The result shows pass/fail, elapsed solve time, move count, and retry/replay actions.
 
 ## Milestones
@@ -93,6 +93,17 @@ See [Milestone 4](milestone-4.md) and the accepted
 
 Status: planned.
 
+### Milestone 5: Combined Random and Scout Level
+
+Add a fifth 7x7 level where Random and Scout run concurrently from different starts. Random pursues
+centered cheese while Scout pursues an acorn one diagonal cell away. Both routes must remain valid,
+and both characters must exceed the target for the level to pass.
+
+See the accepted [multi-mouse level design](../docs/milestone-5-level-design.md) and completed
+[implementation card](done/milestone-5-01-fifth-level.md).
+
+Status: complete.
+
 ### Cross-Cutting Asset Delivery
 
 - [ASSET-01: Ship optional art separately and load it on demand](asset-01-lazy-delivery.md) is a
@@ -106,10 +117,9 @@ Status: planned.
 
 These remain outside the planned Milestone 4 scope:
 
-- Grid progression beyond the four authored levels planned through Milestone 4.
+- Grid progression beyond the five authored levels.
 - Cell types beyond Wall and Slow Floor.
 - Additional mouse types beyond Random and Scout.
-- Multiple mice and multiple start locations.
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and mouse behaviors.
 
@@ -133,4 +143,6 @@ Completed task cards are retained in the [done archive](done/README.md).
 - Milestone 4 adds Wall and Slow Floor only; Slow Floor adds one movement interval after entry without
   changing route choice or move count.
 - Each level explicitly authors finite or infinite supply for every placeable type.
+- Multi-mouse levels protect every start and goal, preserve every matching route, and pass only when
+  every character exceeds the target; the weakest elapsed time is the saved score.
 - Palette drag and select-then-place use one atomic edit, and existing-item drag never changes inventory.

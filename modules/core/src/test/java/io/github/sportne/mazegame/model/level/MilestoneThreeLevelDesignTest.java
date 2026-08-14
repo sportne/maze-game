@@ -123,7 +123,11 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals(53L, PROPOSED_LEVEL.randomSeed());
     assertEquals(
         List.of(
-            Levels.milestoneOne(), Levels.milestoneTwo(), PROPOSED_LEVEL, Levels.milestoneFour()),
+            Levels.milestoneOne(),
+            Levels.milestoneTwo(),
+            PROPOSED_LEVEL,
+            Levels.milestoneFour(),
+            Levels.milestoneFive()),
         Levels.catalog().levels());
   }
 

@@ -78,7 +78,8 @@ final class GameSessionTest {
             Levels.milestoneOne().id(),
             Levels.milestoneTwo().id(),
             Levels.milestoneThree().id(),
-            Levels.milestoneFour().id()),
+            Levels.milestoneFour().id(),
+            Levels.milestoneFive().id()),
         store.loadedLevelIds);
   }
 
@@ -672,8 +673,8 @@ final class GameSessionTest {
     assertEquals(secondBest, store.results.get(Levels.milestoneTwo().id()));
     assertEquals(thirdBest, store.results.get(Levels.milestoneThree().id()));
     assertEquals(fourthBest, store.results.get(Levels.milestoneFour().id()));
-    assertFalse(session.hasNextLevel());
-    assertTrue(session.nextLevelId().isEmpty());
+    assertTrue(session.hasNextLevel());
+    assertEquals(Optional.of(Levels.milestoneFive().id()), session.nextLevelId());
 
     session.replayRun();
     session.updateMouseRun(6.5F);
@@ -702,6 +703,7 @@ final class GameSessionTest {
     store.results.put(Levels.milestoneOne().id(), new BestResult(Duration.ofSeconds(10), 40));
     store.results.put(Levels.milestoneTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
     store.results.put(Levels.milestoneThree().id(), new BestResult(Duration.ofMillis(6500), 26));
+    store.results.put(Levels.milestoneFour().id(), new BestResult(Duration.ofMillis(5750), 20));
     GameSession session = new GameSession(store);
 
     assertTrue(session.startLevel(level.id()));

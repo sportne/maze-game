@@ -146,7 +146,14 @@ final class MazeGameLayoutTest {
       GridSize gridSize = level.gridSize();
       for (boolean hasNextLevel : List.of(false, true)) {
         ScreenLayout layout =
-            MazeGameLayout.forPhase(phase, width, height, gridSize, false, 3, hasNextLevel);
+            MazeGameLayout.forPhase(
+                phase,
+                width,
+                height,
+                gridSize,
+                false,
+                Levels.catalog().levels().size(),
+                hasNextLevel);
 
         assertTrue(
             LayoutValidator.validate(layout).isEmpty(),

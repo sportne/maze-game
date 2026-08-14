@@ -40,6 +40,21 @@ final class MazeGameDebugHarnessTest {
   private static final Set<GridPosition> MILESTONE_FOUR_SLOW_FLOORS =
       Set.of(new GridPosition(6, 2), new GridPosition(6, 1), new GridPosition(6, 0));
 
+  private static final Set<GridPosition> MILESTONE_FIVE_WALLS =
+      Set.of(
+          new GridPosition(0, 2),
+          new GridPosition(3, 2),
+          new GridPosition(6, 1),
+          new GridPosition(1, 3),
+          new GridPosition(4, 0));
+
+  private static final Set<GridPosition> MILESTONE_FIVE_SLOW_FLOORS =
+      Set.of(
+          new GridPosition(6, 3),
+          new GridPosition(2, 2),
+          new GridPosition(2, 5),
+          new GridPosition(1, 2));
+
   @Test
   void rejectsInvalidScreenDimensions() {
     assertThrows(IllegalArgumentException.class, () -> new MazeGameDebugHarness(0, 720));
@@ -176,21 +191,29 @@ final class MazeGameDebugHarnessTest {
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
-    assertFalse(harness.snapshot().hasNextLevel());
-    harness.clickReplay().advance(Duration.ofMillis(6500)).clickRetry();
-    assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.milestoneFour(), harness.snapshot().mazeState().levelDefinition());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.milestoneFive(), harness.snapshot().mazeState().levelDefinition());
 
-    MILESTONE_FOUR_WALLS.forEach(harness::leftClickCell);
+    MILESTONE_FIVE_WALLS.forEach(harness::leftClickCell);
     harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
-    MILESTONE_FOUR_SLOW_FLOORS.forEach(harness::leftClickCell);
+    MILESTONE_FIVE_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(10));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
+    assertFalse(harness.snapshot().hasNextLevel());
+    harness.clickReplay().advance(Duration.ofSeconds(10)).clickRetry();
+    assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
+    assertEquals(Levels.milestoneFive(), harness.snapshot().mazeState().levelDefinition());
+
     harness
         .clickStartRun()
-        .advance(Duration.ofMillis(6500))
+        .advance(Duration.ofSeconds(10))
         .clickResultMainMenu()
         .clickMainMenuStart()
-        .clickMilestoneFourLevel();
+        .clickMilestoneFiveLevel();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.milestoneFour(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.milestoneFive(), harness.snapshot().mazeState().levelDefinition());
   }
 }

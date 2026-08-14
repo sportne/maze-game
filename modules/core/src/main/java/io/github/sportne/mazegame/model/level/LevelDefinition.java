@@ -29,6 +29,7 @@ import java.util.Objects;
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
  * @param mouseBehavior movement rule used by this level
  * @param randomSeed seed used by deterministic mouse AI
+ * @param mice authored mice in stable presentation order
  */
 public record LevelDefinition(
     String id,
@@ -42,7 +43,38 @@ public record LevelDefinition(
     Duration mouseMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
     MouseBehavior mouseBehavior,
-    long randomSeed) {
+    long randomSeed,
+    List<LevelMouse> mice) {
+  /** Compatibility constructor for the released single-mouse level format. */
+  public LevelDefinition(
+      String id,
+      String name,
+      GridSize gridSize,
+      GridPosition mouseStart,
+      GridPosition cheese,
+      Duration buildTime,
+      Duration targetSolveTime,
+      Duration maximumSolveTime,
+      Duration mouseMoveInterval,
+      List<PlaceableCellSupply> placeableCellSupplies,
+      MouseBehavior mouseBehavior,
+      long randomSeed) {
+    this(
+        id,
+        name,
+        gridSize,
+        mouseStart,
+        cheese,
+        buildTime,
+        targetSolveTime,
+        maximumSolveTime,
+        mouseMoveInterval,
+        placeableCellSupplies,
+        mouseBehavior,
+        randomSeed,
+        List.of(new LevelMouse(mouseStart, cheese, mouseBehavior, randomSeed)));
+  }
+
   /**
    * Creates validated level authoring data.
    *
@@ -61,10 +93,18 @@ public record LevelDefinition(
     requirePositive(mouseMoveInterval, "mouseMoveInterval");
     placeableCellSupplies = validateSupplies(placeableCellSupplies);
     Objects.requireNonNull(mouseBehavior, "mouseBehavior");
+    mice = validateMice(mice, gridSize);
     requireWithinGrid(mouseStart, gridSize, "mouseStart");
     requireWithinGrid(cheese, gridSize, "cheese");
     if (mouseStart.equals(cheese)) {
       throw new IllegalArgumentException("mouseStart and cheese must be different");
+    }
+    LevelMouse primaryMouse = mice.get(0);
+    if (!primaryMouse.start().equals(mouseStart)
+        || !primaryMouse.goal().equals(cheese)
+        || primaryMouse.behavior() != mouseBehavior
+        || primaryMouse.randomSeed() != randomSeed) {
+      throw new IllegalArgumentException("primary mouse fields must match the first mouse");
     }
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
@@ -87,6 +127,33 @@ public record LevelDefinition(
     return List.copyOf(placeableCellSupplies);
   }
 
+  /** Returns an immutable defensive copy of the authored mice in presentation order. */
+  @Override
+  public List<LevelMouse> mice() {
+    return List.copyOf(mice);
+  }
+
+  /** Returns a single-mouse view used by one independent simulation. */
+  public LevelDefinition forMouse(LevelMouse mouse) {
+    Objects.requireNonNull(mouse, "mouse");
+    if (!mice.contains(mouse)) {
+      throw new IllegalArgumentException("mouse is not authored by this level");
+    }
+    return new LevelDefinition(
+        id,
+        name,
+        gridSize,
+        mouse.start(),
+        mouse.goal(),
+        buildTime,
+        targetSolveTime,
+        maximumSolveTime,
+        mouseMoveInterval,
+        placeableCellSupplies,
+        mouse.behavior(),
+        mouse.randomSeed());
+  }
+
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {
     Objects.requireNonNull(supplies, "placeableCellSupplies");
     List<PlaceableCellSupply> copied = List.copyOf(supplies);
@@ -99,6 +166,27 @@ public record LevelDefinition(
     }
     if (!seen.equals(EnumSet.allOf(PlaceableCellType.class))) {
       throw new IllegalArgumentException("every placeable cell type must have exactly one supply");
+    }
+    return copied;
+  }
+
+  private static List<LevelMouse> validateMice(List<LevelMouse> authoredMice, GridSize gridSize) {
+    Objects.requireNonNull(authoredMice, "mice");
+    List<LevelMouse> copied = List.copyOf(authoredMice);
+    if (copied.isEmpty()) {
+      throw new IllegalArgumentException("level must contain at least one mouse");
+    }
+    java.util.HashSet<GridPosition> protectedPositions = new java.util.HashSet<>();
+    for (LevelMouse mouse : copied) {
+      Objects.requireNonNull(mouse, "mice entry");
+      requireWithinGrid(mouse.start(), gridSize, "mouse start");
+      requireWithinGrid(mouse.goal(), gridSize, "mouse goal");
+      if (!protectedPositions.add(mouse.start())) {
+        throw new IllegalArgumentException("mouse starts must be unique");
+      }
+      if (!protectedPositions.add(mouse.goal())) {
+        throw new IllegalArgumentException("mouse starts and goals must not overlap");
+      }
     }
     return copied;
   }

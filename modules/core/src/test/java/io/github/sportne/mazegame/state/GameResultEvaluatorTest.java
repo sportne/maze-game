@@ -9,6 +9,7 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class GameResultEvaluatorTest {
@@ -42,5 +43,32 @@ final class GameResultEvaluatorTest {
     assertThrows(
         NullPointerException.class,
         () -> GameResultEvaluator.passed(GamePhase.RESULT, result, null));
+  }
+
+  @Test
+  void multiMousePassRequiresEveryAuthoredResultPastTheTarget() {
+    LevelDefinition level = Levels.milestoneFive();
+    MouseRunResult passing =
+        new MouseRunResult(
+            level.cheese(), Duration.ofSeconds(6), 20, MouseRunStatus.REACHED_CHEESE);
+    MouseRunResult exact =
+        new MouseRunResult(
+            level.mice().get(1).goal(), level.targetSolveTime(), 18, MouseRunStatus.REACHED_CHEESE);
+
+    assertTrue(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, passing), level));
+    assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, exact), level));
+    assertFalse(
+        GameResultEvaluator.passedAll(GamePhase.MOUSE_RUNNING, List.of(passing, passing), level));
+    assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing), level));
+    assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(), level));
+    assertThrows(
+        NullPointerException.class,
+        () -> GameResultEvaluator.passedAll(GamePhase.RESULT, null, level));
+    assertThrows(
+        NullPointerException.class,
+        () -> GameResultEvaluator.passedAll(null, List.of(passing, passing), level));
+    assertThrows(
+        NullPointerException.class,
+        () -> GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, passing), null));
   }
 }

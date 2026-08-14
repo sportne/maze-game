@@ -30,6 +30,7 @@ import java.util.Objects;
  * @param audioEnabled whether session audio is enabled
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
+ * @param mouseRunResults latest results in authored mouse order
  */
 public record GameRenderSnapshot(
     GamePhase phase,
@@ -46,7 +47,8 @@ public record GameRenderSnapshot(
     PlaceableCellType paletteTooltipType,
     boolean audioEnabled,
     boolean resultPassed,
-    boolean hasNextLevel) {
+    boolean hasNextLevel,
+    List<MouseRunResult> mouseRunResults) {
   /** Creates a render snapshot with required frame state validated. */
   public GameRenderSnapshot {
     Objects.requireNonNull(phase, "phase");
@@ -54,6 +56,43 @@ public record GameRenderSnapshot(
     Objects.requireNonNull(mazeState, "mazeState");
     levelProgress = List.copyOf(levelProgress);
     paletteState = List.copyOf(paletteState);
+    mouseRunResults = List.copyOf(mouseRunResults);
+  }
+
+  /** Creates a snapshot using the released single-result representation. */
+  public GameRenderSnapshot(
+      GamePhase phase,
+      LevelDefinition levelDefinition,
+      MazeState mazeState,
+      float buildTimeRemainingSeconds,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemainingSeconds,
+      MouseRunResult mouseRunResult,
+      BestResult bestResult,
+      List<LevelProgress> levelProgress,
+      List<CellPaletteState> paletteState,
+      PaletteDragPreview paletteDragPreview,
+      PlaceableCellType paletteTooltipType,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    this(
+        phase,
+        levelDefinition,
+        mazeState,
+        buildTimeRemainingSeconds,
+        rejectedPosition,
+        rejectedFlashRemainingSeconds,
+        mouseRunResult,
+        bestResult,
+        levelProgress,
+        paletteState,
+        paletteDragPreview,
+        paletteTooltipType,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
   }
 
   /** Creates a snapshot with an active drag but no delayed hover tooltip. */
@@ -87,7 +126,8 @@ public record GameRenderSnapshot(
         null,
         audioEnabled,
         resultPassed,
-        hasNextLevel);
+        hasNextLevel,
+        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
   }
 
   /** Creates a snapshot with palette data and no active drag for compatibility fixtures. */
@@ -120,7 +160,8 @@ public record GameRenderSnapshot(
         null,
         audioEnabled,
         resultPassed,
-        hasNextLevel);
+        hasNextLevel,
+        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
   }
 
   /** Creates a snapshot without palette data for non-building and compatibility fixtures. */
@@ -152,6 +193,7 @@ public record GameRenderSnapshot(
         null,
         audioEnabled,
         resultPassed,
-        hasNextLevel);
+        hasNextLevel,
+        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
   }
 }

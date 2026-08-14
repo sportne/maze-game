@@ -62,11 +62,14 @@ public final class GameSession {
   /** Whether a run has been requested or auto-started for the current level attempt. */
   private boolean runRequested;
 
-  /** Active deterministic mouse simulation, or null before a run starts. */
-  private MouseSimulation mouseSimulation;
-
   /** Latest mouse simulation snapshot, or null before a run starts. */
   private MouseRunResult mouseRunResult;
+
+  /** Active simulations in the level's authored mouse order. */
+  private List<MouseSimulation> mouseSimulations = List.of();
+
+  /** Latest results in the level's authored mouse order. */
+  private List<MouseRunResult> mouseRunResults = List.of();
 
   /** Current high-level game phase. */
   private GamePhase gamePhase;
@@ -238,6 +241,11 @@ public final class GameSession {
     return mouseRunResult;
   }
 
+  /** Returns current results in authored mouse order, or an empty list before a run starts. */
+  public List<MouseRunResult> mouseRunResults() {
+    return List.copyOf(mouseRunResults);
+  }
+
   /**
    * Resets all model state and enters the startup menu.
    *
@@ -340,8 +348,7 @@ public final class GameSession {
     gamePhase = GamePhase.MOUSE_RUNNING;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
-    mouseSimulation = MouseSimulationFactory.create(mazeState);
-    mouseRunResult = mouseSimulation.result();
+    initializeMouseSimulations();
   }
 
   /**
@@ -458,8 +465,7 @@ public final class GameSession {
     }
     gamePhase = GamePhase.REPLAY;
     runRequested = true;
-    mouseSimulation = MouseSimulationFactory.create(mazeState);
-    mouseRunResult = mouseSimulation.result();
+    initializeMouseSimulations();
   }
 
   /**
@@ -468,7 +474,7 @@ public final class GameSession {
    * @return true when result phase is active and elapsed solve time exceeded the target
    */
   public boolean resultPassed() {
-    return GameResultEvaluator.passed(gamePhase, mouseRunResult, levelDefinition);
+    return GameResultEvaluator.passedAll(gamePhase, mouseRunResults, levelDefinition);
   }
 
   /**
@@ -508,20 +514,39 @@ public final class GameSession {
    */
   public void updateMouseRun(float deltaSeconds) {
     if ((gamePhase != GamePhase.MOUSE_RUNNING && gamePhase != GamePhase.REPLAY)
-        || mouseSimulation == null
-        || mouseRunResult == null
-        || mouseRunResult.status() != MouseRunStatus.RUNNING) {
+        || mouseSimulations.isEmpty()
+        || mouseRunResults.stream()
+            .noneMatch(result -> result.status() == MouseRunStatus.RUNNING)) {
       return;
     }
     boolean shouldRecordBestResult = gamePhase == GamePhase.MOUSE_RUNNING;
     long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
-    mouseRunResult = mouseSimulation.update(Duration.ofMillis(deltaMillis));
-    if (mouseRunResult.status() != MouseRunStatus.RUNNING) {
+    List<MouseRunResult> updatedResults = new ArrayList<>();
+    for (int index = 0; index < mouseSimulations.size(); index++) {
+      MouseRunResult current = mouseRunResults.get(index);
+      updatedResults.add(
+          current.status() == MouseRunStatus.RUNNING
+              ? mouseSimulations.get(index).update(Duration.ofMillis(deltaMillis))
+              : current);
+    }
+    mouseRunResults = List.copyOf(updatedResults);
+    mouseRunResult = mouseRunResults.get(0);
+    if (mouseRunResults.stream().noneMatch(result -> result.status() == MouseRunStatus.RUNNING)) {
       gamePhase = GamePhase.RESULT;
       if (shouldRecordBestResult && resultPassed()) {
-        recordBestResult(BestResult.from(mouseRunResult));
+        recordBestResult(bestResultFromCompletedRuns());
       }
     }
+  }
+
+  private BestResult bestResultFromCompletedRuns() {
+    Duration shortestElapsed =
+        mouseRunResults.stream()
+            .map(MouseRunResult::elapsedTime)
+            .min(Duration::compareTo)
+            .orElseThrow();
+    int totalMoves = mouseRunResults.stream().mapToInt(MouseRunResult::moveCount).sum();
+    return new BestResult(shortestElapsed, totalMoves);
   }
 
   private void recordBestResult(BestResult candidate) {
@@ -582,9 +607,19 @@ public final class GameSession {
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
     runRequested = false;
-    mouseSimulation = null;
     mouseRunResult = null;
+    mouseSimulations = List.of();
+    mouseRunResults = List.of();
     gamePhase = initialPhase;
+  }
+
+  private void initializeMouseSimulations() {
+    mouseSimulations =
+        levelDefinition.mice().stream()
+            .map(mouse -> MouseSimulationFactory.create(mazeState, mouse))
+            .toList();
+    mouseRunResults = mouseSimulations.stream().map(MouseSimulation::result).toList();
+    mouseRunResult = mouseRunResults.get(0);
   }
 
   private static PlaceableCellType initialSelectedCellType(LevelDefinition levelDefinition) {

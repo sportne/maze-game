@@ -441,6 +441,11 @@ public final class MazeGame extends ApplicationAdapter {
     return session.mouseRunResult();
   }
 
+  /** Returns the latest results for every mouse in authored order. */
+  public List<MouseRunResult> mouseRunResults() {
+    return session.mouseRunResults();
+  }
+
   /**
    * Returns build time remaining.
    *
@@ -891,7 +896,8 @@ public final class MazeGame extends ApplicationAdapter {
         paletteTooltipType().orElse(null),
         audioEnabled(),
         resultPassed(),
-        hasNextLevel());
+        hasNextLevel(),
+        session.mouseRunResults());
   }
 
   /**

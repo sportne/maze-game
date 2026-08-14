@@ -170,6 +170,89 @@ final class LevelDefinitionTest {
                 .add(PlaceableCellSupply.infinite(PlaceableCellType.WALL)));
   }
 
+  @Test
+  void levelMouseRequiresDistinctPositionsAndBehavior() {
+    GridPosition start = new GridPosition(4, 2);
+    GridPosition goal = new GridPosition(0, 2);
+
+    assertThrows(
+        NullPointerException.class, () -> new LevelMouse(null, goal, MouseBehavior.RANDOM, 1L));
+    assertThrows(
+        NullPointerException.class, () -> new LevelMouse(start, null, MouseBehavior.RANDOM, 1L));
+    assertThrows(NullPointerException.class, () -> new LevelMouse(start, goal, null, 1L));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new LevelMouse(start, start, MouseBehavior.RANDOM, 1L));
+  }
+
+  @Test
+  void multiMouseDefinitionsValidateAndDefensivelyCopyEveryProtectedPosition() {
+    LevelMouse primary =
+        new LevelMouse(new GridPosition(4, 2), new GridPosition(0, 2), MouseBehavior.RANDOM, 1L);
+    LevelMouse secondary =
+        new LevelMouse(
+            new GridPosition(3, 3), new GridPosition(1, 1), MouseBehavior.LEFT_PRIORITY, 2L);
+    List<LevelMouse> mutable = new ArrayList<>(List.of(primary, secondary));
+    LevelDefinition level = multiMouseLevel(mutable);
+    mutable.clear();
+
+    assertEquals(List.of(primary, secondary), level.mice());
+    assertEquals(secondary.start(), level.forMouse(secondary).mouseStart());
+    assertThrows(NullPointerException.class, () -> assertEquals(level, level.forMouse(null)));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            assertEquals(
+                level,
+                level.forMouse(
+                    new LevelMouse(
+                        new GridPosition(2, 1),
+                        new GridPosition(2, 2),
+                        MouseBehavior.RANDOM,
+                        3L))));
+    assertThrows(NullPointerException.class, () -> multiMouseLevel(null));
+    assertThrows(IllegalArgumentException.class, () -> multiMouseLevel(List.of()));
+    assertThrows(
+        NullPointerException.class, () -> multiMouseLevel(java.util.Arrays.asList(primary, null)));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            multiMouseLevel(
+                List.of(
+                    primary,
+                    new LevelMouse(
+                        primary.start(),
+                        new GridPosition(1, 1),
+                        MouseBehavior.LEFT_PRIORITY,
+                        2L))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            multiMouseLevel(
+                List.of(
+                    primary,
+                    new LevelMouse(
+                        new GridPosition(3, 3), primary.goal(), MouseBehavior.LEFT_PRIORITY, 2L))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            multiMouseLevel(
+                List.of(
+                    primary,
+                    new LevelMouse(
+                        new GridPosition(5, 0),
+                        new GridPosition(1, 1),
+                        MouseBehavior.LEFT_PRIORITY,
+                        2L))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            multiMouseLevel(
+                List.of(
+                    new LevelMouse(
+                        primary.start(), primary.goal(), MouseBehavior.LEFT_PRIORITY, 2L))));
+  }
+
   private static LevelDefinition level(
       String id, String name, GridPosition mouseStart, GridPosition cheese) {
     return new LevelDefinition(
@@ -219,5 +302,23 @@ final class LevelDefinitionTest {
         supplies,
         source.mouseBehavior(),
         source.randomSeed());
+  }
+
+  private static LevelDefinition multiMouseLevel(List<LevelMouse> mice) {
+    LevelDefinition source = Levels.milestoneOne();
+    return new LevelDefinition(
+        "multi-mouse-test",
+        "Multi Mouse Test",
+        source.gridSize(),
+        source.mouseStart(),
+        source.cheese(),
+        source.buildTime(),
+        source.targetSolveTime(),
+        source.maximumSolveTime(),
+        source.mouseMoveInterval(),
+        source.placeableCellSupplies(),
+        source.mouseBehavior(),
+        source.randomSeed(),
+        mice);
   }
 }

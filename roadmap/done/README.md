@@ -41,6 +41,10 @@ and planned cards remain in the parent `roadmap/` directory.
 - [M4-07: Reposition placed cells by drag](milestone-4-07-cell-repositioning.md)
 - [M4-08: Add the fourth authored level and progression](milestone-4-08-fourth-level.md)
 
+## Milestone 5
+
+- [M5-01: Add a fifth level with Random and Scout](milestone-5-01-fifth-level.md)
+
 ## TeaVM and GitHub Pages
 
 - [WEB-01: Align the TeaVM toolchain](teavm-01-toolchain-alignment.md)

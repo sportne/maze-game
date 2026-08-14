@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.mouse;
 
+import io.github.sportne.mazegame.model.level.LevelMouse;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.util.Objects;
 
@@ -19,5 +20,14 @@ public final class MouseSimulationFactory {
       case RANDOM -> new RandomMouseSimulation(mazeState);
       case LEFT_PRIORITY -> new ScoutMouseSimulation(mazeState);
     };
+  }
+
+  /** Creates an independent simulation for one mouse authored by a multi-mouse level. */
+  public static MouseSimulation create(MazeState mazeState, LevelMouse mouse) {
+    Objects.requireNonNull(mazeState, "mazeState");
+    Objects.requireNonNull(mouse, "mouse");
+    MazeState mouseMaze =
+        new MazeState(mazeState.levelDefinition().forMouse(mouse), mazeState.placedCells());
+    return create(mouseMaze);
   }
 }

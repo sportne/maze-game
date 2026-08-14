@@ -25,8 +25,8 @@ public record MazeState(
       validatePlacedCell(levelDefinition, entry.getKey(), entry.getValue());
     }
     deriveRemainingSupplies(levelDefinition, placedCells);
-    if (!hasPathFromStartToCheese(levelDefinition, placedCells)) {
-      throw new IllegalArgumentException("maze must keep a path from mouse start to cheese");
+    if (!hasPathsForEveryMouse(levelDefinition, placedCells)) {
+      throw new IllegalArgumentException("maze must keep a path for every mouse");
     }
   }
 
@@ -71,7 +71,7 @@ public record MazeState(
     }
     Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
     updated.put(destination, type);
-    if (!hasPathFromStartToCheese(levelDefinition, updated)) {
+    if (!hasPathsForEveryMouse(levelDefinition, updated)) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
     }
     return MazeEditResult.accepted(
@@ -118,7 +118,7 @@ public record MazeState(
     Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
     updated.remove(source);
     updated.put(destination, type);
-    if (!hasPathFromStartToCheese(levelDefinition, updated)) {
+    if (!hasPathsForEveryMouse(levelDefinition, updated)) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
     }
     return MazeEditResult.accepted(new MazeState(levelDefinition, updated), MazeEditStatus.MOVED);
@@ -152,10 +152,10 @@ public record MazeState(
   /** Returns the content rendered for one grid position. */
   public CellContent cellContentAt(GridPosition position) {
     requireInsideGrid(position);
-    if (position.equals(levelDefinition.mouseStart())) {
+    if (levelDefinition.mice().stream().anyMatch(mouse -> position.equals(mouse.start()))) {
       return CellContent.MOUSE_START;
     }
-    if (position.equals(levelDefinition.cheese())) {
+    if (levelDefinition.mice().stream().anyMatch(mouse -> position.equals(mouse.goal()))) {
       return CellContent.CHEESE;
     }
     return switch (placedCells.get(position)) {
@@ -167,7 +167,7 @@ public record MazeState(
 
   /** Returns whether the start remains connected to the cheese through walkable cells. */
   public boolean hasPathFromStartToCheese() {
-    return hasPathFromStartToCheese(levelDefinition, placedCells);
+    return hasPathsForEveryMouse(levelDefinition, placedCells);
   }
 
   /** Wall-only compatibility view retained until session and renderer migration is complete. */
@@ -221,16 +221,16 @@ public record MazeState(
   /** Returns whether a position is reserved for the mouse start or cheese. */
   public boolean isProtected(GridPosition position) {
     requireInsideGrid(position);
-    return position.equals(levelDefinition.mouseStart())
-        || position.equals(levelDefinition.cheese());
+    return levelDefinition.mice().stream()
+        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()));
   }
 
   private MazeEditStatus validateDestination(GridPosition position) {
     if (!position.isWithin(levelDefinition.gridSize())) {
       return MazeEditStatus.REJECTED_OUTSIDE_GRID;
     }
-    if (position.equals(levelDefinition.mouseStart())
-        || position.equals(levelDefinition.cheese())) {
+    if (levelDefinition.mice().stream()
+        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()))) {
       return MazeEditStatus.REJECTED_PROTECTED_CELL;
     }
     return null;
@@ -259,8 +259,8 @@ public record MazeState(
     if (!position.isWithin(levelDefinition.gridSize())) {
       throw new IllegalArgumentException("placed cell must be inside the grid");
     }
-    if (position.equals(levelDefinition.mouseStart())
-        || position.equals(levelDefinition.cheese())) {
+    if (levelDefinition.mice().stream()
+        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()))) {
       throw new IllegalArgumentException("placed cell must not be protected");
     }
   }
@@ -281,15 +281,24 @@ public record MazeState(
     return Map.copyOf(remaining);
   }
 
-  private static boolean hasPathFromStartToCheese(
+  private static boolean hasPathsForEveryMouse(
       LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
+    return levelDefinition.mice().stream()
+        .allMatch(mouse -> hasPath(levelDefinition, placedCells, mouse.start(), mouse.goal()));
+  }
+
+  private static boolean hasPath(
+      LevelDefinition levelDefinition,
+      Map<GridPosition, PlaceableCellType> placedCells,
+      GridPosition start,
+      GridPosition goal) {
     Queue<GridPosition> frontier = new ArrayDeque<>();
     Set<GridPosition> visited = new HashSet<>();
-    frontier.add(levelDefinition.mouseStart());
-    visited.add(levelDefinition.mouseStart());
+    frontier.add(start);
+    visited.add(start);
     while (!frontier.isEmpty()) {
       GridPosition current = frontier.remove();
-      if (current.equals(levelDefinition.cheese())) {
+      if (current.equals(goal)) {
         return true;
       }
       for (GridPosition neighbor : neighbors(current)) {

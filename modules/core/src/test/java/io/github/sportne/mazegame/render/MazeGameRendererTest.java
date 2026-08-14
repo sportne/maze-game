@@ -703,6 +703,49 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void multiMouseLevelDrawsBothCharactersAndBothMatchingGoals() {
+    LevelDefinition level = Levels.milestoneFive();
+    RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
+    List<MouseRunResult> results =
+        List.of(
+            new MouseRunResult(
+                level.mice().get(0).start(), Duration.ZERO, 0, MouseRunStatus.RUNNING),
+            new MouseRunResult(
+                level.mice().get(1).start(), Duration.ZERO, 0, MouseRunStatus.RUNNING));
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.MOUSE_RUNNING,
+            level,
+            MazeState.empty(level),
+            0.0F,
+            null,
+            0.0F,
+            results.get(0),
+            null,
+            List.of(new LevelProgress(level, true, null)),
+            List.of(),
+            null,
+            null,
+            true,
+            false,
+            false,
+            results);
+
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.MOUSE_RUNNING, 1280, 720, level.gridSize(), true, 1, false),
+        snapshot);
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(1));
+    assertTrue(spriteBatch.drawnRegionXs().contains(2));
+    assertTrue(spriteBatch.drawnRegionXs().contains(10));
+    assertTrue(spriteBatch.drawnRegionXs().contains(20));
+    assertTrue(font.capturedText().stream().anyMatch(text -> text.contains("Mouse + Scout")));
+  }
+
+  @Test
   void rendererRejectsMissingSpriteRegions() {
     assertThrows(
         NullPointerException.class,
