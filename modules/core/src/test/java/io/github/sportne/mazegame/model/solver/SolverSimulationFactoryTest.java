@@ -1,9 +1,11 @@
 package io.github.sportne.mazegame.model.solver;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -30,6 +32,31 @@ final class SolverSimulationFactoryTest {
   @Test
   void requiresAMaze() {
     assertThrows(NullPointerException.class, () -> SolverSimulationFactory.create(null));
+  }
+
+  @Test
+  void createsAnIndependentSimulationFromAnAuthoredSolver() {
+    LevelDefinition level = Levels.milestoneFive();
+    LevelSolver scout = level.solvers().get(1);
+
+    SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level), scout);
+
+    assertInstanceOf(ScoutSolverSimulation.class, simulation);
+    assertEquals(scout.start(), simulation.result().position());
+  }
+
+  @Test
+  void rejectsASolverThatIsNotAuthoredByTheMazeLevel() {
+    LevelDefinition level = Levels.milestoneFive();
+    LevelSolver unknown =
+        new LevelSolver(level.goal(), level.solverStart(), SolverBehavior.RANDOM, 1L);
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> SolverSimulationFactory.create(MazeState.empty(level), unknown));
+    assertThrows(
+        NullPointerException.class,
+        () -> SolverSimulationFactory.create(MazeState.empty(level), null));
   }
 
   private static LevelDefinition withBehavior(

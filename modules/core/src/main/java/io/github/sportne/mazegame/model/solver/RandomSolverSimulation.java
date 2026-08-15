@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,12 @@ public final class RandomSolverSimulation extends TimedSolverSimulation {
    * @param mazeState maze to solve
    */
   public RandomSolverSimulation(MazeState mazeState) {
-    super(mazeState);
-    random = new Random(mazeState.levelDefinition().randomSeed());
+    this(mazeState, mazeState.levelDefinition().primarySolver());
+  }
+
+  RandomSolverSimulation(MazeState mazeState, LevelSolver solver) {
+    super(mazeState, solver);
+    random = new Random(solver.randomSeed());
   }
 
   /** Makes one random legal movement decision. */

@@ -888,7 +888,6 @@ public final class MazeGame extends ApplicationAdapter {
         session.buildTimeRemainingSeconds(),
         session.rejectedPosition(),
         session.rejectedFlashRemainingSeconds(),
-        session.solverRunResult(),
         session.bestResult(),
         session.levelProgress(),
         session.paletteState(),

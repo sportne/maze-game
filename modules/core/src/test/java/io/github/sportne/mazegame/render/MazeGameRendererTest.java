@@ -128,6 +128,7 @@ final class MazeGameRendererTest {
     assertEquals(rejected, snapshot.rejectedPosition());
     assertEquals(0.4F, snapshot.rejectedFlashRemainingSeconds());
     assertEquals(runResult, snapshot.solverRunResult());
+    assertEquals(List.of(runResult), snapshot.solverRunResults());
     assertEquals(bestResult, snapshot.bestResult());
     assertEquals(levelProgress(bestResult), snapshot.levelProgress());
     assertTrue(snapshot.audioEnabled());
@@ -760,7 +761,6 @@ final class MazeGameRendererTest {
             0.0F,
             null,
             0.0F,
-            results.get(0),
             null,
             List.of(new LevelProgress(level, true, null)),
             List.of(),

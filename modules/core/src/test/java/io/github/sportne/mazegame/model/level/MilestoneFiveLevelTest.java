@@ -112,12 +112,14 @@ final class MilestoneFiveLevelTest {
 
     session.startRun();
     assertEquals(2, session.solverRunResults().size());
+    assertEquals(session.solverRunResults().get(0), session.solverRunResult());
     session.updateSolverRun(10.0F);
 
     assertEquals(GamePhase.RESULT, session.gamePhase());
     assertTrue(session.resultPassed());
     assertEquals(Duration.ofSeconds(10), session.solverRunResults().get(0).elapsedTime());
     assertEquals(Duration.ofSeconds(9), session.solverRunResults().get(1).elapsedTime());
+    assertEquals(session.solverRunResults().get(0), session.solverRunResult());
     assertEquals(new BestResult(Duration.ofSeconds(9), 72), session.bestResult());
     assertFalse(session.hasNextLevel());
 

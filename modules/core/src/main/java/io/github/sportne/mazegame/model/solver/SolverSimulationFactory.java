@@ -16,18 +16,19 @@ public final class SolverSimulationFactory {
    */
   public static SolverSimulation create(MazeState mazeState) {
     Objects.requireNonNull(mazeState, "mazeState");
-    return switch (mazeState.levelDefinition().solverBehavior()) {
-      case RANDOM -> new RandomSolverSimulation(mazeState);
-      case LEFT_PRIORITY -> new ScoutSolverSimulation(mazeState);
-    };
+    return create(mazeState, mazeState.levelDefinition().primarySolver());
   }
 
   /** Creates an independent simulation for one solver authored by a multi-solver level. */
   public static SolverSimulation create(MazeState mazeState, LevelSolver solver) {
     Objects.requireNonNull(mazeState, "mazeState");
     Objects.requireNonNull(solver, "solver");
-    MazeState solverMaze =
-        new MazeState(mazeState.levelDefinition().forSolver(solver), mazeState.placedCells());
-    return create(solverMaze);
+    if (!mazeState.levelDefinition().solvers().contains(solver)) {
+      throw new IllegalArgumentException("solver is not authored by this level");
+    }
+    return switch (solver.behavior()) {
+      case RANDOM -> new RandomSolverSimulation(mazeState, solver);
+      case LEFT_PRIORITY -> new ScoutSolverSimulation(mazeState, solver);
+    };
   }
 }

@@ -20,30 +20,22 @@ import java.util.Objects;
  * @param id stable machine-readable level identifier
  * @param name display name for the level
  * @param gridSize dimensions of the level grid
- * @param solverStart fixed starting position for the solver
- * @param goal fixed endpoint position for the primary solver's goal
  * @param buildTime amount of time the player gets to place walls before auto-start
  * @param targetSolveTime solve time the solver must exceed for the player to pass
  * @param maximumSolveTime timeout that ends the run if the goal is not reached
  * @param solverMoveInterval time between solver movement decisions
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
- * @param solverBehavior movement rule used by this level
- * @param randomSeed seed used by deterministic solver AI
  * @param solvers authored solvers in stable presentation order
  */
 public record LevelDefinition(
     String id,
     String name,
     GridSize gridSize,
-    GridPosition solverStart,
-    GridPosition goal,
     Duration buildTime,
     Duration targetSolveTime,
     Duration maximumSolveTime,
     Duration solverMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
-    SolverBehavior solverBehavior,
-    long randomSeed,
     List<LevelSolver> solvers) {
   /** Compatibility constructor for the released single-solver level format. */
   public LevelDefinition(
@@ -63,15 +55,11 @@ public record LevelDefinition(
         id,
         name,
         gridSize,
-        solverStart,
-        goal,
         buildTime,
         targetSolveTime,
         maximumSolveTime,
         solverMoveInterval,
         placeableCellSupplies,
-        solverBehavior,
-        randomSeed,
         List.of(new LevelSolver(solverStart, goal, solverBehavior, randomSeed)));
   }
 
@@ -85,27 +73,12 @@ public record LevelDefinition(
     id = requireNonBlank(id, "id");
     name = requireNonBlank(name, "name");
     Objects.requireNonNull(gridSize, "gridSize");
-    Objects.requireNonNull(solverStart, "solverStart");
-    Objects.requireNonNull(goal, "goal");
     requirePositive(buildTime, "buildTime");
     requirePositive(targetSolveTime, "targetSolveTime");
     requirePositive(maximumSolveTime, "maximumSolveTime");
     requirePositive(solverMoveInterval, "solverMoveInterval");
     placeableCellSupplies = validateSupplies(placeableCellSupplies);
-    Objects.requireNonNull(solverBehavior, "solverBehavior");
     solvers = validateSolvers(solvers, gridSize);
-    requireWithinGrid(solverStart, gridSize, "solverStart");
-    requireWithinGrid(goal, gridSize, "goal");
-    if (solverStart.equals(goal)) {
-      throw new IllegalArgumentException("solverStart and goal must be different");
-    }
-    LevelSolver primarySolver = solvers.get(0);
-    if (!primarySolver.start().equals(solverStart)
-        || !primarySolver.goal().equals(goal)
-        || primarySolver.behavior() != solverBehavior
-        || primarySolver.randomSeed() != randomSeed) {
-      throw new IllegalArgumentException("primary solver fields must match the first solver");
-    }
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
     }
@@ -133,25 +106,29 @@ public record LevelDefinition(
     return List.copyOf(solvers);
   }
 
-  /** Returns a single-solver view used by one independent simulation. */
-  public LevelDefinition forSolver(LevelSolver solver) {
-    Objects.requireNonNull(solver, "solver");
-    if (!solvers.contains(solver)) {
-      throw new IllegalArgumentException("solver is not authored by this level");
-    }
-    return new LevelDefinition(
-        id,
-        name,
-        gridSize,
-        solver.start(),
-        solver.goal(),
-        buildTime,
-        targetSolveTime,
-        maximumSolveTime,
-        solverMoveInterval,
-        placeableCellSupplies,
-        solver.behavior(),
-        solver.randomSeed());
+  /** Returns the first authored solver used by single-solver views. */
+  public LevelSolver primarySolver() {
+    return solvers.get(0);
+  }
+
+  /** Returns the primary solver's starting position. */
+  public GridPosition solverStart() {
+    return primarySolver().start();
+  }
+
+  /** Returns the primary solver's goal position. */
+  public GridPosition goal() {
+    return primarySolver().goal();
+  }
+
+  /** Returns the primary solver's movement behavior. */
+  public SolverBehavior solverBehavior() {
+    return primarySolver().behavior();
+  }
+
+  /** Returns the primary solver's deterministic random seed. */
+  public long randomSeed() {
+    return primarySolver().randomSeed();
   }
 
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {

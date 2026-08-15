@@ -21,7 +21,6 @@ import java.util.Objects;
  * @param buildTimeRemainingSeconds build timer value
  * @param rejectedPosition cell flashing as rejected, or null
  * @param rejectedFlashRemainingSeconds rejected flash time remaining
- * @param solverRunResult latest solver result, or null before a run starts
  * @param bestResult best saved result for the current level, or null when none exists
  * @param levelProgress authored level presentation state in catalog order
  * @param paletteState authored and remaining build-palette state in display order
@@ -39,7 +38,6 @@ public record GameRenderSnapshot(
     float buildTimeRemainingSeconds,
     GridPosition rejectedPosition,
     float rejectedFlashRemainingSeconds,
-    SolverRunResult solverRunResult,
     BestResult bestResult,
     List<LevelProgress> levelProgress,
     List<CellPaletteState> paletteState,
@@ -83,7 +81,6 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -118,7 +115,6 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -152,7 +148,6 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -185,7 +180,6 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        solverRunResult,
         bestResult,
         levelProgress,
         List.of(),
@@ -195,5 +189,10 @@ public record GameRenderSnapshot(
         resultPassed,
         hasNextLevel,
         solverRunResult == null ? List.of() : List.of(solverRunResult));
+  }
+
+  /** Returns the primary solver result, or null before a run starts. */
+  public SolverRunResult solverRunResult() {
+    return solverRunResults.isEmpty() ? null : solverRunResults.get(0);
   }
 }

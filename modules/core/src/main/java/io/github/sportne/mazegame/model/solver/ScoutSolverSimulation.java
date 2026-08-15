@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -12,6 +13,10 @@ final class ScoutSolverSimulation extends TimedSolverSimulation {
 
   ScoutSolverSimulation(MazeState mazeState) {
     super(mazeState);
+  }
+
+  ScoutSolverSimulation(MazeState mazeState, LevelSolver solver) {
+    super(mazeState, solver);
   }
 
   @Override

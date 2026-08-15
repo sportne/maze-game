@@ -86,8 +86,6 @@ public final class Levels {
           "milestone-5",
           "Level 5",
           GridSize.square(7),
-          new GridPosition(6, 0),
-          new GridPosition(3, 3),
           Duration.ofSeconds(25),
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
@@ -95,8 +93,6 @@ public final class Levels {
           List.of(
               PlaceableCellSupply.finite(PlaceableCellType.WALL, 5),
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 4)),
-          SolverBehavior.RANDOM,
-          23L,
           List.of(
               new LevelSolver(
                   new GridPosition(6, 0), new GridPosition(3, 3), SolverBehavior.RANDOM, 23L),

@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Objects;
@@ -8,6 +9,7 @@ import java.util.Objects;
 /** Shared fixed-step timing and terminal-state handling for solver simulations. */
 abstract class TimedSolverSimulation implements SolverSimulation {
   private final MazeState mazeState;
+  private final LevelSolver solver;
   private GridPosition position;
   private Duration elapsedTime = Duration.ZERO;
   private Duration timeUntilDecision;
@@ -16,8 +18,15 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   private SolverRunStatus status = SolverRunStatus.RUNNING;
 
   TimedSolverSimulation(MazeState mazeState) {
+    this(
+        mazeState,
+        Objects.requireNonNull(mazeState, "mazeState").levelDefinition().primarySolver());
+  }
+
+  TimedSolverSimulation(MazeState mazeState, LevelSolver solver) {
     this.mazeState = Objects.requireNonNull(mazeState, "mazeState");
-    position = mazeState.levelDefinition().solverStart();
+    this.solver = Objects.requireNonNull(solver, "solver");
+    position = solver.start();
     timeUntilDecision = mazeState.levelDefinition().solverMoveInterval();
   }
 
@@ -97,7 +106,7 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   }
 
   private void updateStatus() {
-    if (position.equals(mazeState.levelDefinition().goal())) {
+    if (position.equals(solver.goal())) {
       status = SolverRunStatus.REACHED_GOAL;
     } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
       status = SolverRunStatus.TIMED_OUT;

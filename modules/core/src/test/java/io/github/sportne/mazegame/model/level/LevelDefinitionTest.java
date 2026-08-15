@@ -207,19 +207,11 @@ final class LevelDefinitionTest {
     mutable.clear();
 
     assertEquals(List.of(primary, secondary), level.solvers());
-    assertEquals(secondary.start(), level.forSolver(secondary).solverStart());
-    assertThrows(NullPointerException.class, () -> assertEquals(level, level.forSolver(null)));
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            assertEquals(
-                level,
-                level.forSolver(
-                    new LevelSolver(
-                        new GridPosition(2, 1),
-                        new GridPosition(2, 2),
-                        SolverBehavior.RANDOM,
-                        3L))));
+    assertEquals(primary, level.primarySolver());
+    assertEquals(primary.start(), level.solverStart());
+    assertEquals(primary.goal(), level.goal());
+    assertEquals(primary.behavior(), level.solverBehavior());
+    assertEquals(primary.randomSeed(), level.randomSeed());
     assertThrows(NullPointerException.class, () -> multiSolverLevel(null));
     assertThrows(IllegalArgumentException.class, () -> multiSolverLevel(List.of()));
     assertThrows(
@@ -257,13 +249,6 @@ final class LevelDefinitionTest {
                         new GridPosition(1, 1),
                         SolverBehavior.LEFT_PRIORITY,
                         2L))));
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            multiSolverLevel(
-                List.of(
-                    new LevelSolver(
-                        primary.start(), primary.goal(), SolverBehavior.LEFT_PRIORITY, 2L))));
   }
 
   private static LevelDefinition level(
@@ -323,15 +308,11 @@ final class LevelDefinitionTest {
         "multi-solver-test",
         "Multi Solver Test",
         source.gridSize(),
-        source.solverStart(),
-        source.goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
         source.solverMoveInterval(),
         source.placeableCellSupplies(),
-        source.solverBehavior(),
-        source.randomSeed(),
         solvers);
   }
 }

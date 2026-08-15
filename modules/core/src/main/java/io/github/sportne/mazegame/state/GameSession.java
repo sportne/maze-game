@@ -62,9 +62,6 @@ public final class GameSession {
   /** Whether a run has been requested or auto-started for the current level attempt. */
   private boolean runRequested;
 
-  /** Latest solver simulation snapshot, or null before a run starts. */
-  private SolverRunResult solverRunResult;
-
   /** Active simulations in the level's authored solver order. */
   private List<SolverSimulation> solverSimulations = List.of();
 
@@ -238,7 +235,7 @@ public final class GameSession {
    * @return latest run result, or null before the solver starts
    */
   public SolverRunResult solverRunResult() {
-    return solverRunResult;
+    return solverRunResults.isEmpty() ? null : solverRunResults.get(0);
   }
 
   /** Returns current results in authored solver order, or an empty list before a run starts. */
@@ -530,7 +527,6 @@ public final class GameSession {
               : current);
     }
     solverRunResults = List.copyOf(updatedResults);
-    solverRunResult = solverRunResults.get(0);
     if (solverRunResults.stream().noneMatch(result -> result.status() == SolverRunStatus.RUNNING)) {
       gamePhase = GamePhase.RESULT;
       if (shouldRecordBestResult && resultPassed()) {
@@ -607,7 +603,6 @@ public final class GameSession {
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
     runRequested = false;
-    solverRunResult = null;
     solverSimulations = List.of();
     solverRunResults = List.of();
     gamePhase = initialPhase;
@@ -619,7 +614,6 @@ public final class GameSession {
             .map(solver -> SolverSimulationFactory.create(mazeState, solver))
             .toList();
     solverRunResults = solverSimulations.stream().map(SolverSimulation::result).toList();
-    solverRunResult = solverRunResults.get(0);
   }
 
   private static PlaceableCellType initialSelectedCellType(LevelDefinition levelDefinition) {
