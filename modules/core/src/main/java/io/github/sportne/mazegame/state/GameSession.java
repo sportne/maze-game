@@ -431,25 +431,6 @@ public final class GameSession {
     return Optional.of(mazeState.move(source, destination));
   }
 
-  /** Places a Wall through the shared atomic edit path for compatibility with released tests. */
-  public void placeWall(GridPosition position) {
-    Objects.requireNonNull(position, "position");
-    if (gamePhase != GamePhase.BUILDING) {
-      return;
-    }
-    if (!position.isWithin(levelDefinition.gridSize()) || !mazeState.hasWallAt(position)) {
-      applyEdit(mazeState.placeOrReplace(PlaceableCellType.WALL, position), position);
-    }
-  }
-
-  /** Clears a Wall through the shared atomic edit path for compatibility with released tests. */
-  public void clearWall(GridPosition position) {
-    Objects.requireNonNull(position, "position");
-    if (gamePhase == GamePhase.BUILDING && mazeState.hasWallAt(position)) {
-      applyEdit(mazeState.remove(position), position);
-    }
-  }
-
   /** Resets the current level to a fresh build phase attempt. */
   public void retryLevel() {
     initializeLevelState(levelDefinition, GamePhase.BUILDING);

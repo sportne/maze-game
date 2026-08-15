@@ -1,12 +1,15 @@
 package io.github.sportne.mazegame.model.solver;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import org.junit.jupiter.api.Test;
@@ -49,7 +52,13 @@ final class SolverSimulationFactoryTest {
   void rejectsASolverThatIsNotAuthoredByTheMazeLevel() {
     LevelDefinition level = Levels.levelFive();
     LevelSolver unknown =
-        new LevelSolver(level.goal(), level.solverStart(), SolverBehavior.RANDOM, 1L);
+        new LevelSolver(
+            level.primarySolver().goal(),
+            level.primarySolver().start(),
+            SolverBehavior.RANDOM,
+            java.util.OptionalLong.of(1L),
+            SolverAppearance.CLASSIC_MOUSE,
+            GoalType.CHEESE);
 
     assertThrows(
         IllegalArgumentException.class,
@@ -61,18 +70,18 @@ final class SolverSimulationFactoryTest {
 
   private static LevelDefinition withBehavior(
       LevelDefinition source, SolverBehavior solverBehavior) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         source.id(),
         source.name(),
         source.gridSize(),
-        source.solverStart(),
-        source.goal(),
+        source.primarySolver().start(),
+        source.primarySolver().goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
         source.solverMoveInterval(),
         source.placeableCellSupplies(),
         solverBehavior,
-        source.randomSeed());
+        source.primarySolver().randomSeed().orElseThrow());
   }
 }

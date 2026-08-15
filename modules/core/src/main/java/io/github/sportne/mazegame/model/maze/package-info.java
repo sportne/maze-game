@@ -1,5 +1,5 @@
 /**
- * Immutable placed-cell state, transactional edit results, and compatibility wall adapters.
+ * Immutable placed-cell state and transactional edit results.
  *
  * <p>The maze package owns runtime inventory derivation, protected-cell rules, cell content
  * classification, and connectivity validation for every authored solver-to-goal route.

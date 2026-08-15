@@ -231,27 +231,27 @@ final class GameInputRouterTest {
   void cellActionsRequireCellPayloads() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.PLACE_OR_REPLACE_CELL, null, null));
+        () -> new GameInputAction(GameInputActionType.PLACE_OR_REPLACE_CELL, null, null, null));
   }
 
   @Test
   void nonCellActionsRejectCellPayloads() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.RETRY, new GridPosition(2, 2), null));
+        () -> new GameInputAction(GameInputActionType.RETRY, new GridPosition(2, 2), null, null));
   }
 
   @Test
   void levelSelectionRequiresOnlyAStableLevelId() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, null));
+        () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, null, null));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, " "));
+        () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, " ", null));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.RETRY, null, Levels.levelTwo().id()));
+        () -> new GameInputAction(GameInputActionType.RETRY, null, Levels.levelTwo().id(), null));
 
     assertEquals(
         Levels.levelTwo().id(), GameInputAction.selectLevel(Levels.levelTwo().id()).levelId());

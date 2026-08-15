@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.level;
 
+import static io.github.sportne.mazegame.TestMazeStates.withWalls;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,13 +67,13 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals("milestone-2", LEVEL.id());
     assertEquals("Level 2", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
-    assertEquals(new GridPosition(6, 3), LEVEL.solverStart());
-    assertEquals(new GridPosition(0, 3), LEVEL.goal());
+    assertEquals(new GridPosition(6, 3), LEVEL.primarySolver().start());
+    assertEquals(new GridPosition(0, 3), LEVEL.primarySolver().goal());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(15), LEVEL.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), LEVEL.solverMoveInterval());
-    assertEquals(38L, LEVEL.randomSeed());
+    assertEquals(38L, LEVEL.primarySolver().randomSeed().orElseThrow());
     assertEquals(
         List.of(
             Levels.levelOne(), LEVEL, Levels.levelThree(), Levels.levelFour(), Levels.levelFive()),
@@ -87,7 +88,8 @@ final class MilestoneTwoLevelDesignTest {
 
     assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
         result);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, result, LEVEL));
   }
@@ -100,9 +102,10 @@ final class MilestoneTwoLevelDesignTest {
 
   private static void assertPassingLayout(
       Set<GridPosition> walls, Duration elapsedTime, int moveCount) {
-    MazeState maze = new MazeState(LEVEL, walls);
+    MazeState maze = withWalls(LEVEL, walls);
     SolverRunResult expected =
-        new SolverRunResult(LEVEL.goal(), elapsedTime, moveCount, SolverRunStatus.REACHED_GOAL);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), elapsedTime, moveCount, SolverRunStatus.REACHED_GOAL);
 
     assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(expected, run(maze));
@@ -112,7 +115,7 @@ final class MilestoneTwoLevelDesignTest {
 
   @Test
   void representativeValidLayoutCanReachTheTimeout() {
-    MazeState maze = new MazeState(LEVEL, TIMEOUT_LAYOUT);
+    MazeState maze = withWalls(LEVEL, TIMEOUT_LAYOUT);
 
     SolverRunResult result = run(maze);
 

@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.state;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -289,7 +290,7 @@ final class GameSessionInventoryTest {
   }
 
   private static LevelDefinition level(String id, List<PlaceableCellSupply> supplies) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         id,
         id,
         GridSize.square(5),

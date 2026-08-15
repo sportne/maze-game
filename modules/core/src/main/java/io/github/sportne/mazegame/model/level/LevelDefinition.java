@@ -37,32 +37,6 @@ public record LevelDefinition(
     Duration solverMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
     List<LevelSolver> solvers) {
-  /** Compatibility constructor for the released single-solver level format. */
-  public LevelDefinition(
-      String id,
-      String name,
-      GridSize gridSize,
-      GridPosition solverStart,
-      GridPosition goal,
-      Duration buildTime,
-      Duration targetSolveTime,
-      Duration maximumSolveTime,
-      Duration solverMoveInterval,
-      List<PlaceableCellSupply> placeableCellSupplies,
-      SolverBehavior solverBehavior,
-      long randomSeed) {
-    this(
-        id,
-        name,
-        gridSize,
-        buildTime,
-        targetSolveTime,
-        maximumSolveTime,
-        solverMoveInterval,
-        placeableCellSupplies,
-        List.of(new LevelSolver(solverStart, goal, solverBehavior, randomSeed)));
-  }
-
   /**
    * Creates validated level authoring data.
    *
@@ -109,26 +83,6 @@ public record LevelDefinition(
   /** Returns the first authored solver used by single-solver views. */
   public LevelSolver primarySolver() {
     return solvers.get(0);
-  }
-
-  /** Returns the primary solver's starting position. */
-  public GridPosition solverStart() {
-    return primarySolver().start();
-  }
-
-  /** Returns the primary solver's goal position. */
-  public GridPosition goal() {
-    return primarySolver().goal();
-  }
-
-  /** Returns the primary solver's movement behavior. */
-  public SolverBehavior solverBehavior() {
-    return primarySolver().behavior();
-  }
-
-  /** Returns the primary solver's deterministic random seed. */
-  public long randomSeed() {
-    return primarySolver().randomSeed().orElse(0L);
   }
 
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {

@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.level;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,14 +24,14 @@ final class LevelDefinitionTest {
     assertEquals("milestone-1", level.id());
     assertEquals("Level 1", level.name());
     assertEquals(GridSize.square(5), level.gridSize());
-    assertEquals(new GridPosition(4, 2), level.solverStart());
-    assertEquals(new GridPosition(0, 2), level.goal());
+    assertEquals(new GridPosition(4, 2), level.primarySolver().start());
+    assertEquals(new GridPosition(0, 2), level.primarySolver().goal());
     assertEquals(Duration.ofSeconds(30), level.buildTime());
     assertEquals(Duration.ofSeconds(5), level.targetSolveTime());
     assertEquals(Duration.ofSeconds(10), level.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), level.solverMoveInterval());
-    assertEquals(SolverBehavior.RANDOM, level.solverBehavior());
-    assertEquals(1L, level.randomSeed());
+    assertEquals(SolverBehavior.RANDOM, level.primarySolver().behavior());
+    assertEquals(1L, level.primarySolver().randomSeed().orElseThrow());
   }
 
   @Test
@@ -83,7 +84,7 @@ final class LevelDefinitionTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new LevelDefinition(
+            singleSolverLevel(
                 "level",
                 "Level",
                 GridSize.square(5),
@@ -103,7 +104,7 @@ final class LevelDefinitionTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new LevelDefinition(
+            singleSolverLevel(
                 "level",
                 "Level",
                 GridSize.square(5),
@@ -123,8 +124,8 @@ final class LevelDefinitionTest {
     LevelDefinition random = levelWithBehavior(SolverBehavior.RANDOM);
     LevelDefinition scout = levelWithBehavior(SolverBehavior.LEFT_PRIORITY);
 
-    assertEquals(SolverBehavior.RANDOM, random.solverBehavior());
-    assertEquals(SolverBehavior.LEFT_PRIORITY, scout.solverBehavior());
+    assertEquals(SolverBehavior.RANDOM, random.primarySolver().behavior());
+    assertEquals(SolverBehavior.LEFT_PRIORITY, scout.primarySolver().behavior());
     assertNotEquals(random, scout);
     assertThrows(NullPointerException.class, () -> levelWithBehavior(null));
   }
@@ -187,13 +188,45 @@ final class LevelDefinitionTest {
     GridPosition goal = new GridPosition(0, 2);
 
     assertThrows(
-        NullPointerException.class, () -> new LevelSolver(null, goal, SolverBehavior.RANDOM, 1L));
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                null,
+                goal,
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
     assertThrows(
-        NullPointerException.class, () -> new LevelSolver(start, null, SolverBehavior.RANDOM, 1L));
-    assertThrows(NullPointerException.class, () -> new LevelSolver(start, goal, null, 1L));
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                start,
+                null,
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                null,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new LevelSolver(start, start, SolverBehavior.RANDOM, 1L));
+        () ->
+            new LevelSolver(
+                start,
+                start,
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
     assertThrows(
         IllegalArgumentException.class,
         () ->
@@ -244,20 +277,32 @@ final class LevelDefinitionTest {
   @Test
   void multiSolverDefinitionsValidateAndDefensivelyCopyEveryProtectedPosition() {
     LevelSolver primary =
-        new LevelSolver(new GridPosition(4, 2), new GridPosition(0, 2), SolverBehavior.RANDOM, 1L);
+        new LevelSolver(
+            new GridPosition(4, 2),
+            new GridPosition(0, 2),
+            SolverBehavior.RANDOM,
+            OptionalLong.of(1L),
+            SolverAppearance.CLASSIC_MOUSE,
+            GoalType.CHEESE);
     LevelSolver secondary =
         new LevelSolver(
-            new GridPosition(3, 3), new GridPosition(1, 1), SolverBehavior.LEFT_PRIORITY, 2L);
+            new GridPosition(3, 3),
+            new GridPosition(1, 1),
+            SolverBehavior.LEFT_PRIORITY,
+            OptionalLong.empty(),
+            SolverAppearance.SCOUT_SQUIRREL,
+            GoalType.ACORN);
     List<LevelSolver> mutable = new ArrayList<>(List.of(primary, secondary));
     LevelDefinition level = multiSolverLevel(mutable);
     mutable.clear();
 
     assertEquals(List.of(primary, secondary), level.solvers());
     assertEquals(primary, level.primarySolver());
-    assertEquals(primary.start(), level.solverStart());
-    assertEquals(primary.goal(), level.goal());
-    assertEquals(primary.behavior(), level.solverBehavior());
-    assertEquals(primary.randomSeed(), OptionalLong.of(level.randomSeed()));
+    assertEquals(primary.start(), level.primarySolver().start());
+    assertEquals(primary.goal(), level.primarySolver().goal());
+    assertEquals(primary.behavior(), level.primarySolver().behavior());
+    assertEquals(
+        primary.randomSeed(), OptionalLong.of(level.primarySolver().randomSeed().orElseThrow()));
     assertThrows(NullPointerException.class, () -> multiSolverLevel(null));
     assertThrows(IllegalArgumentException.class, () -> multiSolverLevel(List.of()));
     assertThrows(
@@ -272,7 +317,9 @@ final class LevelDefinitionTest {
                         primary.start(),
                         new GridPosition(1, 1),
                         SolverBehavior.LEFT_PRIORITY,
-                        2L))));
+                        OptionalLong.empty(),
+                        SolverAppearance.SCOUT_SQUIRREL,
+                        GoalType.ACORN))));
     assertThrows(
         IllegalArgumentException.class,
         () ->
@@ -283,7 +330,9 @@ final class LevelDefinitionTest {
                         new GridPosition(3, 3),
                         primary.goal(),
                         SolverBehavior.LEFT_PRIORITY,
-                        2L))));
+                        OptionalLong.empty(),
+                        SolverAppearance.SCOUT_SQUIRREL,
+                        GoalType.ACORN))));
     assertThrows(
         IllegalArgumentException.class,
         () ->
@@ -294,12 +343,14 @@ final class LevelDefinitionTest {
                         new GridPosition(5, 0),
                         new GridPosition(1, 1),
                         SolverBehavior.LEFT_PRIORITY,
-                        2L))));
+                        OptionalLong.empty(),
+                        SolverAppearance.SCOUT_SQUIRREL,
+                        GoalType.ACORN))));
   }
 
   private static LevelDefinition level(
       String id, String name, GridPosition solverStart, GridPosition goal) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         id,
         name,
         GridSize.square(5),
@@ -316,36 +367,36 @@ final class LevelDefinitionTest {
 
   private static LevelDefinition levelWithBehavior(SolverBehavior solverBehavior) {
     LevelDefinition source = Levels.levelOne();
-    return new LevelDefinition(
+    return singleSolverLevel(
         source.id(),
         source.name(),
         source.gridSize(),
-        source.solverStart(),
-        source.goal(),
+        source.primarySolver().start(),
+        source.primarySolver().goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
         source.solverMoveInterval(),
         source.placeableCellSupplies(),
         solverBehavior,
-        source.randomSeed());
+        source.primarySolver().randomSeed().orElseThrow());
   }
 
   private static LevelDefinition levelWithSupplies(List<PlaceableCellSupply> supplies) {
     LevelDefinition source = Levels.levelOne();
-    return new LevelDefinition(
+    return singleSolverLevel(
         "supply-test",
         "Supply Test",
         source.gridSize(),
-        source.solverStart(),
-        source.goal(),
+        source.primarySolver().start(),
+        source.primarySolver().goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
         source.solverMoveInterval(),
         supplies,
-        source.solverBehavior(),
-        source.randomSeed());
+        source.primarySolver().behavior(),
+        source.primarySolver().randomSeed().orElseThrow());
   }
 
   private static LevelDefinition multiSolverLevel(List<LevelSolver> solvers) {

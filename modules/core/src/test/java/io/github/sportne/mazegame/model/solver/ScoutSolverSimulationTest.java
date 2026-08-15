@@ -1,5 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
+import static io.github.sportne.mazegame.TestMazeStates.withWalls;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -83,7 +85,7 @@ final class ScoutSolverSimulationTest {
     LevelDefinition level = level(GridSize.square(3), position(1, 1), position(2, 2), 1L);
     ScoutSolverSimulation scout =
         new ScoutSolverSimulation(
-            new MazeState(level, Set.of(position(1, 0), position(0, 1), position(1, 2))));
+            withWalls(level, Set.of(position(1, 0), position(0, 1), position(1, 2))));
 
     assertEquals(position(2, 1), scout.update(MOVE_INTERVAL).position());
     assertEquals(position(2, 2), scout.update(MOVE_INTERVAL).position());
@@ -98,15 +100,15 @@ final class ScoutSolverSimulationTest {
         Set.of(position(2, 2), position(3, 1), position(4, 0), position(5, 1));
 
     assertEquals(
-        new ScoutSolverSimulation(new MazeState(first, walls)).update(Duration.ofSeconds(8)),
-        new ScoutSolverSimulation(new MazeState(second, walls)).update(Duration.ofSeconds(8)));
+        new ScoutSolverSimulation(withWalls(first, walls)).update(Duration.ofSeconds(8)),
+        new ScoutSolverSimulation(withWalls(second, walls)).update(Duration.ofSeconds(8)));
   }
 
   @Test
   void wholeAndChunkedUpdatesHaveEqualTimingAndMovement() {
     LevelDefinition level = level(GridSize.square(7), position(6, 3), position(0, 3), 1L);
     MazeState maze =
-        new MazeState(
+        withWalls(
             level,
             Set.of(position(2, 1), position(3, 0), position(3, 2), position(3, 4), position(4, 3)));
     ScoutSolverSimulation whole = new ScoutSolverSimulation(maze);
@@ -119,7 +121,10 @@ final class ScoutSolverSimulationTest {
 
     assertEquals(
         new SolverRunResult(
-            level.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL),
+            level.primarySolver().goal(),
+            Duration.ofMillis(7500),
+            30,
+            SolverRunStatus.REACHED_GOAL),
         expected);
     assertEquals(expected, chunked.result());
   }
@@ -127,7 +132,7 @@ final class ScoutSolverSimulationTest {
   @Test
   void deterministicPerimeterLoopTimesOutDespiteAViableDirectPath() {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "loop",
             "Loop",
             GridSize.square(3),
@@ -146,14 +151,14 @@ final class ScoutSolverSimulationTest {
 
     assertEquals(
         new SolverRunResult(
-            level.solverStart(), Duration.ofSeconds(2), 8, SolverRunStatus.TIMED_OUT),
+            level.primarySolver().start(), Duration.ofSeconds(2), 8, SolverRunStatus.TIMED_OUT),
         result);
   }
 
   @Test
   void validatesDeltasAndStopsUpdatingAfterTerminalResult() {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "short-timeout",
             "Short Timeout",
             GridSize.square(2),
@@ -173,7 +178,7 @@ final class ScoutSolverSimulationTest {
     SolverRunResult terminal = scout.update(Duration.ofSeconds(1));
     assertEquals(
         new SolverRunResult(
-            level.solverStart(), Duration.ofMillis(100), 0, SolverRunStatus.TIMED_OUT),
+            level.primarySolver().start(), Duration.ofMillis(100), 0, SolverRunStatus.TIMED_OUT),
         terminal);
     assertEquals(terminal, scout.update(Duration.ofSeconds(1)));
   }
@@ -190,7 +195,7 @@ final class ScoutSolverSimulationTest {
     LevelDefinition level = level(GridSize.square(3), position(1, 1), goal, 1L);
 
     SolverRunResult result =
-        new ScoutSolverSimulation(new MazeState(level, walls)).update(MOVE_INTERVAL);
+        new ScoutSolverSimulation(withWalls(level, walls)).update(MOVE_INTERVAL);
 
     assertEquals(expected, result.position());
     assertEquals(1, result.moveCount());
@@ -209,7 +214,7 @@ final class ScoutSolverSimulationTest {
 
   private static LevelDefinition level(
       GridSize gridSize, GridPosition start, GridPosition goal, long seed) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "scout-" + seed,
         "Scout " + seed,
         gridSize,

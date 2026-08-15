@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.level;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,12 +44,12 @@ final class LevelCatalogTest {
   }
 
   private static LevelDefinition levelWithId(String id) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         id,
         "Test Level",
         FIRST_LEVEL.gridSize(),
-        FIRST_LEVEL.solverStart(),
-        FIRST_LEVEL.goal(),
+        FIRST_LEVEL.primarySolver().start(),
+        FIRST_LEVEL.primarySolver().goal(),
         FIRST_LEVEL.buildTime(),
         FIRST_LEVEL.targetSolveTime(),
         FIRST_LEVEL.maximumSolveTime(),

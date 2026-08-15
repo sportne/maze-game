@@ -12,20 +12,6 @@ public record LevelSolver(
     OptionalLong randomSeed,
     SolverAppearance appearance,
     GoalType goalType) {
-  /** Compatibility constructor that supplies the released behavior-to-presentation mapping. */
-  public LevelSolver(
-      GridPosition start, GridPosition goal, SolverBehavior behavior, long randomSeed) {
-    this(
-        start,
-        goal,
-        behavior,
-        behavior == SolverBehavior.RANDOM ? OptionalLong.of(randomSeed) : OptionalLong.empty(),
-        behavior == SolverBehavior.RANDOM
-            ? SolverAppearance.CLASSIC_MOUSE
-            : SolverAppearance.SCOUT_SQUIRREL,
-        behavior == SolverBehavior.RANDOM ? GoalType.CHEESE : GoalType.ACORN);
-  }
-
   /** Creates a solver definition with all required values present. */
   public LevelSolver {
     Objects.requireNonNull(start, "start");

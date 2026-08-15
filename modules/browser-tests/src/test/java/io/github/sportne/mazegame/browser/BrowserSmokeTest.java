@@ -29,8 +29,11 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.awt.image.BufferedImage;
@@ -49,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.IntConsumer;
@@ -226,7 +230,12 @@ final class BrowserSmokeTest {
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-scout-result.png")));
     assertRenderedSolverPresentation(
-        page, Levels.levelThree(), Levels.levelThree().goal(), false, SCOUT_STATUS_SIGNATURE, true);
+        page,
+        Levels.levelThree(),
+        Levels.levelThree().primarySolver().goal(),
+        false,
+        SCOUT_STATUS_SIGNATURE,
+        true);
     controls.clickButtonAndWaitForChange(
         GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
@@ -437,21 +446,28 @@ final class BrowserSmokeTest {
   }
 
   private static LevelDefinition buildGestureFixtureLevel() {
+    List<PlaceableCellSupply> supplies =
+        List.of(
+            PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
+            PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2));
+    LevelSolver solver =
+        new LevelSolver(
+            new GridPosition(4, 2),
+            new GridPosition(0, 2),
+            SolverBehavior.RANDOM,
+            OptionalLong.of(1L),
+            SolverAppearance.CLASSIC_MOUSE,
+            GoalType.CHEESE);
     return new LevelDefinition(
         "browser-build-gesture-fixture",
         "Build Gesture Fixture",
         GridSize.square(5),
-        new GridPosition(4, 2),
-        new GridPosition(0, 2),
         Duration.ofSeconds(30),
         Duration.ofMillis(200),
         Duration.ofSeconds(3),
         Duration.ofMillis(50),
-        List.of(
-            PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
-            PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
-        SolverBehavior.RANDOM,
-        1L);
+        supplies,
+        List.of(solver));
   }
 
   private static void runMobileTouchFlow(

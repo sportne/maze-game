@@ -1,11 +1,14 @@
 package io.github.sportne.mazegame.model.level;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
+import static io.github.sportne.mazegame.TestMazeStates.withWalls;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -172,7 +175,9 @@ final class MilestoneFourCellDesignTest {
     assertEquals(Supply.unlimited(), removed.board().remaining().get(CellType.WALL));
 
     MazeState production = MazeState.empty(Levels.levelOne());
-    assertTrue(production.withWall(position(1, 1)).withoutWall(position(1, 1)).walls().isEmpty());
+    MazeState placed =
+        production.placeOrReplace(PlaceableCellType.WALL, position(1, 1)).mazeState();
+    assertTrue(placed.remove(position(1, 1)).mazeState().placedCells().isEmpty());
   }
 
   @Test
@@ -290,7 +295,7 @@ final class MilestoneFourCellDesignTest {
   private static void assertMatchesProduction(
       SolverBehavior behavior, long seed, ReferenceSimulation referenceSimulation) {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "milestone-4-reference-" + behavior.name().toLowerCase(java.util.Locale.ROOT),
             "Milestone 4 Reference",
             GridSize.square(GRID_SIZE),
@@ -303,7 +308,7 @@ final class MilestoneFourCellDesignTest {
             PlaceableCellSupply.releasedDefaults(),
             behavior,
             seed);
-    MazeState productionMaze = new MazeState(level, PASSING_WALLS);
+    MazeState productionMaze = withWalls(level, PASSING_WALLS);
     SolverSimulation production = SolverSimulationFactory.create(productionMaze);
     List<GridPosition> productionTrace = new ArrayList<>();
     productionTrace.add(START);

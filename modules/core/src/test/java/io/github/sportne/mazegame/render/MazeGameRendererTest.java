@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.render;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -50,13 +51,14 @@ final class MazeGameRendererTest {
   @Test
   void cellColorReflectsMazeContentAndRejectedPosition() {
     GridPosition wall = new GridPosition(1, 1);
-    MazeState maze = MazeState.empty(LEVEL).withWall(wall);
+    MazeState maze =
+        MazeState.empty(LEVEL).placeOrReplace(PlaceableCellType.WALL, wall).mazeState();
 
     assertEquals(Color.BLACK, MazeGameRenderer.cellColor(maze, null, 0.0F, new GridPosition(2, 2)));
     assertEquals(Color.WHITE, MazeGameRenderer.cellColor(maze, null, 0.0F, wall));
     assertEquals(
         new Color(0.24F, 0.62F, 0.95F, 1.0F),
-        MazeGameRenderer.cellColor(maze, null, 0.0F, LEVEL.solverStart()));
+        MazeGameRenderer.cellColor(maze, null, 0.0F, LEVEL.primarySolver().start()));
     assertEquals(
         new Color(0.95F, 0.42F, 0.42F, 1.0F), MazeGameRenderer.cellColor(maze, wall, 0.2F, wall));
   }
@@ -96,7 +98,7 @@ final class MazeGameRendererTest {
             MazeGameRenderer.spriteDestination(
                 new ScreenRectangle(400.0F, 100.0F, 500.0F, 500.0F),
                 LEVEL,
-                LEVEL.solverStart(),
+                LEVEL.primarySolver().start(),
                 0.0F,
                 100.0F));
   }
@@ -107,11 +109,11 @@ final class MazeGameRendererTest {
     GridPosition rejected = new GridPosition(2, 2);
     SolverRunResult runResult =
         new SolverRunResult(
-            LEVEL.solverStart(), Duration.ofMillis(250L), 1, SolverRunStatus.RUNNING);
+            LEVEL.primarySolver().start(), Duration.ofMillis(250L), 1, SolverRunStatus.RUNNING);
     BestResult bestResult = new BestResult(Duration.ofSeconds(10L), 40);
 
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.SOLVER_RUNNING,
             LEVEL,
             maze,
@@ -146,7 +148,7 @@ final class MazeGameRendererTest {
     assertThrows(
         NullPointerException.class,
         () ->
-            new GameRenderSnapshot(
+            snapshot(
                 null, LEVEL, maze, 12.0F, null, 0.0F, null, null, List.of(), true, false, false));
   }
 
@@ -202,7 +204,7 @@ final class MazeGameRendererTest {
     BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
     BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.LEVEL_SELECT,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -232,9 +234,10 @@ final class MazeGameRendererTest {
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     SolverRunResult result =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.RESULT,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -268,13 +271,16 @@ final class MazeGameRendererTest {
     LevelDefinition finalLevel = Levels.levelFive();
     SolverRunResult result =
         new SolverRunResult(
-            finalLevel.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+            finalLevel.primarySolver().goal(),
+            Duration.ofSeconds(10),
+            40,
+            SolverRunStatus.TIMED_OUT);
     List<LevelProgress> progress =
         Levels.catalog().levels().stream()
             .map(level -> new LevelProgress(level, true, null))
             .toList();
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.RESULT,
             finalLevel,
             MazeState.empty(finalLevel),
@@ -305,11 +311,13 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer = renderer(spriteBatch, shapeRenderer, font);
     SolverRunResult running =
         new SolverRunResult(
-            LEVEL.solverStart(), Duration.ofMillis(2500L), 10, SolverRunStatus.RUNNING);
+            LEVEL.primarySolver().start(), Duration.ofMillis(2500L), 10, SolverRunStatus.RUNNING);
     SolverRunResult result =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10L), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(10L), 40, SolverRunStatus.TIMED_OUT);
     SolverRunResult failedResult =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(2L), 8, SolverRunStatus.REACHED_GOAL);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(2L), 8, SolverRunStatus.REACHED_GOAL);
 
     renderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
     renderer.render(layout(GamePhase.SOLVER_RUNNING), snapshot(GamePhase.SOLVER_RUNNING, running));
@@ -359,7 +367,7 @@ final class MazeGameRendererTest {
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(allocate(RecordingSpriteBatch.class), shapes, font);
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.BUILDING,
             level,
             maze,
@@ -397,7 +405,7 @@ final class MazeGameRendererTest {
 
     RecordingFont tooltipFont = recordingFont();
     GameRenderSnapshot tooltipSnapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.BUILDING,
             level,
             maze,
@@ -459,7 +467,7 @@ final class MazeGameRendererTest {
     withoutRenderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
     withRenderer.render(
         layout(GamePhase.BUILDING),
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.BUILDING,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -555,7 +563,7 @@ final class MazeGameRendererTest {
             new LevelProgress(Levels.levelTwo(), true, secondBest),
             new LevelProgress(Levels.levelThree(), false, null));
     GameRenderSnapshot selectSnapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.LEVEL_SELECT,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -582,7 +590,7 @@ final class MazeGameRendererTest {
             new LevelProgress(Levels.levelThree(), true, scoutBest));
     renderer.render(
         selectLayout,
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.LEVEL_SELECT,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -597,9 +605,10 @@ final class MazeGameRendererTest {
             false));
 
     SolverRunResult result =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot resultSnapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.RESULT,
             LEVEL,
             MazeState.empty(LEVEL),
@@ -637,10 +646,13 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
     SolverRunResult running =
         new SolverRunResult(
-            scoutLevel.solverStart(), Duration.ofSeconds(1), 4, SolverRunStatus.RUNNING);
+            scoutLevel.primarySolver().start(), Duration.ofSeconds(1), 4, SolverRunStatus.RUNNING);
     SolverRunResult result =
         new SolverRunResult(
-            scoutLevel.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL);
+            scoutLevel.primarySolver().goal(),
+            Duration.ofMillis(6500),
+            26,
+            SolverRunStatus.REACHED_GOAL);
     List<LevelProgress> progress =
         List.of(
             new LevelProgress(Levels.levelOne(), true, null),
@@ -650,7 +662,7 @@ final class MazeGameRendererTest {
     renderer.render(
         MazeGameLayout.forPhase(
             GamePhase.LEVEL_SELECT, 1280, 720, scoutLevel.gridSize(), true, 3, false),
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.LEVEL_SELECT,
             scoutLevel,
             MazeState.empty(scoutLevel),
@@ -685,7 +697,8 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer =
         renderer(spriteBatch, allocate(RecordingShapeRenderer.class), recordingFont());
     SolverRunResult randomResult =
-        new SolverRunResult(LEVEL.solverStart(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
+        new SolverRunResult(
+            LEVEL.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
 
     renderer.render(
         layout(GamePhase.SOLVER_RUNNING), snapshot(GamePhase.SOLVER_RUNNING, randomResult));
@@ -707,15 +720,15 @@ final class MazeGameRendererTest {
             LEVEL.placeableCellSupplies(),
             List.of(
                 new LevelSolver(
-                    LEVEL.solverStart(),
-                    LEVEL.goal(),
+                    LEVEL.primarySolver().start(),
+                    LEVEL.primarySolver().goal(),
                     SolverBehavior.RANDOM,
-                    OptionalLong.of(LEVEL.randomSeed()),
+                    OptionalLong.of(LEVEL.primarySolver().randomSeed().orElseThrow()),
                     SolverAppearance.SCOUT_SQUIRREL,
                     GoalType.ACORN)));
     SolverRunResult scoutResult =
         new SolverRunResult(
-            scoutAppearanceWithRandomBehavior.solverStart(),
+            scoutAppearanceWithRandomBehavior.primarySolver().start(),
             Duration.ZERO,
             0,
             SolverRunStatus.RUNNING);
@@ -729,7 +742,7 @@ final class MazeGameRendererTest {
             true,
             3,
             false),
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.SOLVER_RUNNING,
             scoutAppearanceWithRandomBehavior,
             MazeState.empty(scoutAppearanceWithRandomBehavior),
@@ -762,7 +775,7 @@ final class MazeGameRendererTest {
             new SolverRunResult(
                 level.solvers().get(1).start(), Duration.ZERO, 0, SolverRunStatus.RUNNING));
     GameRenderSnapshot snapshot =
-        new GameRenderSnapshot(
+        snapshot(
             GamePhase.SOLVER_RUNNING,
             level,
             MazeState.empty(level),
@@ -862,7 +875,7 @@ final class MazeGameRendererTest {
   private static GameRenderSnapshot scoutSnapshot(
       GamePhase phase, SolverRunResult result, List<LevelProgress> progress) {
     LevelDefinition level = Levels.levelThree();
-    return new GameRenderSnapshot(
+    return snapshot(
         phase,
         level,
         MazeState.empty(level),
@@ -881,7 +894,7 @@ final class MazeGameRendererTest {
     boolean resultPassed =
         solverRunResult != null
             && solverRunResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0;
-    return new GameRenderSnapshot(
+    return snapshot(
         phase,
         LEVEL,
         MazeState.empty(LEVEL),
@@ -903,7 +916,7 @@ final class MazeGameRendererTest {
   }
 
   private static LevelDefinition paletteLevel() {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "palette-render",
         "Palette Render",
         GridSize.square(5),
@@ -956,7 +969,7 @@ final class MazeGameRendererTest {
 
   private static GameRenderSnapshot resultSnapshot(
       LevelDefinition level, List<SolverRunResult> results) {
-    return new GameRenderSnapshot(
+    return snapshot(
         GamePhase.RESULT,
         level,
         MazeState.empty(level),
@@ -975,7 +988,7 @@ final class MazeGameRendererTest {
   }
 
   private static GameRenderSnapshot snapshotWithPreview(PaletteDragPreview preview) {
-    return new GameRenderSnapshot(
+    return snapshot(
         GamePhase.BUILDING,
         LEVEL,
         MazeState.empty(LEVEL),
@@ -993,7 +1006,7 @@ final class MazeGameRendererTest {
   }
 
   private static GameRenderSnapshot buildSnapshot(LevelDefinition level) {
-    return new GameRenderSnapshot(
+    return snapshot(
         GamePhase.BUILDING,
         level,
         MazeState.empty(level),
@@ -1062,6 +1075,170 @@ final class MazeGameRendererTest {
       }
       return drawnRegionXs;
     }
+  }
+
+  private static GameRenderSnapshot snapshot(
+      GamePhase phase,
+      LevelDefinition level,
+      MazeState maze,
+      float buildTimeRemaining,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemaining,
+      BestResult bestResult,
+      List<LevelProgress> progress,
+      List<CellPaletteState> palette,
+      PaletteDragPreview dragPreview,
+      PlaceableCellType tooltipType,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel,
+      List<SolverRunResult> results) {
+    return new GameRenderSnapshot(
+        phase,
+        level,
+        maze,
+        buildTimeRemaining,
+        rejectedPosition,
+        rejectedFlashRemaining,
+        bestResult,
+        progress,
+        palette,
+        dragPreview,
+        tooltipType,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        results);
+  }
+
+  private static GameRenderSnapshot snapshot(
+      GamePhase phase,
+      LevelDefinition level,
+      MazeState maze,
+      float buildTimeRemaining,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemaining,
+      SolverRunResult result,
+      BestResult bestResult,
+      List<LevelProgress> progress,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    return snapshot(
+        phase,
+        level,
+        maze,
+        buildTimeRemaining,
+        rejectedPosition,
+        rejectedFlashRemaining,
+        bestResult,
+        progress,
+        List.of(),
+        null,
+        null,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        result == null ? List.of() : List.of(result));
+  }
+
+  private static GameRenderSnapshot snapshot(
+      GamePhase phase,
+      LevelDefinition level,
+      MazeState maze,
+      float buildTimeRemaining,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemaining,
+      SolverRunResult result,
+      BestResult bestResult,
+      List<LevelProgress> progress,
+      List<CellPaletteState> palette,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    return snapshot(
+        phase,
+        level,
+        maze,
+        buildTimeRemaining,
+        rejectedPosition,
+        rejectedFlashRemaining,
+        bestResult,
+        progress,
+        palette,
+        null,
+        null,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        result == null ? List.of() : List.of(result));
+  }
+
+  private static GameRenderSnapshot snapshot(
+      GamePhase phase,
+      LevelDefinition level,
+      MazeState maze,
+      float buildTimeRemaining,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemaining,
+      SolverRunResult result,
+      BestResult bestResult,
+      List<LevelProgress> progress,
+      List<CellPaletteState> palette,
+      PaletteDragPreview dragPreview,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    return snapshot(
+        phase,
+        level,
+        maze,
+        buildTimeRemaining,
+        rejectedPosition,
+        rejectedFlashRemaining,
+        bestResult,
+        progress,
+        palette,
+        dragPreview,
+        null,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        result == null ? List.of() : List.of(result));
+  }
+
+  private static GameRenderSnapshot snapshot(
+      GamePhase phase,
+      LevelDefinition level,
+      MazeState maze,
+      float buildTimeRemaining,
+      GridPosition rejectedPosition,
+      float rejectedFlashRemaining,
+      SolverRunResult result,
+      BestResult bestResult,
+      List<LevelProgress> progress,
+      List<CellPaletteState> palette,
+      PaletteDragPreview dragPreview,
+      PlaceableCellType tooltipType,
+      boolean audioEnabled,
+      boolean resultPassed,
+      boolean hasNextLevel) {
+    return snapshot(
+        phase,
+        level,
+        maze,
+        buildTimeRemaining,
+        rejectedPosition,
+        rejectedFlashRemaining,
+        bestResult,
+        progress,
+        palette,
+        dragPreview,
+        tooltipType,
+        audioEnabled,
+        resultPassed,
+        hasNextLevel,
+        result == null ? List.of() : List.of(result));
   }
 
   private static final class TestTexture extends Texture {

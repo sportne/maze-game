@@ -66,7 +66,7 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().walls().isEmpty());
+    assertTrue(game.mazeState().placedCells().isEmpty());
   }
 
   @Test
@@ -287,7 +287,7 @@ final class MazeGameTest {
 
     assertTrue(game.runRequested());
     assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
-    assertEquals(Levels.levelOne().solverStart(), game.solverRunResult().position());
+    assertEquals(Levels.levelOne().primarySolver().start(), game.solverRunResult().position());
   }
 
   @Test
@@ -312,15 +312,15 @@ final class MazeGameTest {
 
     assertTrue(game.runRequested());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
-    assertFalse(game.mazeState().hasWallAt(wall));
-    assertEquals(Levels.levelOne().solverStart(), game.solverRunResult().position());
+    assertFalse(game.mazeState().placedCells().containsKey(wall));
+    assertEquals(Levels.levelOne().primarySolver().start(), game.solverRunResult().position());
   }
 
   @Test
   void startRunClearsRejectedPlacementFlash() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.levelOne().solverStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.levelOne().primarySolver().start(), Input.Buttons.LEFT);
     game.startRun();
 
     assertNull(game.rejectedPosition());
@@ -332,14 +332,14 @@ final class MazeGameTest {
     GridPosition wall = new GridPosition(2, 2);
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
-    assertTrue(game.mazeState().hasWallAt(wall));
+    assertTrue(game.mazeState().placedCells().containsKey(wall));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
-    assertFalse(game.mazeState().hasWallAt(wall));
+    assertFalse(game.mazeState().placedCells().containsKey(wall));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.handleGridClick(wall, Input.Buttons.RIGHT);
-    assertFalse(game.mazeState().hasWallAt(wall));
+    assertFalse(game.mazeState().placedCells().containsKey(wall));
   }
 
   @Test
@@ -348,10 +348,10 @@ final class MazeGameTest {
     GridPosition wall = new GridPosition(2, 2);
 
     game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
-    assertTrue(game.mazeState().hasWallAt(wall));
+    assertTrue(game.mazeState().placedCells().containsKey(wall));
 
     game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
-    assertFalse(game.mazeState().hasWallAt(wall));
+    assertFalse(game.mazeState().placedCells().containsKey(wall));
   }
 
   @Test
@@ -425,7 +425,7 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().walls().isEmpty());
+    assertTrue(game.mazeState().placedCells().isEmpty());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
   }
 
@@ -448,7 +448,7 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().walls().isEmpty());
+    assertTrue(game.mazeState().placedCells().isEmpty());
   }
 
   @Test
@@ -525,17 +525,17 @@ final class MazeGameTest {
   void rejectedPlacementDoesNotMutateMaze() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.levelOne().solverStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.levelOne().primarySolver().start(), Input.Buttons.LEFT);
 
-    assertTrue(game.mazeState().walls().isEmpty());
+    assertTrue(game.mazeState().placedCells().isEmpty());
   }
 
   @Test
   void rejectedPlacementFlashExpiresDuringBuildTimerUpdates() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.levelOne().solverStart(), Input.Buttons.LEFT);
-    assertEquals(Levels.levelOne().solverStart(), game.rejectedPosition());
+    game.handleGridClick(Levels.levelOne().primarySolver().start(), Input.Buttons.LEFT);
+    assertEquals(Levels.levelOne().primarySolver().start(), game.rejectedPosition());
 
     game.updateBuildTimer(0.5F);
 
@@ -549,15 +549,17 @@ final class MazeGameTest {
 
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
     assertEquals(
-        new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.levelOne().solverStart()));
-    assertEquals(Color.BLACK, game.cellColor(Levels.levelOne().goal()));
+        new Color(0.24F, 0.62F, 0.95F, 1.0F),
+        game.cellColor(Levels.levelOne().primarySolver().start()));
+    assertEquals(Color.BLACK, game.cellColor(Levels.levelOne().primarySolver().goal()));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertEquals(Color.WHITE, game.cellColor(wall));
 
-    game.handleGridClick(Levels.levelOne().solverStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.levelOne().primarySolver().start(), Input.Buttons.LEFT);
     assertEquals(
-        new Color(0.95F, 0.42F, 0.42F, 1.0F), game.cellColor(Levels.levelOne().solverStart()));
+        new Color(0.95F, 0.42F, 0.42F, 1.0F),
+        game.cellColor(Levels.levelOne().primarySolver().start()));
   }
 
   @Test

@@ -1,5 +1,7 @@
 package io.github.sportne.mazegame.model.level;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
+import static io.github.sportne.mazegame.TestMazeStates.withWalls;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -113,13 +115,13 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals("milestone-3", PROPOSED_LEVEL.id());
     assertEquals("Level 3", PROPOSED_LEVEL.name());
     assertEquals(GridSize.square(7), PROPOSED_LEVEL.gridSize());
-    assertEquals(position(6, 3), PROPOSED_LEVEL.solverStart());
-    assertEquals(position(0, 3), PROPOSED_LEVEL.goal());
+    assertEquals(position(6, 3), PROPOSED_LEVEL.primarySolver().start());
+    assertEquals(position(0, 3), PROPOSED_LEVEL.primarySolver().goal());
     assertEquals(Duration.ofSeconds(25), PROPOSED_LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), PROPOSED_LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(8), PROPOSED_LEVEL.maximumSolveTime());
     assertEquals(MOVE_INTERVAL, PROPOSED_LEVEL.solverMoveInterval());
-    assertEquals(SolverBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.solverBehavior());
+    assertEquals(SolverBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.primarySolver().behavior());
     assertTrue(PROPOSED_LEVEL.primarySolver().randomSeed().isEmpty());
     assertEquals(SolverAppearance.SCOUT_SQUIRREL, PROPOSED_LEVEL.primarySolver().appearance());
     assertEquals(GoalType.ACORN, PROPOSED_LEVEL.primarySolver().goalType());
@@ -166,7 +168,7 @@ final class MilestoneThreeLevelDesignTest {
   void reverseBecomesTheHeadingAndFullyBlockedDecisionHasNoDirection() {
     ReferenceScout scout =
         new ReferenceScout(
-            new MazeState(
+            withWalls(
                 smallLevel(),
                 Set.of(
                     new GridPosition(0, 0),
@@ -208,7 +210,7 @@ final class MilestoneThreeLevelDesignTest {
 
   @Test
   void wholeAndChunkedUpdatesProduceTheSameDeterministicResultAndTrace() {
-    MazeState maze = new MazeState(PROPOSED_LEVEL, PASSING_LAYOUT_B);
+    MazeState maze = withWalls(PROPOSED_LEVEL, PASSING_LAYOUT_B);
     ReferenceScout whole = new ReferenceScout(maze);
     ReferenceScout chunked = new ReferenceScout(maze);
 
@@ -227,12 +229,18 @@ final class MilestoneThreeLevelDesignTest {
     assertPassingLayout(
         PASSING_LAYOUT_A,
         new SolverRunResult(
-            PROPOSED_LEVEL.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL),
+            PROPOSED_LEVEL.primarySolver().goal(),
+            Duration.ofMillis(6500),
+            26,
+            SolverRunStatus.REACHED_GOAL),
         PASSING_TRACE_A);
     assertPassingLayout(
         PASSING_LAYOUT_B,
         new SolverRunResult(
-            PROPOSED_LEVEL.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL),
+            PROPOSED_LEVEL.primarySolver().goal(),
+            Duration.ofMillis(7500),
+            30,
+            SolverRunStatus.REACHED_GOAL),
         PASSING_TRACE_B);
   }
 
@@ -242,12 +250,18 @@ final class MilestoneThreeLevelDesignTest {
         PASSING_LAYOUT_A,
         PASSING_TRACE_A,
         new SolverRunResult(
-            PROPOSED_LEVEL.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL));
+            PROPOSED_LEVEL.primarySolver().goal(),
+            Duration.ofMillis(6500),
+            26,
+            SolverRunStatus.REACHED_GOAL));
     assertProductionTrace(
         PASSING_LAYOUT_B,
         PASSING_TRACE_B,
         new SolverRunResult(
-            PROPOSED_LEVEL.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL));
+            PROPOSED_LEVEL.primarySolver().goal(),
+            Duration.ofMillis(7500),
+            30,
+            SolverRunStatus.REACHED_GOAL));
     assertProductionTrace(
         TIMEOUT_LAYOUT,
         TIMEOUT_TRACE,
@@ -263,11 +277,14 @@ final class MilestoneThreeLevelDesignTest {
     assertTrue(empty.hasPathFromStartToGoal());
     assertEquals(
         new SolverRunResult(
-            PROPOSED_LEVEL.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
+            PROPOSED_LEVEL.primarySolver().goal(),
+            Duration.ofSeconds(3),
+            12,
+            SolverRunStatus.REACHED_GOAL),
         emptyResult);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, emptyResult, PROPOSED_LEVEL));
 
-    MazeState timeoutMaze = new MazeState(PROPOSED_LEVEL, TIMEOUT_LAYOUT);
+    MazeState timeoutMaze = withWalls(PROPOSED_LEVEL, TIMEOUT_LAYOUT);
     ReferenceScout timeout = new ReferenceScout(timeoutMaze);
     SolverRunResult timeoutResult = timeout.update(PROPOSED_LEVEL.maximumSolveTime());
 
@@ -280,10 +297,13 @@ final class MilestoneThreeLevelDesignTest {
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, timeoutResult, PROPOSED_LEVEL));
 
     LevelDefinition extendedLevel = levelWithMaximumSolveTime(Duration.ofSeconds(9));
-    ReferenceScout extended = new ReferenceScout(new MazeState(extendedLevel, TIMEOUT_LAYOUT));
+    ReferenceScout extended = new ReferenceScout(withWalls(extendedLevel, TIMEOUT_LAYOUT));
     assertEquals(
         new SolverRunResult(
-            extendedLevel.goal(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_GOAL),
+            extendedLevel.primarySolver().goal(),
+            Duration.ofMillis(8500),
+            34,
+            SolverRunStatus.REACHED_GOAL),
         extended.update(extendedLevel.maximumSolveTime()));
     assertEquals(
         positions(0, 2, 0, 3),
@@ -297,26 +317,37 @@ final class MilestoneThreeLevelDesignTest {
         level,
         MILESTONE_TWO_PASSING_LAYOUT,
         new SolverRunResult(
-            level.goal(), Duration.ofMillis(9500), 38, SolverRunStatus.REACHED_GOAL),
-        new SolverRunResult(level.goal(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_GOAL));
+            level.primarySolver().goal(),
+            Duration.ofMillis(9500),
+            38,
+            SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(
+            level.primarySolver().goal(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_GOAL));
     assertComparison(
         level,
         MILESTONE_TWO_PASSING_LAYOUT_B,
         new SolverRunResult(
-            level.goal(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_GOAL),
-        new SolverRunResult(level.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL));
+            level.primarySolver().goal(),
+            Duration.ofMillis(8500),
+            34,
+            SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(
+            level.primarySolver().goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL));
     assertComparison(
         level,
         MILESTONE_TWO_TIMEOUT_LAYOUT,
         new SolverRunResult(
             new GridPosition(1, 2), Duration.ofSeconds(15), 60, SolverRunStatus.TIMED_OUT),
         new SolverRunResult(
-            level.goal(), Duration.ofMillis(3500), 14, SolverRunStatus.REACHED_GOAL));
+            level.primarySolver().goal(),
+            Duration.ofMillis(3500),
+            14,
+            SolverRunStatus.REACHED_GOAL));
   }
 
   private static void assertPassingLayout(
       Set<GridPosition> walls, SolverRunResult expectedResult, List<GridPosition> expectedTrace) {
-    MazeState maze = new MazeState(PROPOSED_LEVEL, walls);
+    MazeState maze = withWalls(PROPOSED_LEVEL, walls);
     ReferenceScout first = new ReferenceScout(maze);
     ReferenceScout replay = new ReferenceScout(maze);
 
@@ -333,7 +364,7 @@ final class MilestoneThreeLevelDesignTest {
       Set<GridPosition> walls,
       SolverRunResult expectedRandom,
       SolverRunResult expectedScout) {
-    MazeState maze = new MazeState(level, walls);
+    MazeState maze = withWalls(level, walls);
 
     assertEquals(expectedRandom, new RandomSolverSimulation(maze).update(level.maximumSolveTime()));
     assertEquals(expectedScout, new ReferenceScout(maze).update(level.maximumSolveTime()));
@@ -341,7 +372,7 @@ final class MilestoneThreeLevelDesignTest {
 
   private static void assertProductionTrace(
       Set<GridPosition> walls, List<GridPosition> expectedTrace, SolverRunResult expectedResult) {
-    MazeState maze = new MazeState(PROPOSED_LEVEL, walls);
+    MazeState maze = withWalls(PROPOSED_LEVEL, walls);
     SolverSimulation simulation = SolverSimulationFactory.create(maze);
     List<GridPosition> trace = new ArrayList<>();
     trace.add(simulation.result().position());
@@ -368,7 +399,7 @@ final class MilestoneThreeLevelDesignTest {
   }
 
   private static LevelDefinition smallLevel() {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "scout-reference",
         "Scout Reference",
         GridSize.square(3),
@@ -454,7 +485,7 @@ final class MilestoneThreeLevelDesignTest {
 
     private ReferenceScout(MazeState mazeState) {
       this.mazeState = Objects.requireNonNull(mazeState, "mazeState");
-      position = mazeState.levelDefinition().solverStart();
+      position = mazeState.levelDefinition().primarySolver().start();
       trace.add(position);
     }
 
@@ -494,7 +525,7 @@ final class MilestoneThreeLevelDesignTest {
       candidates.forEach(
           (direction, candidate) -> {
             if (!candidate.isWithin(mazeState.levelDefinition().gridSize())
-                || mazeState.hasWallAt(candidate)) {
+                || mazeState.placedCells().containsKey(candidate)) {
               blocked.add(direction);
             }
           });
@@ -509,7 +540,7 @@ final class MilestoneThreeLevelDesignTest {
     }
 
     private void updateStatus() {
-      if (position.equals(mazeState.levelDefinition().goal())) {
+      if (position.equals(mazeState.levelDefinition().primarySolver().goal())) {
         status = SolverRunStatus.REACHED_GOAL;
       } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
         status = SolverRunStatus.TIMED_OUT;

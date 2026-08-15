@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -483,7 +484,7 @@ final class MazeGameBuildGestureTest {
   private static LevelDefinition level(
       CellSupply wallSupply, CellSupply slowSupply, GridSize gridSize) {
     int centerColumn = gridSize.columns() / 2;
-    return new LevelDefinition(
+    return singleSolverLevel(
         "palette-drag-%dx%d".formatted(gridSize.rows(), gridSize.columns()),
         "Palette Drag",
         gridSize,

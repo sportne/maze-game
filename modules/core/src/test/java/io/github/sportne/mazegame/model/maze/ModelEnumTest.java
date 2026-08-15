@@ -15,20 +15,6 @@ final class ModelEnumTest {
   }
 
   @Test
-  void wallPlacementStatusesCoverAcceptedAndRejectedOutcomes() {
-    assertArrayEquals(
-        new WallPlacementStatus[] {
-          WallPlacementStatus.PLACED,
-          WallPlacementStatus.ALREADY_PRESENT,
-          WallPlacementStatus.REJECTED_OUTSIDE_GRID,
-          WallPlacementStatus.REJECTED_PROTECTED_CELL,
-          WallPlacementStatus.REJECTED_EXHAUSTED_SUPPLY,
-          WallPlacementStatus.REJECTED_BLOCKS_PATH
-        },
-        WallPlacementStatus.values());
-  }
-
-  @Test
   void mazeEditStatusesCoverEveryTransactionalOutcome() {
     assertArrayEquals(
         new MazeEditStatus[] {

@@ -18,13 +18,6 @@ public record GameInputAction(
   public static final GameInputAction NONE =
       new GameInputAction(GameInputActionType.NONE, null, null, null);
 
-  /**
-   * Creates an action without a palette-type payload for compatibility with non-palette callers.
-   */
-  public GameInputAction(GameInputActionType type, GridPosition position, String levelId) {
-    this(type, position, levelId, null);
-  }
-
   /** Creates an input action with a valid payload for its type. */
   public GameInputAction {
     Objects.requireNonNull(type, "type");

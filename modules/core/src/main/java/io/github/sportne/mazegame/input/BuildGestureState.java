@@ -32,18 +32,6 @@ public record BuildGestureState(
     }
   }
 
-  /** Compatibility constructor for palette-only callers. */
-  public BuildGestureState(
-      int pointerId,
-      PlaceableCellType originType,
-      float pressX,
-      float pressY,
-      float currentX,
-      float currentY,
-      boolean dragThresholdCrossed) {
-    this(pointerId, originType, null, pressX, pressY, currentX, currentY, dragThresholdCrossed);
-  }
-
   /** Returns whether this gesture began on a palette item. */
   public boolean paletteOrigin() {
     return originPosition == null;

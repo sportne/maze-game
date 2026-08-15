@@ -18,7 +18,8 @@ final class GameResultEvaluatorTest {
   @Test
   void passRequiresResultPhaseAndElapsedTimeAboveTarget() {
     SolverRunResult passingResult =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, passingResult, LEVEL));
     assertFalse(GameResultEvaluator.passed(GamePhase.SOLVER_RUNNING, passingResult, LEVEL));
@@ -27,7 +28,8 @@ final class GameResultEvaluatorTest {
   @Test
   void equalOrFasterThanTargetDoesNotPass() {
     SolverRunResult exactTarget =
-        new SolverRunResult(LEVEL.goal(), LEVEL.targetSolveTime(), 8, SolverRunStatus.REACHED_GOAL);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), LEVEL.targetSolveTime(), 8, SolverRunStatus.REACHED_GOAL);
 
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, exactTarget, LEVEL));
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, null, LEVEL));
@@ -36,7 +38,8 @@ final class GameResultEvaluatorTest {
   @Test
   void requiresPhaseAndLevelDefinition() {
     SolverRunResult result =
-        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(
+            LEVEL.primarySolver().goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertThrows(NullPointerException.class, () -> GameResultEvaluator.passed(null, result, LEVEL));
     assertThrows(
@@ -48,7 +51,8 @@ final class GameResultEvaluatorTest {
   void multiSolverPassRequiresEveryAuthoredResultPastTheTarget() {
     LevelDefinition level = Levels.levelFive();
     SolverRunResult passing =
-        new SolverRunResult(level.goal(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_GOAL);
+        new SolverRunResult(
+            level.primarySolver().goal(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_GOAL);
     SolverRunResult exact =
         new SolverRunResult(
             level.solvers().get(1).goal(),

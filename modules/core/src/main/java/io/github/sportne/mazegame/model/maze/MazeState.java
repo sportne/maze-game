@@ -30,11 +30,6 @@ public record MazeState(
     }
   }
 
-  /** Compatibility constructor for released wall-only fixtures during the ordered migration. */
-  public MazeState(LevelDefinition levelDefinition, Set<GridPosition> walls) {
-    this(levelDefinition, wallCells(walls));
-  }
-
   /** Creates an empty maze with inventory derived from the level definition. */
   public static MazeState empty(LevelDefinition levelDefinition) {
     return new MazeState(levelDefinition, Map.of());
@@ -170,54 +165,6 @@ public record MazeState(
     return hasPathsForEverySolver(levelDefinition, placedCells);
   }
 
-  /** Wall-only compatibility view retained until session and renderer migration is complete. */
-  public Set<GridPosition> walls() {
-    Set<GridPosition> walls = new HashSet<>();
-    placedCells.forEach(
-        (position, type) -> {
-          if (type == PlaceableCellType.WALL) {
-            walls.add(position);
-          }
-        });
-    return Set.copyOf(walls);
-  }
-
-  /** Wall-only compatibility query retained for existing simulations and UI code. */
-  public boolean hasWallAt(GridPosition position) {
-    requireInsideGrid(position);
-    return placedCells.get(position) == PlaceableCellType.WALL;
-  }
-
-  /** Wall-only compatibility placement retained during the ordered migration. */
-  public WallPlacementResult placeWall(GridPosition position) {
-    Objects.requireNonNull(position, "position");
-    if (position.isWithin(levelDefinition.gridSize()) && hasWallAt(position)) {
-      return WallPlacementResult.accepted(this, WallPlacementStatus.ALREADY_PRESENT);
-    }
-    MazeEditResult edit = placeOrReplace(PlaceableCellType.WALL, position);
-    return edit.accepted()
-        ? WallPlacementResult.accepted(edit.mazeState(), WallPlacementStatus.PLACED)
-        : WallPlacementResult.rejected(this, wallRejectionStatus(edit.status()));
-  }
-
-  /** Wall-only compatibility convenience that throws when placement is rejected. */
-  public MazeState withWall(GridPosition position) {
-    WallPlacementResult result = placeWall(position);
-    if (!result.accepted()) {
-      throw new IllegalArgumentException("wall placement rejected: " + result.status());
-    }
-    return result.mazeState();
-  }
-
-  /** Wall-only compatibility removal retained during the ordered migration. */
-  public MazeState withoutWall(GridPosition position) {
-    requireInsideGrid(position);
-    if (placedCells.get(position) != PlaceableCellType.WALL) {
-      return this;
-    }
-    return remove(position).mazeState();
-  }
-
   /** Returns whether a position is reserved for a solver start or goal. */
   public boolean isProtected(GridPosition position) {
     requireInsideGrid(position);
@@ -241,15 +188,6 @@ public record MazeState(
     if (!position.isWithin(levelDefinition.gridSize())) {
       throw new IllegalArgumentException("position must be inside the grid");
     }
-  }
-
-  private static Map<GridPosition, PlaceableCellType> wallCells(Set<GridPosition> walls) {
-    Objects.requireNonNull(walls, "walls");
-    Map<GridPosition, PlaceableCellType> cells = new HashMap<>();
-    for (GridPosition wall : walls) {
-      cells.put(Objects.requireNonNull(wall, "wall"), PlaceableCellType.WALL);
-    }
-    return cells;
   }
 
   private static void validatePlacedCell(
@@ -324,15 +262,5 @@ public record MazeState(
       GridPosition position) {
     return position.isWithin(levelDefinition.gridSize())
         && placedCells.get(position) != PlaceableCellType.WALL;
-  }
-
-  private static WallPlacementStatus wallRejectionStatus(MazeEditStatus status) {
-    return switch (status) {
-      case REJECTED_OUTSIDE_GRID -> WallPlacementStatus.REJECTED_OUTSIDE_GRID;
-      case REJECTED_PROTECTED_CELL -> WallPlacementStatus.REJECTED_PROTECTED_CELL;
-      case REJECTED_EXHAUSTED_SUPPLY -> WallPlacementStatus.REJECTED_EXHAUSTED_SUPPLY;
-      case REJECTED_BLOCKS_PATH -> WallPlacementStatus.REJECTED_BLOCKS_PATH;
-      default -> throw new IllegalArgumentException("unexpected wall edit status: " + status);
-    };
   }
 }

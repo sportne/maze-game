@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -112,7 +113,7 @@ final class MazeGamePaletteTest {
 
   private static MazeGame finiteGame() {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "palette-test",
             "Palette Test",
             GridSize.square(5),

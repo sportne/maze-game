@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.solver;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.github.sportne.mazegame.model.cell.CellSupply;
@@ -166,14 +167,15 @@ final class SlowFloorSimulationTest {
             Set.of(position(1, 1)));
 
     assertEquals(
-        new SolverRunResult(level.goal(), Duration.ofMillis(750), 2, SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(
+            level.primarySolver().goal(), Duration.ofMillis(750), 2, SolverRunStatus.REACHED_GOAL),
         run(maze));
   }
 
   @Test
   void goalArrivalStillWinsANormalDecisionAtTheTimeoutBoundary() {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "goal-boundary",
             "Goal Boundary",
             GridSize.square(3),
@@ -189,7 +191,8 @@ final class SlowFloorSimulationTest {
     MazeState maze = maze(level, Set.of(position(1, 0), position(1, 2)), Set.of());
 
     assertEquals(
-        new SolverRunResult(level.goal(), MOVE_INTERVAL, 1, SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(
+            level.primarySolver().goal(), MOVE_INTERVAL, 1, SolverRunStatus.REACHED_GOAL),
         run(maze));
   }
 
@@ -224,7 +227,7 @@ final class SlowFloorSimulationTest {
 
   private static LevelDefinition level(
       SolverBehavior behavior, long seed, Duration maximumSolveTime) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "slow-floor-" + behavior.name().toLowerCase(java.util.Locale.ROOT),
         "Slow Floor " + behavior,
         GridSize.square(7),
@@ -240,7 +243,7 @@ final class SlowFloorSimulationTest {
   }
 
   private static LevelDefinition corridorLevel(Duration maximumSolveTime) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "slow-corridor",
         "Slow Corridor",
         GridSize.square(3),

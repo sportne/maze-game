@@ -5,14 +5,18 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GameSession;
 import java.time.Duration;
 import java.util.List;
+import java.util.OptionalLong;
 
 /** Loopback-only level fixture used by real-browser build-gesture verification. */
 final class BrowserBuildGestureFixture {
@@ -47,8 +51,6 @@ final class BrowserBuildGestureFixture {
         LEVEL_ID,
         "Build Gesture Fixture",
         GridSize.square(5),
-        new GridPosition(4, 2),
-        new GridPosition(0, 2),
         Duration.ofSeconds(30),
         Duration.ofMillis(200),
         Duration.ofSeconds(3),
@@ -56,7 +58,13 @@ final class BrowserBuildGestureFixture {
         List.of(
             PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
-        SolverBehavior.RANDOM,
-        1L);
+        List.of(
+            new LevelSolver(
+                new GridPosition(4, 2),
+                new GridPosition(0, 2),
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE)));
   }
 }

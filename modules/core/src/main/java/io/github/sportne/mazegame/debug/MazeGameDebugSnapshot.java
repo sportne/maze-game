@@ -31,39 +31,6 @@ public record MazeGameDebugSnapshot(
     boolean resultPassed,
     boolean hasNextLevel,
     List<CellPaletteState> paletteState) {
-  /**
-   * Creates a debug snapshot without palette state for compatibility with earlier harness clients.
-   *
-   * @param gamePhase current high-level game phase
-   * @param mazeState current maze state
-   * @param buildTimeRemainingSeconds seconds left in the build phase
-   * @param rejectedPosition most recent rejected placement cell, or null
-   * @param solverRunResult current solver simulation result, or null
-   * @param bestResult best saved result for the current level, or null
-   * @param resultPassed true when the last completed run passed
-   * @param hasNextLevel true when another level is available
-   */
-  public MazeGameDebugSnapshot(
-      GamePhase gamePhase,
-      MazeState mazeState,
-      float buildTimeRemainingSeconds,
-      GridPosition rejectedPosition,
-      SolverRunResult solverRunResult,
-      BestResult bestResult,
-      boolean resultPassed,
-      boolean hasNextLevel) {
-    this(
-        gamePhase,
-        mazeState,
-        buildTimeRemainingSeconds,
-        rejectedPosition,
-        solverRunResult,
-        bestResult,
-        resultPassed,
-        hasNextLevel,
-        List.of());
-  }
-
   /** Creates a debug snapshot with immutable palette state. */
   public MazeGameDebugSnapshot {
     paletteState = List.copyOf(paletteState);

@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.maze;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -208,15 +209,19 @@ final class MazeInventoryTest {
         placed,
         MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
-        placed.move(level.solverStart(), position(4, 3)),
+        placed.move(level.primarySolver().start(), position(4, 3)),
         placed,
         MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
-        placed.move(level.goal(), position(4, 3)), placed, MazeEditStatus.REJECTED_MISSING_SOURCE);
+        placed.move(level.primarySolver().goal(), position(4, 3)),
+        placed,
+        MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
         placed.move(FIRST, SECOND), placed, MazeEditStatus.REJECTED_OCCUPIED_DESTINATION);
     assertRejectedSame(
-        placed.move(FIRST, level.solverStart()), placed, MazeEditStatus.REJECTED_PROTECTED_CELL);
+        placed.move(FIRST, level.primarySolver().start()),
+        placed,
+        MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(
         placed.move(FIRST, position(5, 0)), placed, MazeEditStatus.REJECTED_OUTSIDE_GRID);
 
@@ -255,7 +260,9 @@ final class MazeInventoryTest {
     assertSame(maze, empty.mazeState());
     assertEquals(MazeEditStatus.NO_OP, empty.status());
     assertRejectedSame(
-        maze.remove(maze.levelDefinition().goal()), maze, MazeEditStatus.REJECTED_PROTECTED_CELL);
+        maze.remove(maze.levelDefinition().primarySolver().goal()),
+        maze,
+        MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(maze.remove(position(-1, 0)), maze, MazeEditStatus.REJECTED_OUTSIDE_GRID);
   }
 
@@ -264,7 +271,7 @@ final class MazeInventoryTest {
     MazeState maze = MazeState.empty(level(CellSupply.finite(0), CellSupply.finite(0)));
 
     assertRejectedSame(
-        maze.placeOrReplace(PlaceableCellType.WALL, maze.levelDefinition().solverStart()),
+        maze.placeOrReplace(PlaceableCellType.WALL, maze.levelDefinition().primarySolver().start()),
         maze,
         MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(
@@ -308,7 +315,9 @@ final class MazeInventoryTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> new MazeState(level, Map.of(level.solverStart(), PlaceableCellType.SLOW_FLOOR)));
+        () ->
+            new MazeState(
+                level, Map.of(level.primarySolver().start(), PlaceableCellType.SLOW_FLOOR)));
     assertThrows(
         IllegalArgumentException.class,
         () -> new MazeState(level, Map.of(position(-1, 0), PlaceableCellType.WALL)));
@@ -320,20 +329,19 @@ final class MazeInventoryTest {
   }
 
   @Test
-  void wallCompatibilityAdaptersRemainExplicitAndInventoryAware() {
+  void canonicalWallEditsRemainInventoryAware() {
     LevelDefinition finite = level(CellSupply.finite(1), CellSupply.finite(1));
     MazeState maze = MazeState.empty(finite);
 
-    WallPlacementResult placed = maze.placeWall(FIRST);
-    WallPlacementResult alreadyPresent = placed.mazeState().placeWall(FIRST);
-    WallPlacementResult exhausted = placed.mazeState().placeWall(SECOND);
+    MazeEditResult placed = maze.placeOrReplace(PlaceableCellType.WALL, FIRST);
+    MazeEditResult removed = placed.mazeState().placeOrReplace(PlaceableCellType.WALL, FIRST);
+    MazeEditResult exhausted = placed.mazeState().placeOrReplace(PlaceableCellType.WALL, SECOND);
 
-    assertEquals(WallPlacementStatus.PLACED, placed.status());
-    assertEquals(WallPlacementStatus.ALREADY_PRESENT, alreadyPresent.status());
-    assertEquals(WallPlacementStatus.REJECTED_EXHAUSTED_SUPPLY, exhausted.status());
-    assertSame(placed.mazeState(), alreadyPresent.mazeState());
+    assertEquals(MazeEditStatus.PLACED, placed.status());
+    assertEquals(MazeEditStatus.REMOVED, removed.status());
+    assertEquals(MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY, exhausted.status());
+    assertTrue(removed.mazeState().placedCells().isEmpty());
     assertSame(placed.mazeState(), exhausted.mazeState());
-    assertTrue(placed.mazeState().withoutWall(FIRST).walls().isEmpty());
   }
 
   private static void assertAccepted(
@@ -356,7 +364,7 @@ final class MazeInventoryTest {
   }
 
   private static LevelDefinition level(CellSupply wallSupply, CellSupply slowFloorSupply) {
-    return new LevelDefinition(
+    return singleSolverLevel(
         "inventory-test",
         "Inventory Test",
         GridSize.square(5),

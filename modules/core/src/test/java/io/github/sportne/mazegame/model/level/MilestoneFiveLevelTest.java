@@ -52,8 +52,24 @@ final class MilestoneFiveLevelTest {
     assertEquals(CellSupply.finite(5), LEVEL.supplyFor(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(4), LEVEL.supplyFor(PlaceableCellType.SLOW_FLOOR));
 
-    assertEquals(new LevelSolver(position(6, 0), CHEESE, SolverBehavior.RANDOM, 23L), RANDOM);
-    assertEquals(new LevelSolver(position(1, 4), ACORN, SolverBehavior.LEFT_PRIORITY, 53L), SCOUT);
+    assertEquals(
+        new LevelSolver(
+            position(6, 0),
+            CHEESE,
+            SolverBehavior.RANDOM,
+            java.util.OptionalLong.of(23L),
+            SolverAppearance.CLASSIC_MOUSE,
+            GoalType.CHEESE),
+        RANDOM);
+    assertEquals(
+        new LevelSolver(
+            position(1, 4),
+            ACORN,
+            SolverBehavior.LEFT_PRIORITY,
+            java.util.OptionalLong.empty(),
+            SolverAppearance.SCOUT_SQUIRREL,
+            GoalType.ACORN),
+        SCOUT);
     assertEquals(23L, RANDOM.randomSeed().orElseThrow());
     assertTrue(SCOUT.randomSeed().isEmpty());
     assertEquals(SolverAppearance.CLASSIC_MOUSE, RANDOM.appearance());

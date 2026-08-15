@@ -1,5 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
+import static io.github.sportne.mazegame.TestMazeStates.withWalls;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +25,7 @@ final class RandomSolverSimulationTest {
 
     SolverRunResult result = simulation.result();
 
-    assertEquals(Levels.levelOne().solverStart(), result.position());
+    assertEquals(Levels.levelOne().primarySolver().start(), result.position());
     assertEquals(Duration.ZERO, result.elapsedTime());
     assertEquals(0, result.moveCount());
     assertEquals(SolverRunStatus.RUNNING, result.status());
@@ -36,7 +38,7 @@ final class RandomSolverSimulationTest {
 
     SolverRunResult result = simulation.update(Duration.ofMillis(249));
 
-    assertEquals(Levels.levelOne().solverStart(), result.position());
+    assertEquals(Levels.levelOne().primarySolver().start(), result.position());
     assertEquals(0, result.moveCount());
   }
 
@@ -66,7 +68,7 @@ final class RandomSolverSimulationTest {
   @Test
   void onlyMovesToOpenNeighboringCells() {
     MazeState maze =
-        new MazeState(
+        withWalls(
             Levels.levelOne(),
             Set.of(
                 new GridPosition(4, 1),
@@ -88,7 +90,7 @@ final class RandomSolverSimulationTest {
 
     SolverRunResult result = simulation.update(Duration.ofSeconds(1));
 
-    assertEquals(Levels.levelOne().goal(), result.position());
+    assertEquals(Levels.levelOne().primarySolver().goal(), result.position());
     assertEquals(SolverRunStatus.REACHED_GOAL, result.status());
     assertEquals(4, result.moveCount());
   }
@@ -101,7 +103,7 @@ final class RandomSolverSimulationTest {
 
     SolverRunResult result = simulation.update(Duration.ofMillis(500));
 
-    assertEquals(level.solverStart(), result.position());
+    assertEquals(level.primarySolver().start(), result.position());
     assertEquals(2, result.moveCount());
   }
 
@@ -120,7 +122,7 @@ final class RandomSolverSimulationTest {
   @Test
   void timesOutAtExactMaximumSolveTimeBeforeNextMoveTick() {
     LevelDefinition level =
-        new LevelDefinition(
+        singleSolverLevel(
             "short-timeout",
             "Short Timeout",
             GridSize.square(2),
@@ -152,12 +154,12 @@ final class RandomSolverSimulationTest {
 
   private static LevelDefinition levelWithSeed(long seed) {
     LevelDefinition milestoneOne = Levels.levelOne();
-    return new LevelDefinition(
+    return singleSolverLevel(
         "seed-" + seed,
         "Seed " + seed,
         milestoneOne.gridSize(),
-        milestoneOne.solverStart(),
-        milestoneOne.goal(),
+        milestoneOne.primarySolver().start(),
+        milestoneOne.primarySolver().goal(),
         milestoneOne.buildTime(),
         milestoneOne.targetSolveTime(),
         milestoneOne.maximumSolveTime(),
@@ -168,7 +170,7 @@ final class RandomSolverSimulationTest {
   }
 
   private static MazeState verticalCorridor(LevelDefinition level) {
-    return new MazeState(
+    return withWalls(
         level,
         Set.of(
             new GridPosition(4, 1),

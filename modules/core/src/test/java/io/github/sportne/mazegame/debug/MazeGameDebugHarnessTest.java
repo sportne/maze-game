@@ -67,10 +67,10 @@ final class MazeGameDebugHarnessTest {
     GridPosition wall = new GridPosition(2, 2);
 
     harness.leftClickCell(wall);
-    assertTrue(harness.snapshot().mazeState().hasWallAt(wall));
+    assertTrue(harness.snapshot().mazeState().placedCells().containsKey(wall));
 
     harness.rightClickCell(wall);
-    assertTrue(harness.snapshot().mazeState().walls().isEmpty());
+    assertTrue(harness.snapshot().mazeState().placedCells().isEmpty());
   }
 
   @Test
@@ -89,10 +89,10 @@ final class MazeGameDebugHarnessTest {
   }
 
   @Test
-  void compatibilitySnapshotConstructorDefaultsToEmptyPalette() {
+  void canonicalSnapshotAcceptsExplicitEmptyPalette() {
     MazeGameDebugSnapshot current = new MazeGameDebugHarness().snapshot();
 
-    MazeGameDebugSnapshot compatible =
+    MazeGameDebugSnapshot snapshot =
         new MazeGameDebugSnapshot(
             current.gamePhase(),
             current.mazeState(),
@@ -101,9 +101,10 @@ final class MazeGameDebugHarnessTest {
             current.solverRunResult(),
             current.bestResult(),
             current.resultPassed(),
-            current.hasNextLevel());
+            current.hasNextLevel(),
+            java.util.List.of());
 
-    assertTrue(compatible.paletteState().isEmpty());
+    assertTrue(snapshot.paletteState().isEmpty());
   }
 
   @Test
@@ -135,10 +136,10 @@ final class MazeGameDebugHarnessTest {
   void simulatesRejectedPlacementFeedback() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
-    harness.leftClickCell(Levels.levelOne().solverStart());
+    harness.leftClickCell(Levels.levelOne().primarySolver().start());
 
-    assertEquals(Levels.levelOne().solverStart(), harness.snapshot().rejectedPosition());
-    assertTrue(harness.snapshot().mazeState().walls().isEmpty());
+    assertEquals(Levels.levelOne().primarySolver().start(), harness.snapshot().rejectedPosition());
+    assertTrue(harness.snapshot().mazeState().placedCells().isEmpty());
   }
 
   @Test
