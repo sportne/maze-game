@@ -171,7 +171,7 @@ final class MilestoneFourCellDesignTest {
     assertEquals(EditStatus.REMOVED, removed.status());
     assertEquals(Supply.unlimited(), removed.board().remaining().get(CellType.WALL));
 
-    MazeState production = MazeState.empty(Levels.milestoneOne());
+    MazeState production = MazeState.empty(Levels.levelOne());
     assertTrue(production.withWall(position(1, 1)).withoutWall(position(1, 1)).walls().isEmpty());
   }
 

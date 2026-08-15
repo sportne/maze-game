@@ -15,8 +15,8 @@ import java.util.OptionalLong;
  * of individual authored definitions.
  */
 public final class Levels {
-  /** Initial 5x5 level specified by the milestone roadmap. */
-  private static final LevelDefinition MILESTONE_ONE =
+  /** Initial authored 5x5 level. */
+  private static final LevelDefinition LEVEL_ONE =
       new LevelDefinition(
           "milestone-1",
           "Level 1",
@@ -35,8 +35,8 @@ public final class Levels {
                   SolverAppearance.CLASSIC_MOUSE,
                   GoalType.CHEESE)));
 
-  /** Larger second level specified by the Milestone 2 design. */
-  private static final LevelDefinition MILESTONE_TWO =
+  /** Larger second authored level. */
+  private static final LevelDefinition LEVEL_TWO =
       new LevelDefinition(
           "milestone-2",
           "Level 2",
@@ -56,7 +56,7 @@ public final class Levels {
                   GoalType.CHEESE)));
 
   /** Third 7x7 level introducing Scout's deterministic search pattern. */
-  private static final LevelDefinition MILESTONE_THREE =
+  private static final LevelDefinition LEVEL_THREE =
       new LevelDefinition(
           "milestone-3",
           "Level 3",
@@ -76,7 +76,7 @@ public final class Levels {
                   GoalType.ACORN)));
 
   /** Fourth 7x7 level introducing finite Walls and Slow Floors with Scout. */
-  private static final LevelDefinition MILESTONE_FOUR =
+  private static final LevelDefinition LEVEL_FOUR =
       new LevelDefinition(
           "milestone-4",
           "Level 4",
@@ -98,7 +98,7 @@ public final class Levels {
                   GoalType.ACORN)));
 
   /** Fifth 7x7 level combining Random and Scout with distinct starts and goals. */
-  private static final LevelDefinition MILESTONE_FIVE =
+  private static final LevelDefinition LEVEL_FIVE =
       new LevelDefinition(
           "milestone-5",
           "Level 5",
@@ -128,8 +128,7 @@ public final class Levels {
 
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
-      new LevelCatalog(
-          List.of(MILESTONE_ONE, MILESTONE_TWO, MILESTONE_THREE, MILESTONE_FOUR, MILESTONE_FIVE));
+      new LevelCatalog(List.of(LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -137,42 +136,42 @@ public final class Levels {
   /**
    * Returns the first playable 5x5 level.
    *
-   * @return the milestone-one level definition
+   * @return the first level definition
    */
-  public static LevelDefinition milestoneOne() {
-    return MILESTONE_ONE;
+  public static LevelDefinition levelOne() {
+    return LEVEL_ONE;
   }
 
   /**
    * Returns the larger second authored level.
    *
-   * @return the milestone-two level definition
+   * @return the second level definition
    */
-  public static LevelDefinition milestoneTwo() {
-    return MILESTONE_TWO;
+  public static LevelDefinition levelTwo() {
+    return LEVEL_TWO;
   }
 
   /**
    * Returns the third authored level featuring Scout.
    *
-   * @return the milestone-three level definition
+   * @return the third level definition
    */
-  public static LevelDefinition milestoneThree() {
-    return MILESTONE_THREE;
+  public static LevelDefinition levelThree() {
+    return LEVEL_THREE;
   }
 
   /**
    * Returns the fourth authored level featuring finite Walls and Slow Floors.
    *
-   * @return the milestone-four level definition
+   * @return the fourth level definition
    */
-  public static LevelDefinition milestoneFour() {
-    return MILESTONE_FOUR;
+  public static LevelDefinition levelFour() {
+    return LEVEL_FOUR;
   }
 
   /** Returns the fifth authored level featuring both Random and Scout. */
-  public static LevelDefinition milestoneFive() {
-    return MILESTONE_FIVE;
+  public static LevelDefinition levelFive() {
+    return LEVEL_FIVE;
   }
 
   /**

@@ -62,7 +62,7 @@ public final class MazeGameDebugHarness {
    *
    * @param screenWidth virtual window width in pixels
    * @param screenHeight virtual window height in pixels
-   * @param startInLevel true to jump directly to Milestone 1 for legacy interaction tests
+   * @param startInLevel true to jump directly to Level 1 for legacy interaction tests
    */
   private MazeGameDebugHarness(int screenWidth, int screenHeight, boolean startInLevel) {
     if (screenWidth <= 0 || screenHeight <= 0) {
@@ -73,7 +73,7 @@ public final class MazeGameDebugHarness {
     this.screenHeight = screenHeight;
     if (startInLevel) {
       clickMainMenuStart();
-      clickMilestoneOneLevel();
+      clickLevelOne();
     }
   }
 
@@ -166,11 +166,11 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Simulates clicking the enabled Milestone 1 card.
+   * Simulates clicking the enabled Level 1 card.
    *
    * @return this harness for fluent scripting
    */
-  public MazeGameDebugHarness clickMilestoneOneLevel() {
+  public MazeGameDebugHarness clickLevelOne() {
     clickButton(
         currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(1)),
         Input.Buttons.LEFT);
@@ -178,11 +178,11 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Simulates clicking the enabled Milestone 2 card.
+   * Simulates clicking the enabled Level 2 card.
    *
    * @return this harness for fluent scripting
    */
-  public MazeGameDebugHarness clickMilestoneTwoLevel() {
+  public MazeGameDebugHarness clickLevelTwo() {
     clickButton(
         currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(2)),
         Input.Buttons.LEFT);
@@ -190,11 +190,11 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Simulates clicking the enabled Milestone 3 card.
+   * Simulates clicking the enabled Level 3 card.
    *
    * @return this harness for fluent scripting
    */
-  public MazeGameDebugHarness clickMilestoneThreeLevel() {
+  public MazeGameDebugHarness clickLevelThree() {
     clickButton(
         currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(3)),
         Input.Buttons.LEFT);
@@ -202,19 +202,19 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Simulates clicking the enabled Milestone 4 card.
+   * Simulates clicking the enabled Level 4 card.
    *
    * @return this harness for fluent scripting
    */
-  public MazeGameDebugHarness clickMilestoneFourLevel() {
+  public MazeGameDebugHarness clickLevelFour() {
     clickButton(
         currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(4)),
         Input.Buttons.LEFT);
     return this;
   }
 
-  /** Simulates clicking the enabled Milestone 5 card. */
-  public MazeGameDebugHarness clickMilestoneFiveLevel() {
+  /** Simulates clicking the enabled Level 5 card. */
+  public MazeGameDebugHarness clickLevelFive() {
     clickButton(
         currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(5)),
         Input.Buttons.LEFT);

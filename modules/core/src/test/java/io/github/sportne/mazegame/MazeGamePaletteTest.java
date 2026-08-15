@@ -71,7 +71,7 @@ final class MazeGamePaletteTest {
   @Test
   void releasedPaletteKeepsWallUsableAndSlowFloorSelectableButExhausted() {
     MazeGame game = new MazeGame();
-    game.startLevel(io.github.sportne.mazegame.model.level.Levels.milestoneOne().id());
+    game.startLevel(io.github.sportne.mazegame.model.level.Levels.levelOne().id());
 
     assertEquals(CellSupply.infinite(), selected(game).remainingSupply());
     clickPalette(game, PlaceableCellType.SLOW_FLOOR);

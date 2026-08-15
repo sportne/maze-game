@@ -13,7 +13,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 final class MazeStateTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneOne();
+  private static final LevelDefinition LEVEL = Levels.levelOne();
 
   @Test
   void emptyMazeStartsWithNoWalls() {

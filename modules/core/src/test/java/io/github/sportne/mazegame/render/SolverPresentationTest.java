@@ -15,9 +15,8 @@ import org.junit.jupiter.api.Test;
 final class SolverPresentationTest {
   @Test
   void selectsPlayerFacingIdentityFromAppearanceAndGoalType() {
-    SolverPresentation random = SolverPresentation.forSolver(Levels.milestoneOne().primarySolver());
-    SolverPresentation scout =
-        SolverPresentation.forSolver(Levels.milestoneThree().primarySolver());
+    SolverPresentation random = SolverPresentation.forSolver(Levels.levelOne().primarySolver());
+    SolverPresentation scout = SolverPresentation.forSolver(Levels.levelThree().primarySolver());
 
     assertEquals("Solver", random.name());
     assertEquals("cheese", random.goalName());
@@ -51,6 +50,6 @@ final class SolverPresentationTest {
     assertThrows(NullPointerException.class, () -> SolverPresentation.forSolver(null));
     assertThrows(
         NullPointerException.class,
-        () -> SolverPresentation.forSolver(Levels.milestoneOne().primarySolver()).levelTitle(null));
+        () -> SolverPresentation.forSolver(Levels.levelOne().primarySolver()).levelTitle(null));
   }
 }

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 /** Production authoring and independent-run coverage for the fifth level. */
 final class MilestoneFiveLevelTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneFive();
+  private static final LevelDefinition LEVEL = Levels.levelFive();
   private static final LevelSolver RANDOM = LEVEL.solvers().get(0);
   private static final LevelSolver SCOUT = LEVEL.solvers().get(1);
   private static final GridPosition CHEESE = position(3, 3);

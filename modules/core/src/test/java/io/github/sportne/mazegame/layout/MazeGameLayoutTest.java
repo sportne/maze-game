@@ -123,7 +123,7 @@ final class MazeGameLayoutTest {
               GamePhase.BUILDING,
               viewport[0],
               viewport[1],
-              Levels.milestoneThree().gridSize(),
+              Levels.levelThree().gridSize(),
               false,
               3,
               false);

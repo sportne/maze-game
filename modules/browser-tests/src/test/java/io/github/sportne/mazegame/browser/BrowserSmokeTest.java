@@ -189,16 +189,15 @@ final class BrowserSmokeTest {
         new BrowserControls(page, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, touchInput());
 
     controls.waitForButton(
-        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+        GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
     BrowserGameScenario.startMilestoneOne(controls);
     assertAudioResumed(page);
     waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
     assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
 
     controls.clickButtonAndWaitForChange(
-        GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_REPLAY);
-    controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_REPLAY);
+    controls.waitForButton(GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_RETRY);
     BrowserGameScenario.startMilestoneTwo(controls);
     waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
     assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
@@ -210,7 +209,7 @@ final class BrowserSmokeTest {
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-solver-result.png")));
     assertRenderedSolverPresentation(
-        page, Levels.milestoneTwo(), new GridPosition(3, 0), true, SOLVER_STATUS_SIGNATURE, false);
+        page, Levels.levelTwo(), new GridPosition(3, 0), true, SOLVER_STATUS_SIGNATURE, false);
     BrowserGameScenario.openMilestoneThree(controls);
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -227,34 +226,28 @@ final class BrowserSmokeTest {
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-scout-result.png")));
     assertRenderedSolverPresentation(
-        page,
-        Levels.milestoneThree(),
-        Levels.milestoneThree().goal(),
-        false,
-        SCOUT_STATUS_SIGNATURE,
-        true);
+        page, Levels.levelThree(), Levels.levelThree().goal(), false, SCOUT_STATUS_SIGNATURE, true);
     controls.clickButtonAndWaitForChange(
-        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
+        GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
-    controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
+    controls.clickButton(GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
     controls.clickButton(
         GamePhase.BUILDING,
-        Levels.milestoneThree(),
+        Levels.levelThree(),
         false,
         MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
     page.waitForTimeout(100.0);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
-    assertPaletteSupplyBadges(page, Levels.milestoneThree());
+    assertPaletteSupplyBadges(page, Levels.levelThree());
     if (!touchInput()) {
       BufferedImage paletteWithoutTooltip = screenshot(page);
       controls.hoverButton(
           GamePhase.BUILDING,
-          Levels.milestoneThree(),
+          Levels.levelThree(),
           false,
           MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
       BufferedImage paletteWithTooltip = screenshot(page);
@@ -264,7 +257,7 @@ final class BrowserSmokeTest {
                       GamePhase.BUILDING,
                       VIEWPORT_WIDTH,
                       VIEWPORT_HEIGHT,
-                      Levels.milestoneThree().gridSize())
+                      Levels.levelThree().gridSize())
                   .bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
       assertFalse(
           lightPixelSignature(paletteWithoutTooltip, tooltip)
@@ -275,21 +268,21 @@ final class BrowserSmokeTest {
               .setPath(reportDirectory.resolve("desktop-palette-tooltip.png")));
     }
     controls.dragPaletteToCell(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, PlaceableCellType.WALL, EDITED_CELL);
-    assertWallCell(page, controls.cellCenter(Levels.milestoneThree(), EDITED_CELL));
+        GamePhase.BUILDING, Levels.levelThree(), false, PlaceableCellType.WALL, EDITED_CELL);
+    assertWallCell(page, controls.cellCenter(Levels.levelThree(), EDITED_CELL));
     GridPosition firstWall = MILESTONE_THREE_WALLS.get(0);
-    controls.beginPlacedCellDrag(Levels.milestoneThree(), EDITED_CELL, firstWall);
+    controls.beginPlacedCellDrag(Levels.levelThree(), EDITED_CELL, firstWall);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-cell-drag.png")));
-    controls.finishPlacedCellDrag(Levels.milestoneThree(), firstWall);
-    assertOpenCell(page, controls.cellCenter(Levels.milestoneThree(), EDITED_CELL));
-    assertWallCell(page, controls.cellCenter(Levels.milestoneThree(), firstWall));
+    controls.finishPlacedCellDrag(Levels.levelThree(), firstWall);
+    assertOpenCell(page, controls.cellCenter(Levels.levelThree(), EDITED_CELL));
+    assertWallCell(page, controls.cellCenter(Levels.levelThree(), firstWall));
     controls.placeWalls(
-        Levels.milestoneThree(), MILESTONE_THREE_WALLS.subList(1, MILESTONE_THREE_WALLS.size()));
+        Levels.levelThree(), MILESTONE_THREE_WALLS.subList(1, MILESTONE_THREE_WALLS.size()));
     controls.clickButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
 
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -298,11 +291,11 @@ final class BrowserSmokeTest {
     assertEquals(milestoneTwoResult, readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
     assertEquals(milestoneThreeResult, readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
     controls.clickButton(
-        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+        GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(3));
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
     assertTrue(browserLog.observedAssets().containsAll(browserLog.requiredAssets()));
     if (browserLog.requiredAssets().contains("app.wasm")) {
       assertEquals("application/wasm", browserLog.contentType("app.wasm"));
@@ -485,112 +478,112 @@ final class BrowserSmokeTest {
         BrowserControls rotatedControls =
             new BrowserControls(page, rotated.width(), rotated.height(), true);
         primaryControls.waitForButton(
-            GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+            GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
 
         resizeAndAssert(page, rotated);
         resizeAndAssert(page, primary);
         primaryControls.clickButton(
-            GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+            GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
         primaryControls.waitForButton(
-            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
         primaryControls.clickButton(
-            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(2));
         primaryControls.clickButton(
-            GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
 
         primaryControls.cancelPaletteDragAtCell(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+            GamePhase.BUILDING, Levels.levelOne(), false, PlaceableCellType.WALL, EDITED_CELL);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
         primaryControls.dragPaletteWithSecondaryCancellation(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
-        assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
-        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+            GamePhase.BUILDING, Levels.levelOne(), false, PlaceableCellType.WALL, EDITED_CELL);
+        assertWallCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        primaryControls.clickCell(Levels.levelOne(), EDITED_CELL);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
 
         primaryControls.clickButton(
             GamePhase.BUILDING,
-            Levels.milestoneOne(),
+            Levels.levelOne(),
             false,
             MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
-        primaryControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
+        primaryControls.clickCell(Levels.levelOne(), EDITED_CELL);
         page.waitForTimeout(600.0);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(
             new Page.ScreenshotOptions().setPath(paletteScreenshotPath(screenshotPath)));
         primaryControls.dragPaletteToCell(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, PlaceableCellType.WALL, EDITED_CELL);
-        assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
-        primaryControls.beginPlacedCellDrag(Levels.milestoneOne(), EDITED_CELL, MOVED_CELL);
+            GamePhase.BUILDING, Levels.levelOne(), false, PlaceableCellType.WALL, EDITED_CELL);
+        assertWallCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        primaryControls.beginPlacedCellDrag(Levels.levelOne(), EDITED_CELL, MOVED_CELL);
         page.screenshot(
             new Page.ScreenshotOptions().setPath(cellDragScreenshotPath(screenshotPath)));
-        primaryControls.finishPlacedCellDrag(Levels.milestoneOne(), MOVED_CELL);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
-        assertWallCell(page, primaryControls.cellCenter(Levels.milestoneOne(), MOVED_CELL));
+        primaryControls.finishPlacedCellDrag(Levels.levelOne(), MOVED_CELL);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        assertWallCell(page, primaryControls.cellCenter(Levels.levelOne(), MOVED_CELL));
         resizeAndAssert(page, rotated);
         rotatedControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
-        assertWallCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), MOVED_CELL));
-        rotatedControls.dragPlacedCell(Levels.milestoneOne(), MOVED_CELL, EDITED_CELL);
-        assertOpenCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), MOVED_CELL));
-        assertWallCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
-        rotatedControls.clickCell(Levels.milestoneOne(), EDITED_CELL);
-        assertOpenCell(page, rotatedControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+            GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
+        assertWallCell(page, rotatedControls.cellCenter(Levels.levelOne(), MOVED_CELL));
+        rotatedControls.dragPlacedCell(Levels.levelOne(), MOVED_CELL, EDITED_CELL);
+        assertOpenCell(page, rotatedControls.cellCenter(Levels.levelOne(), MOVED_CELL));
+        assertWallCell(page, rotatedControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        rotatedControls.clickCell(Levels.levelOne(), EDITED_CELL);
+        assertOpenCell(page, rotatedControls.cellCenter(Levels.levelOne(), EDITED_CELL));
         resizeAndAssert(page, primary);
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.milestoneOne(), EDITED_CELL));
+            GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
+        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
 
         primaryControls.clickButton(
-            GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
         resizeAndAssert(page, rotated);
         waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
         assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
         rotatedControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+            GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         rotatedControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+            GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         rotatedControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
-        rotatedControls.placeWalls(Levels.milestoneTwo(), MILESTONE_TWO_WALLS);
+            GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
+        rotatedControls.placeWalls(Levels.levelTwo(), MILESTONE_TWO_WALLS);
         resizeAndAssert(page, primary);
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
         primaryControls.clickButton(
-            GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
         assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+            GamePhase.RESULT, Levels.levelTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 
         resizeAndAssert(page, rotated);
         rotatedControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+            GamePhase.RESULT, Levels.levelTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         rotatedControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
-        rotatedControls.placeWalls(Levels.milestoneThree(), MILESTONE_THREE_WALLS);
+            GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
+        rotatedControls.placeWalls(Levels.levelThree(), MILESTONE_THREE_WALLS);
         resizeAndAssert(page, primary);
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
         primaryControls.clickButton(
-            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
         assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(new Page.ScreenshotOptions().setPath(screenshotPath));
 
         primaryControls.clickButtonAndWaitForChange(
-            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_REPLAY);
+            GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
         primaryControls.waitForButton(
-            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.clickButton(
-            GamePhase.RESULT, Levels.milestoneThree(), true, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
         primaryControls.waitForButton(
-            GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+            GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
         assertTrue(
             mobileLog.errors().isEmpty(),
             () -> String.join(System.lineSeparator(), mobileLog.errors()));

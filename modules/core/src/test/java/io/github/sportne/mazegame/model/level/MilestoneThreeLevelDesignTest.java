@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 final class MilestoneThreeLevelDesignTest {
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
 
-  private static final LevelDefinition PROPOSED_LEVEL = Levels.milestoneThree();
+  private static final LevelDefinition PROPOSED_LEVEL = Levels.levelThree();
 
   private static final Set<GridPosition> PASSING_LAYOUT_A =
       Set.of(
@@ -125,11 +125,11 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals(GoalType.ACORN, PROPOSED_LEVEL.primarySolver().goalType());
     assertEquals(
         List.of(
-            Levels.milestoneOne(),
-            Levels.milestoneTwo(),
+            Levels.levelOne(),
+            Levels.levelTwo(),
             PROPOSED_LEVEL,
-            Levels.milestoneFour(),
-            Levels.milestoneFive()),
+            Levels.levelFour(),
+            Levels.levelFive()),
         Levels.catalog().levels());
   }
 
@@ -292,7 +292,7 @@ final class MilestoneThreeLevelDesignTest {
 
   @Test
   void scoutAndRandomProduceDifferentChallengesOnMilestoneTwoMazes() {
-    LevelDefinition level = Levels.milestoneTwo();
+    LevelDefinition level = Levels.levelTwo();
     assertComparison(
         level,
         MILESTONE_TWO_PASSING_LAYOUT,

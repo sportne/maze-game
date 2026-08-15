@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 /** Reproducible balancing evidence for the authored Milestone 2 level specification. */
 final class MilestoneTwoLevelDesignTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneTwo();
+  private static final LevelDefinition LEVEL = Levels.levelTwo();
 
   private static final Set<GridPosition> PASSING_LAYOUT_A =
       Set.of(
@@ -75,11 +75,7 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals(38L, LEVEL.randomSeed());
     assertEquals(
         List.of(
-            Levels.milestoneOne(),
-            LEVEL,
-            Levels.milestoneThree(),
-            Levels.milestoneFour(),
-            Levels.milestoneFive()),
+            Levels.levelOne(), LEVEL, Levels.levelThree(), Levels.levelFour(), Levels.levelFive()),
         Levels.catalog().levels());
   }
 

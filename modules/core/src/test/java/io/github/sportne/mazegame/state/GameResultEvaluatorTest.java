@@ -13,7 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class GameResultEvaluatorTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneOne();
+  private static final LevelDefinition LEVEL = Levels.levelOne();
 
   @Test
   void passRequiresResultPhaseAndElapsedTimeAboveTarget() {
@@ -46,7 +46,7 @@ final class GameResultEvaluatorTest {
 
   @Test
   void multiSolverPassRequiresEveryAuthoredResultPastTheTarget() {
-    LevelDefinition level = Levels.milestoneFive();
+    LevelDefinition level = Levels.levelFive();
     SolverRunResult passing =
         new SolverRunResult(level.goal(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_GOAL);
     SolverRunResult exact =

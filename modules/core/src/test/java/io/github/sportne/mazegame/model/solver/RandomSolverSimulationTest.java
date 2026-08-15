@@ -19,11 +19,11 @@ final class RandomSolverSimulationTest {
   @Test
   void startsAtSolverStartWithoutMoves() {
     RandomSolverSimulation simulation =
-        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
+        new RandomSolverSimulation(MazeState.empty(Levels.levelOne()));
 
     SolverRunResult result = simulation.result();
 
-    assertEquals(Levels.milestoneOne().solverStart(), result.position());
+    assertEquals(Levels.levelOne().solverStart(), result.position());
     assertEquals(Duration.ZERO, result.elapsedTime());
     assertEquals(0, result.moveCount());
     assertEquals(SolverRunStatus.RUNNING, result.status());
@@ -32,17 +32,17 @@ final class RandomSolverSimulationTest {
   @Test
   void ignoresPartialMoveIntervalsUntilEnoughTimeAccumulates() {
     RandomSolverSimulation simulation =
-        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
+        new RandomSolverSimulation(MazeState.empty(Levels.levelOne()));
 
     SolverRunResult result = simulation.update(Duration.ofMillis(249));
 
-    assertEquals(Levels.milestoneOne().solverStart(), result.position());
+    assertEquals(Levels.levelOne().solverStart(), result.position());
     assertEquals(0, result.moveCount());
   }
 
   @Test
   void movesDeterministicallyForTheSameMazeAndSeed() {
-    MazeState maze = MazeState.empty(Levels.milestoneOne());
+    MazeState maze = MazeState.empty(Levels.levelOne());
     RandomSolverSimulation first = new RandomSolverSimulation(maze);
     RandomSolverSimulation second = new RandomSolverSimulation(maze);
 
@@ -54,7 +54,7 @@ final class RandomSolverSimulationTest {
 
   @Test
   void preservesResultsThroughTheSharedSimulationContract() {
-    MazeState maze = MazeState.empty(Levels.milestoneOne());
+    MazeState maze = MazeState.empty(Levels.levelOne());
     SolverSimulation simulation = new RandomSolverSimulation(maze);
 
     assertEquals(
@@ -67,7 +67,7 @@ final class RandomSolverSimulationTest {
   void onlyMovesToOpenNeighboringCells() {
     MazeState maze =
         new MazeState(
-            Levels.milestoneOne(),
+            Levels.levelOne(),
             Set.of(
                 new GridPosition(4, 1),
                 new GridPosition(4, 3),
@@ -83,12 +83,12 @@ final class RandomSolverSimulationTest {
 
   @Test
   void reachesGoalWhenRandomWalkArrivesThere() {
-    MazeState maze = verticalCorridor(Levels.milestoneOne());
+    MazeState maze = verticalCorridor(Levels.levelOne());
     RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
     SolverRunResult result = simulation.update(Duration.ofSeconds(1));
 
-    assertEquals(Levels.milestoneOne().goal(), result.position());
+    assertEquals(Levels.levelOne().goal(), result.position());
     assertEquals(SolverRunStatus.REACHED_GOAL, result.status());
     assertEquals(4, result.moveCount());
   }
@@ -108,7 +108,7 @@ final class RandomSolverSimulationTest {
   @Test
   void timesOutAtMaximumSolveTime() {
     RandomSolverSimulation simulation =
-        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
+        new RandomSolverSimulation(MazeState.empty(Levels.levelOne()));
 
     SolverRunResult result = simulation.update(Duration.ofSeconds(10));
 
@@ -145,13 +145,13 @@ final class RandomSolverSimulationTest {
   @Test
   void rejectsNegativeDeltaTime() {
     RandomSolverSimulation simulation =
-        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
+        new RandomSolverSimulation(MazeState.empty(Levels.levelOne()));
 
     assertThrows(IllegalArgumentException.class, () -> simulation.update(Duration.ofMillis(-1)));
   }
 
   private static LevelDefinition levelWithSeed(long seed) {
-    LevelDefinition milestoneOne = Levels.milestoneOne();
+    LevelDefinition milestoneOne = Levels.levelOne();
     return new LevelDefinition(
         "seed-" + seed,
         "Seed " + seed,

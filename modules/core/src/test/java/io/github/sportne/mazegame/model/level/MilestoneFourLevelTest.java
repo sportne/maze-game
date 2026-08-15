@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /** Production authoring and deterministic fixture coverage for the fourth level. */
 final class MilestoneFourLevelTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneFour();
+  private static final LevelDefinition LEVEL = Levels.levelFour();
   private static final Set<GridPosition> PASSING_WALLS = positions(0, 0, 1, 1, 2, 2);
   private static final Set<GridPosition> WALL_ONLY_FALLBACK = positions(3, 1, 0, 0, 1, 1, 2, 2);
   private static final Set<GridPosition> PASSING_SLOW_FLOORS = positions(6, 2, 6, 1, 6, 0);

@@ -82,7 +82,7 @@ public final class GameSession {
    * @param bestResultStore persistence boundary for best results
    */
   public GameSession(BestResultStore bestResultStore) {
-    this(Levels.catalog(), Levels.milestoneOne().id(), bestResultStore);
+    this(Levels.catalog(), Levels.levelOne().id(), bestResultStore);
   }
 
   /**

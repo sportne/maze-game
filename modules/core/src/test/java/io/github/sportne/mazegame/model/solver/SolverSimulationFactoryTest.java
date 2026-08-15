@@ -15,14 +15,14 @@ final class SolverSimulationFactoryTest {
   @Test
   void createsRandomSimulationForRandomBehavior() {
     SolverSimulation simulation =
-        SolverSimulationFactory.create(MazeState.empty(Levels.milestoneOne()));
+        SolverSimulationFactory.create(MazeState.empty(Levels.levelOne()));
 
     assertInstanceOf(RandomSolverSimulation.class, simulation);
   }
 
   @Test
   void createsScoutSimulationForLeftPriorityBehavior() {
-    LevelDefinition level = withBehavior(Levels.milestoneOne(), SolverBehavior.LEFT_PRIORITY);
+    LevelDefinition level = withBehavior(Levels.levelOne(), SolverBehavior.LEFT_PRIORITY);
 
     SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level));
 
@@ -36,7 +36,7 @@ final class SolverSimulationFactoryTest {
 
   @Test
   void createsAnIndependentSimulationFromAnAuthoredSolver() {
-    LevelDefinition level = Levels.milestoneFive();
+    LevelDefinition level = Levels.levelFive();
     LevelSolver scout = level.solvers().get(1);
 
     SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level), scout);
@@ -47,7 +47,7 @@ final class SolverSimulationFactoryTest {
 
   @Test
   void rejectsASolverThatIsNotAuthoredByTheMazeLevel() {
-    LevelDefinition level = Levels.milestoneFive();
+    LevelDefinition level = Levels.levelFive();
     LevelSolver unknown =
         new LevelSolver(level.goal(), level.solverStart(), SolverBehavior.RANDOM, 1L);
 

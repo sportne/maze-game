@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 final class LevelDefinitionTest {
   @Test
   void milestoneOneMatchesRoadmapValues() {
-    LevelDefinition level = Levels.milestoneOne();
+    LevelDefinition level = Levels.levelOne();
 
     assertEquals("milestone-1", level.id());
     assertEquals("Level 1", level.name());
@@ -132,7 +132,7 @@ final class LevelDefinitionTest {
   @Test
   void releasedLevelsExplicitlyAuthorInfiniteWallsAndZeroSlowFloors() {
     for (LevelDefinition level :
-        List.of(Levels.milestoneOne(), Levels.milestoneTwo(), Levels.milestoneThree())) {
+        List.of(Levels.levelOne(), Levels.levelTwo(), Levels.levelThree())) {
       assertEquals(CellSupply.infinite(), level.supplyFor(PlaceableCellType.WALL));
       assertEquals(CellSupply.finite(0), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
       assertEquals(PlaceableCellSupply.releasedDefaults(), level.placeableCellSupplies());
@@ -315,7 +315,7 @@ final class LevelDefinitionTest {
   }
 
   private static LevelDefinition levelWithBehavior(SolverBehavior solverBehavior) {
-    LevelDefinition source = Levels.milestoneOne();
+    LevelDefinition source = Levels.levelOne();
     return new LevelDefinition(
         source.id(),
         source.name(),
@@ -332,7 +332,7 @@ final class LevelDefinitionTest {
   }
 
   private static LevelDefinition levelWithSupplies(List<PlaceableCellSupply> supplies) {
-    LevelDefinition source = Levels.milestoneOne();
+    LevelDefinition source = Levels.levelOne();
     return new LevelDefinition(
         "supply-test",
         "Supply Test",
@@ -349,7 +349,7 @@ final class LevelDefinitionTest {
   }
 
   private static LevelDefinition multiSolverLevel(List<LevelSolver> solvers) {
-    LevelDefinition source = Levels.milestoneOne();
+    LevelDefinition source = Levels.levelOne();
     return new LevelDefinition(
         "multi-solver-test",
         "Multi Solver Test",

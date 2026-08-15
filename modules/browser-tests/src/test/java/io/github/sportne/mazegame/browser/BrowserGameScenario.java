@@ -38,40 +38,37 @@ final class BrowserGameScenario {
 
   static void startMilestoneOne(Controls controls) throws IOException {
     controls.clickButton(
-        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+        GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
     controls.waitForButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(2));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(2));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(3));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(4));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(4));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
-    controls.clickButton(
-        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_BACK);
+        GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
+    controls.clickButton(GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_BACK);
     controls.waitForButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(1));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
-    controls.placeAndClearWall(Levels.milestoneOne(), EDITED_CELL);
-    controls.clickButton(
-        GamePhase.BUILDING, Levels.milestoneOne(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
+    controls.placeAndClearWall(Levels.levelOne(), EDITED_CELL);
+    controls.clickButton(GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
   }
 
   static void startMilestoneTwo(Controls controls) throws IOException {
     controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
-    controls.placeWalls(Levels.milestoneTwo(), MILESTONE_TWO_WALLS);
-    controls.clickButton(
-        GamePhase.BUILDING, Levels.milestoneTwo(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
+    controls.placeWalls(Levels.levelTwo(), MILESTONE_TWO_WALLS);
+    controls.clickButton(GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
   }
 
   static void startMilestoneThree(Controls controls) throws IOException {
@@ -81,27 +78,27 @@ final class BrowserGameScenario {
 
   static void openMilestoneThree(Controls controls) throws IOException {
     controls.clickButton(
-        GamePhase.RESULT, Levels.milestoneTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        GamePhase.RESULT, Levels.levelTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
   }
 
   static void startMilestoneThreeFromMainMenu(Controls controls) throws IOException {
     controls.clickButton(
-        GamePhase.MAIN_MENU, Levels.milestoneOne(), false, MazeGameLayout.MAIN_MENU_START);
+        GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
     controls.waitForButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(3));
     controls.clickButton(
-        GamePhase.LEVEL_SELECT, Levels.milestoneOne(), false, MazeGameLayout.levelCardId(3));
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(3));
     controls.waitForButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
     startPreparedMilestoneThree(controls);
   }
 
   private static void startPreparedMilestoneThree(Controls controls) throws IOException {
-    controls.placeWalls(Levels.milestoneThree(), MILESTONE_THREE_WALLS);
+    controls.placeWalls(Levels.levelThree(), MILESTONE_THREE_WALLS);
     controls.clickButton(
-        GamePhase.BUILDING, Levels.milestoneThree(), false, MazeGameLayout.BUILD_START);
+        GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
   }
 
   static ScreenPoint buttonCenter(

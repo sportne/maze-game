@@ -19,11 +19,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class GameInputRouterTest {
-  private static final GridSize GRID_SIZE = Levels.milestoneOne().gridSize();
+  private static final GridSize GRID_SIZE = Levels.levelOne().gridSize();
   private static final List<LevelProgress> LEVEL_PROGRESS =
       List.of(
-          new LevelProgress(Levels.milestoneOne(), true, null),
-          new LevelProgress(Levels.milestoneTwo(), false, null));
+          new LevelProgress(Levels.levelOne(), true, null),
+          new LevelProgress(Levels.levelTwo(), false, null));
   private static final int SCREEN_WIDTH = 1280;
   private static final int SCREEN_HEIGHT = 720;
 
@@ -61,7 +61,7 @@ final class GameInputRouterTest {
   void routesLevelSelectButtons() {
     GameInputAction selection = click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(1));
     assertEquals(GameInputActionType.SELECT_LEVEL, selection.type());
-    assertEquals(Levels.milestoneOne().id(), selection.levelId());
+    assertEquals(Levels.levelOne().id(), selection.levelId());
     assertEquals(
         GameInputActionType.SELECT_LOCKED_LEVEL,
         click(GamePhase.LEVEL_SELECT, MazeGameLayout.levelCardId(2)).type());
@@ -77,11 +77,11 @@ final class GameInputRouterTest {
             GamePhase.LEVEL_SELECT,
             MazeGameLayout.levelCardId(2),
             List.of(
-                new LevelProgress(Levels.milestoneOne(), true, null),
-                new LevelProgress(Levels.milestoneTwo(), true, null)));
+                new LevelProgress(Levels.levelOne(), true, null),
+                new LevelProgress(Levels.levelTwo(), true, null)));
 
     assertEquals(GameInputActionType.SELECT_LEVEL, selection.type());
-    assertEquals(Levels.milestoneTwo().id(), selection.levelId());
+    assertEquals(Levels.levelTwo().id(), selection.levelId());
   }
 
   @Test
@@ -251,11 +251,10 @@ final class GameInputRouterTest {
         () -> new GameInputAction(GameInputActionType.SELECT_LEVEL, null, " "));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GameInputAction(GameInputActionType.RETRY, null, Levels.milestoneTwo().id()));
+        () -> new GameInputAction(GameInputActionType.RETRY, null, Levels.levelTwo().id()));
 
     assertEquals(
-        Levels.milestoneTwo().id(),
-        GameInputAction.selectLevel(Levels.milestoneTwo().id()).levelId());
+        Levels.levelTwo().id(), GameInputAction.selectLevel(Levels.levelTwo().id()).levelId());
   }
 
   @Test

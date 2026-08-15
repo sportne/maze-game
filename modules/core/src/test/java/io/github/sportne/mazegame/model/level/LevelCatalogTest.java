@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 final class LevelCatalogTest {
-  private static final LevelDefinition FIRST_LEVEL = Levels.milestoneOne();
+  private static final LevelDefinition FIRST_LEVEL = Levels.levelOne();
   private static final LevelDefinition SECOND_LEVEL = levelWithId("test-level-2");
 
   @Test

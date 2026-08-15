@@ -45,7 +45,7 @@ import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameRendererTest {
-  private static final LevelDefinition LEVEL = Levels.milestoneOne();
+  private static final LevelDefinition LEVEL = Levels.levelOne();
 
   @Test
   void cellColorReflectsMazeContentAndRejectedPosition() {
@@ -212,8 +212,8 @@ final class MazeGameRendererTest {
             null,
             firstBest,
             List.of(
-                new LevelProgress(Levels.milestoneOne(), true, firstBest),
-                new LevelProgress(Levels.milestoneTwo(), true, secondBest)),
+                new LevelProgress(Levels.levelOne(), true, firstBest),
+                new LevelProgress(Levels.levelTwo(), true, secondBest)),
             true,
             false,
             false);
@@ -245,8 +245,8 @@ final class MazeGameRendererTest {
             new BestResult(Duration.ofSeconds(10), 40),
             List.of(
                 new LevelProgress(
-                    Levels.milestoneOne(), true, new BestResult(Duration.ofSeconds(10), 40)),
-                new LevelProgress(Levels.milestoneTwo(), true, null)),
+                    Levels.levelOne(), true, new BestResult(Duration.ofSeconds(10), 40)),
+                new LevelProgress(Levels.levelTwo(), true, null)),
             true,
             true,
             true);
@@ -265,7 +265,7 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer =
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
-    LevelDefinition finalLevel = Levels.milestoneFive();
+    LevelDefinition finalLevel = Levels.levelFive();
     SolverRunResult result =
         new SolverRunResult(
             finalLevel.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
@@ -335,13 +335,13 @@ final class MazeGameRendererTest {
 
   @Test
   void fourthLevelBuildFeedbackTeachesToolsWithoutRevealingScoutRule() {
-    String instructions = MazeGameRenderer.buildInstructions(buildSnapshot(Levels.milestoneFour()));
+    String instructions = MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelFour()));
 
     assertEquals("Tap or drag tools; delay past 5.5s; keep a path", instructions);
     assertFalse(instructions.toLowerCase(java.util.Locale.ROOT).contains("left"));
     assertEquals(
         "Delay past 5.0s; keep a path to the cheese",
-        MazeGameRenderer.buildInstructions(buildSnapshot(Levels.milestoneOne())));
+        MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelOne())));
   }
 
   @Test
@@ -551,9 +551,9 @@ final class MazeGameRendererTest {
     BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
     List<LevelProgress> progress =
         List.of(
-            new LevelProgress(Levels.milestoneOne(), true, firstBest),
-            new LevelProgress(Levels.milestoneTwo(), true, secondBest),
-            new LevelProgress(Levels.milestoneThree(), false, null));
+            new LevelProgress(Levels.levelOne(), true, firstBest),
+            new LevelProgress(Levels.levelTwo(), true, secondBest),
+            new LevelProgress(Levels.levelThree(), false, null));
     GameRenderSnapshot selectSnapshot =
         new GameRenderSnapshot(
             GamePhase.LEVEL_SELECT,
@@ -577,9 +577,9 @@ final class MazeGameRendererTest {
     BestResult scoutBest = new BestResult(Duration.ofMillis(6500), 26);
     List<LevelProgress> completedProgress =
         List.of(
-            new LevelProgress(Levels.milestoneOne(), true, firstBest),
-            new LevelProgress(Levels.milestoneTwo(), true, secondBest),
-            new LevelProgress(Levels.milestoneThree(), true, scoutBest));
+            new LevelProgress(Levels.levelOne(), true, firstBest),
+            new LevelProgress(Levels.levelTwo(), true, secondBest),
+            new LevelProgress(Levels.levelThree(), true, scoutBest));
     renderer.render(
         selectLayout,
         new GameRenderSnapshot(
@@ -631,7 +631,7 @@ final class MazeGameRendererTest {
 
   @Test
   void scoutPresentationFollowsTheLevelThroughEveryGameplayPhase() {
-    LevelDefinition scoutLevel = Levels.milestoneThree();
+    LevelDefinition scoutLevel = Levels.levelThree();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
@@ -643,8 +643,8 @@ final class MazeGameRendererTest {
             scoutLevel.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL);
     List<LevelProgress> progress =
         List.of(
-            new LevelProgress(Levels.milestoneOne(), true, null),
-            new LevelProgress(Levels.milestoneTwo(), true, null),
+            new LevelProgress(Levels.levelOne(), true, null),
+            new LevelProgress(Levels.levelTwo(), true, null),
             new LevelProgress(scoutLevel, true, new BestResult(Duration.ofMillis(6500), 26)));
 
     renderer.render(
@@ -751,7 +751,7 @@ final class MazeGameRendererTest {
 
   @Test
   void multiSolverLevelDrawsBothCharactersAndBothMatchingGoals() {
-    LevelDefinition level = Levels.milestoneFive();
+    LevelDefinition level = Levels.levelFive();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
@@ -856,12 +856,12 @@ final class MazeGameRendererTest {
 
   private static ScreenLayout scoutLayout(GamePhase phase) {
     return MazeGameLayout.forPhase(
-        phase, 1280, 720, Levels.milestoneThree().gridSize(), true, 3, false);
+        phase, 1280, 720, Levels.levelThree().gridSize(), true, 3, false);
   }
 
   private static GameRenderSnapshot scoutSnapshot(
       GamePhase phase, SolverRunResult result, List<LevelProgress> progress) {
-    LevelDefinition level = Levels.milestoneThree();
+    LevelDefinition level = Levels.levelThree();
     return new GameRenderSnapshot(
         phase,
         level,
@@ -898,8 +898,8 @@ final class MazeGameRendererTest {
 
   private static List<LevelProgress> levelProgress(BestResult firstBestResult) {
     return List.of(
-        new LevelProgress(Levels.milestoneOne(), true, firstBestResult),
-        new LevelProgress(Levels.milestoneTwo(), false, null));
+        new LevelProgress(Levels.levelOne(), true, firstBestResult),
+        new LevelProgress(Levels.levelTwo(), false, null));
   }
 
   private static LevelDefinition paletteLevel() {
