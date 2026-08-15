@@ -66,7 +66,7 @@ final class BrowserSmokeTest {
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
   private static final GridPosition MOVED_CELL = new GridPosition(2, 3);
   private static final int STARTUP_SAMPLE_COUNT = 5;
-  private static final long MOUSE_STATUS_SIGNATURE = 5_167_671_159_018_708_644L;
+  private static final long MOUSE_STATUS_SIGNATURE = 1_484_529_530_432_220_098L;
   private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =

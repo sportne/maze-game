@@ -111,7 +111,7 @@ final class MilestoneThreeLevelDesignTest {
   @Test
   void productionLevelMatchesEveryAcceptedAuthoredParameter() {
     assertEquals("milestone-3", PROPOSED_LEVEL.id());
-    assertEquals("Milestone 3", PROPOSED_LEVEL.name());
+    assertEquals("Level 3", PROPOSED_LEVEL.name());
     assertEquals(GridSize.square(7), PROPOSED_LEVEL.gridSize());
     assertEquals(position(6, 3), PROPOSED_LEVEL.mouseStart());
     assertEquals(position(0, 3), PROPOSED_LEVEL.cheese());

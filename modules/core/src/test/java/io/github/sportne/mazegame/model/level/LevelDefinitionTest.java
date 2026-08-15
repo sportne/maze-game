@@ -20,7 +20,7 @@ final class LevelDefinitionTest {
     LevelDefinition level = Levels.milestoneOne();
 
     assertEquals("milestone-1", level.id());
-    assertEquals("Milestone 1", level.name());
+    assertEquals("Level 1", level.name());
     assertEquals(GridSize.square(5), level.gridSize());
     assertEquals(new GridPosition(4, 2), level.mouseStart());
     assertEquals(new GridPosition(0, 2), level.cheese());
@@ -30,6 +30,16 @@ final class LevelDefinitionTest {
     assertEquals(Duration.ofMillis(250), level.mouseMoveInterval());
     assertEquals(MouseBehavior.RANDOM, level.mouseBehavior());
     assertEquals(1L, level.randomSeed());
+  }
+
+  @Test
+  void catalogUsesLevelNamesWhileKeepingStablePersistenceIds() {
+    assertEquals(
+        List.of("Level 1", "Level 2", "Level 3", "Level 4", "Level 5"),
+        Levels.catalog().levels().stream().map(LevelDefinition::name).toList());
+    assertEquals(
+        List.of("milestone-1", "milestone-2", "milestone-3", "milestone-4", "milestone-5"),
+        Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
   }
 
   @Test

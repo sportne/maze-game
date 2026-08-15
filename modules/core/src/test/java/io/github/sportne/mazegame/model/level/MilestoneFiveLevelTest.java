@@ -43,7 +43,7 @@ final class MilestoneFiveLevelTest {
   @Test
   void catalogsBothMiceWithTheCheeseCenteredAndAcornDiagonal() {
     assertEquals("milestone-5", LEVEL.id());
-    assertEquals("Milestone 5", LEVEL.name());
+    assertEquals("Level 5", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(5), LEVEL.targetSolveTime());

@@ -819,7 +819,7 @@ public final class MazeGameRenderer {
     for (int index = 0; index < progress.size(); index++) {
       if (progress.get(index).levelDefinition().id().equals(snapshot.levelDefinition().id())) {
         return index == progress.size() - 1
-            ? "Final level in this milestone"
+            ? "Final available level"
             : "Pass this level to unlock the next";
       }
     }

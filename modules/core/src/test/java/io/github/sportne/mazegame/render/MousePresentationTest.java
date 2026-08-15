@@ -14,12 +14,12 @@ final class MousePresentationTest {
 
     assertEquals("Mouse", random.name());
     assertEquals("cheese", random.goalName());
-    assertEquals("Milestone 1", random.levelTitle("Milestone 1"));
+    assertEquals("Level 1", random.levelTitle("Level 1"));
     assertEquals("Scout", scout.name());
     assertEquals("acorn", scout.goalName());
-    assertEquals("Milestone 3 | Scout", scout.levelTitle("Milestone 3"));
-    assertEquals("Milestone 3 | Scout", scout.statusTitle("Milestone 3", 300.0F));
-    assertEquals("Scout", scout.statusTitle("Milestone 3", 299.0F));
+    assertEquals("Level 3 | Scout", scout.levelTitle("Level 3"));
+    assertEquals("Level 3 | Scout", scout.statusTitle("Level 3", 300.0F));
+    assertEquals("Scout", scout.statusTitle("Level 3", 299.0F));
   }
 
   @Test

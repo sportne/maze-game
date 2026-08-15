@@ -33,7 +33,7 @@ final class MilestoneFourLevelTest {
     assertEquals(
         List.of("milestone-1", "milestone-2", "milestone-3", "milestone-4", "milestone-5"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
-    assertEquals("Milestone 4", LEVEL.name());
+    assertEquals("Level 4", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
     assertEquals(position(6, 3), LEVEL.mouseStart());
     assertEquals(position(0, 3), LEVEL.cheese());

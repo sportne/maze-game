@@ -18,7 +18,7 @@ public final class Levels {
   private static final LevelDefinition MILESTONE_ONE =
       new LevelDefinition(
           "milestone-1",
-          "Milestone 1",
+          "Level 1",
           GridSize.square(5),
           new GridPosition(4, 2),
           new GridPosition(0, 2),
@@ -34,7 +34,7 @@ public final class Levels {
   private static final LevelDefinition MILESTONE_TWO =
       new LevelDefinition(
           "milestone-2",
-          "Milestone 2",
+          "Level 2",
           GridSize.square(7),
           new GridPosition(6, 3),
           new GridPosition(0, 3),
@@ -50,7 +50,7 @@ public final class Levels {
   private static final LevelDefinition MILESTONE_THREE =
       new LevelDefinition(
           "milestone-3",
-          "Milestone 3",
+          "Level 3",
           GridSize.square(7),
           new GridPosition(6, 3),
           new GridPosition(0, 3),
@@ -66,7 +66,7 @@ public final class Levels {
   private static final LevelDefinition MILESTONE_FOUR =
       new LevelDefinition(
           "milestone-4",
-          "Milestone 4",
+          "Level 4",
           GridSize.square(7),
           new GridPosition(6, 3),
           new GridPosition(0, 3),
@@ -84,7 +84,7 @@ public final class Levels {
   private static final LevelDefinition MILESTONE_FIVE =
       new LevelDefinition(
           "milestone-5",
-          "Milestone 5",
+          "Level 5",
           GridSize.square(7),
           new GridPosition(6, 0),
           new GridPosition(3, 3),

@@ -64,7 +64,7 @@ final class MilestoneTwoLevelDesignTest {
   @Test
   void recordsTheAcceptedAuthoredParameters() {
     assertEquals("milestone-2", LEVEL.id());
-    assertEquals("Milestone 2", LEVEL.name());
+    assertEquals("Level 2", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
     assertEquals(new GridPosition(6, 3), LEVEL.mouseStart());
     assertEquals(new GridPosition(0, 3), LEVEL.cheese());

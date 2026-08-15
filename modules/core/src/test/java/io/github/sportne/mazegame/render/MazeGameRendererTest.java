@@ -160,8 +160,8 @@ final class MazeGameRendererTest {
     assertTrue(font.capturedText().contains("Settings"));
     assertTrue(font.capturedText().contains("Quit"));
     assertTrue(font.capturedText().contains("Select Level"));
-    assertTrue(font.capturedText().contains("Milestone 1"));
-    assertTrue(font.capturedText().contains("Milestone 2"));
+    assertTrue(font.capturedText().contains("Level 1"));
+    assertTrue(font.capturedText().contains("Level 2"));
     assertTrue(font.capturedText().contains("Best: --"));
     assertTrue(font.capturedText().contains("Locked"));
     assertTrue(font.capturedText().contains("Audio: On"));
@@ -254,6 +254,44 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void labelsTheLastCatalogEntryAsTheFinalAvailableLevel() {
+    RecordingFont font = recordingFont();
+    MazeGameRenderer renderer =
+        renderer(
+            allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
+    LevelDefinition finalLevel = Levels.milestoneFive();
+    MouseRunResult result =
+        new MouseRunResult(
+            finalLevel.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    List<LevelProgress> progress =
+        Levels.catalog().levels().stream()
+            .map(level -> new LevelProgress(level, true, null))
+            .toList();
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.RESULT,
+            finalLevel,
+            MazeState.empty(finalLevel),
+            0.0F,
+            null,
+            0.0F,
+            result,
+            null,
+            progress,
+            true,
+            true,
+            false);
+    ScreenLayout resultLayout =
+        MazeGameLayout.forPhase(
+            GamePhase.RESULT, 1280, 720, finalLevel.gridSize(), true, progress.size(), false);
+
+    renderer.render(resultLayout, snapshot);
+
+    assertTrue(font.capturedText().contains("Final available level"));
+    assertFalse(font.capturedText().stream().anyMatch(text -> text.contains("milestone")));
+  }
+
+  @Test
   void rendersBuildAndResultScreensWithExpectedLabels() {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
@@ -273,13 +311,13 @@ final class MazeGameRendererTest {
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, result));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, failedResult));
 
-    assertTrue(font.capturedText().contains("Milestone 1"));
+    assertTrue(font.capturedText().contains("Level 1"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
     assertTrue(font.capturedText().contains("Delay past 5.0s; keep a path to the cheese"));
     assertTrue(font.capturedText().contains("Start Mouse"));
-    assertTrue(font.capturedText().contains("Milestone 1 | 7.5s | >5.0s"));
-    assertTrue(font.capturedText().contains("Milestone 1 | Success | >5.0s"));
-    assertTrue(font.capturedText().contains("Milestone 1 | Failed | >5.0s"));
+    assertTrue(font.capturedText().contains("Level 1 | 7.5s | >5.0s"));
+    assertTrue(font.capturedText().contains("Level 1 | Success | >5.0s"));
+    assertTrue(font.capturedText().contains("Level 1 | Failed | >5.0s"));
     assertTrue(font.capturedText().contains("Time: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Best: 10.00s  Moves: 40"));
     assertTrue(font.capturedText().contains("Retry"));
