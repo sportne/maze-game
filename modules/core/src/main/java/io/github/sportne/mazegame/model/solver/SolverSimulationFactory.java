@@ -29,6 +29,7 @@ public final class SolverSimulationFactory {
     return switch (solver.behavior()) {
       case RANDOM -> new RandomSolverSimulation(mazeState, solver);
       case LEFT_PRIORITY -> new ScoutSolverSimulation(mazeState, solver);
+      case LEAST_VISITED -> new TrackerSolverSimulation(mazeState, solver);
     };
   }
 }

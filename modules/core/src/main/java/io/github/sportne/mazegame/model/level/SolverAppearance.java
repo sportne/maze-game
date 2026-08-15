@@ -6,5 +6,8 @@ public enum SolverAppearance {
   CLASSIC_MOUSE,
 
   /** The squirrel artwork used by Scout. */
-  SCOUT_SQUIRREL
+  SCOUT_SQUIRREL,
+
+  /** The raccoon artwork used by Tracker. */
+  TRACKER_RACCOON
 }

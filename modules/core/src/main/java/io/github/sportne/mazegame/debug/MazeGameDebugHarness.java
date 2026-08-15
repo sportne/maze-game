@@ -351,7 +351,8 @@ public final class MazeGameDebugHarness {
         game.bestResult(),
         game.resultPassed(),
         game.hasNextLevel(),
-        game.paletteState());
+        game.paletteState(),
+        game.solverDecisionStates());
   }
 
   /**

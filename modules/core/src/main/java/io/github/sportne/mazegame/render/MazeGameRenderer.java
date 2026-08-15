@@ -102,11 +102,17 @@ public final class MazeGameRenderer {
   /** Cropped acorn sprite drawn as Scout's endpoint goal. */
   private final TextureRegion acornSprite;
 
+  /** Cropped trash-can sprite drawn as Tracker's endpoint goal. */
+  private final TextureRegion trashCanSprite;
+
   /** Directional classic-mouse sprites drawn for Random solver appearances. */
   private final DirectionalSpriteSet solverSprites;
 
   /** Directional squirrel sprites drawn for Scout appearances. */
   private final DirectionalSpriteSet scoutSprites;
+
+  /** Directional raccoon sprites drawn for Tracker appearances. */
+  private final DirectionalSpriteSet trackerSprites;
 
   /**
    * Creates a renderer around libGDX drawing resources.
@@ -116,9 +122,34 @@ public final class MazeGameRenderer {
    * @param font bitmap font
    * @param cheeseSprite cheese sprite region
    * @param acornSprite acorn sprite region
+   * @param trashCanSprite trash-can sprite region
    * @param solverSprites classic-mouse directional frames
    * @param scoutSprites Scout squirrel directional frames
+   * @param trackerSprites Tracker raccoon directional frames
    */
+  public MazeGameRenderer(
+      SpriteBatch spriteBatch,
+      ShapeRenderer shapeRenderer,
+      BitmapFont font,
+      TextureRegion cheeseSprite,
+      TextureRegion acornSprite,
+      TextureRegion trashCanSprite,
+      DirectionalSpriteSet solverSprites,
+      DirectionalSpriteSet scoutSprites,
+      DirectionalSpriteSet trackerSprites) {
+    this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
+    this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
+    this.font = Objects.requireNonNull(font, "font");
+    this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
+    this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
+    this.trashCanSprite =
+        new TextureRegion(Objects.requireNonNull(trashCanSprite, "trashCanSprite"));
+    this.solverSprites = Objects.requireNonNull(solverSprites, "solverSprites");
+    this.scoutSprites = Objects.requireNonNull(scoutSprites, "scoutSprites");
+    this.trackerSprites = Objects.requireNonNull(trackerSprites, "trackerSprites");
+  }
+
+  /** Creates a compatibility renderer without distinct Tracker artwork. */
   public MazeGameRenderer(
       SpriteBatch spriteBatch,
       ShapeRenderer shapeRenderer,
@@ -127,13 +158,16 @@ public final class MazeGameRenderer {
       TextureRegion acornSprite,
       DirectionalSpriteSet solverSprites,
       DirectionalSpriteSet scoutSprites) {
-    this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
-    this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
-    this.font = Objects.requireNonNull(font, "font");
-    this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
-    this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
-    this.solverSprites = Objects.requireNonNull(solverSprites, "solverSprites");
-    this.scoutSprites = Objects.requireNonNull(scoutSprites, "scoutSprites");
+    this(
+        spriteBatch,
+        shapeRenderer,
+        font,
+        cheeseSprite,
+        acornSprite,
+        acornSprite,
+        solverSprites,
+        scoutSprites,
+        scoutSprites);
   }
 
   /** Creates a compatibility renderer that uses one frame for every direction. */
@@ -535,6 +569,7 @@ public final class MazeGameRenderer {
         switch (solver.appearance()) {
           case CLASSIC_MOUSE -> solverSprites;
           case SCOUT_SQUIRREL -> scoutSprites;
+          case TRACKER_RACCOON -> trackerSprites;
         };
     return lastDirection.map(sprites::sprite).orElseGet(sprites::defaultSprite);
   }
@@ -546,6 +581,7 @@ public final class MazeGameRenderer {
           switch (solver.goalType()) {
             case CHEESE -> cheeseSprite;
             case ACORN -> acornSprite;
+            case TRASH_CAN -> trashCanSprite;
           };
       drawSpriteInCell(grid, levelDefinition, solver.goal(), goalSprite);
     }

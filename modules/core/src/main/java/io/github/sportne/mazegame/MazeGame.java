@@ -31,6 +31,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverDecisionState;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.persistence.LibGdxBestResultStore;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
@@ -105,11 +106,17 @@ public final class MazeGame extends ApplicationAdapter {
   /** Cropped acorn sprite drawn as Scout's endpoint goal. */
   private TextureRegion acornSprite;
 
+  /** Cropped trash-can sprite drawn as Tracker's endpoint goal. */
+  private TextureRegion trashCanSprite;
+
   /** Directional classic-mouse sprites drawn for Random solvers. */
   private DirectionalSpriteSet solverSprites;
 
   /** Directional squirrel sprites drawn when a level selects Scout's appearance. */
   private DirectionalSpriteSet scoutSprites;
+
+  /** Directional raccoon sprites drawn when a level selects Tracker's appearance. */
+  private DirectionalSpriteSet trackerSprites;
 
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
@@ -302,8 +309,10 @@ public final class MazeGame extends ApplicationAdapter {
     goalSpriteSheet = loadNearestTexture(goalSpriteSheetFile());
     cheeseSprite = GameSpriteSheets.cheese(goalSpriteSheet);
     acornSprite = GameSpriteSheets.acorn(goalSpriteSheet);
+    trashCanSprite = GameSpriteSheets.trashCan(goalSpriteSheet);
     solverSprites = GameSpriteSheets.randomSolverSprites(classicMouseSpriteSheet);
     scoutSprites = GameSpriteSheets.scoutSquirrelSprites(basicCharacterSpriteSheet);
+    trackerSprites = GameSpriteSheets.trackerRaccoonSprites(basicCharacterSpriteSheet);
     renderer =
         new MazeGameRenderer(
             spriteBatch,
@@ -311,8 +320,10 @@ public final class MazeGame extends ApplicationAdapter {
             font,
             cheeseSprite,
             acornSprite,
+            trashCanSprite,
             solverSprites,
-            scoutSprites);
+            scoutSprites,
+            trackerSprites);
     if (!runtimeConfiguration.audioRequiresUserGesture()) {
       startBackgroundMusic();
     }
@@ -385,8 +396,10 @@ public final class MazeGame extends ApplicationAdapter {
     goalSpriteSheet = disposeTexture(goalSpriteSheet);
     cheeseSprite = null;
     acornSprite = null;
+    trashCanSprite = null;
     solverSprites = null;
     scoutSprites = null;
+    trackerSprites = null;
     renderer = null;
     if (shapeRenderer != null) {
       shapeRenderer.dispose();
@@ -451,6 +464,11 @@ public final class MazeGame extends ApplicationAdapter {
   /** Returns the latest results for every solver in authored order. */
   public List<SolverRunResult> solverRunResults() {
     return session.solverRunResults();
+  }
+
+  /** Returns immutable decision memory for every active solver in authored order. */
+  public List<SolverDecisionState> solverDecisionStates() {
+    return session.solverDecisionStates();
   }
 
   /**

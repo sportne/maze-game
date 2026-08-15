@@ -14,6 +14,9 @@ public final class GameSpriteSheets {
   /** Row containing the basic squirrel in the basic-character sheet. */
   private static final int SQUIRREL_ROW = 3;
 
+  /** Row containing the basic raccoon in the basic-character sheet. */
+  private static final int RACCOON_ROW = 2;
+
   /** Prevents instantiation of this static sprite helper. */
   private GameSpriteSheets() {}
 
@@ -35,6 +38,11 @@ public final class GameSpriteSheets {
    */
   public static TextureRegion acorn(Texture goals) {
     return frame(goals, 4, 0);
+  }
+
+  /** Selects the trash can used as Tracker's goal. */
+  public static TextureRegion trashCan(Texture goals) {
+    return frame(goals, 3, 0);
   }
 
   /**
@@ -65,6 +73,16 @@ public final class GameSpriteSheets {
   /** Returns every directional frame for the basic squirrel used by Scout behavior. */
   public static DirectionalSpriteSet scoutSquirrelSprites(Texture basicCharacters) {
     return directionalFrames(basicCharacters, SQUIRREL_ROW);
+  }
+
+  /** Selects the right-facing basic raccoon used by Tracker behavior. */
+  public static TextureRegion trackerRaccoon(Texture basicCharacters) {
+    return trackerRaccoonSprites(basicCharacters).defaultSprite();
+  }
+
+  /** Returns every directional frame for the basic raccoon used by Tracker behavior. */
+  public static DirectionalSpriteSet trackerRaccoonSprites(Texture basicCharacters) {
+    return directionalFrames(basicCharacters, RACCOON_ROW);
   }
 
   private static DirectionalSpriteSet directionalFrames(Texture sheet, int row) {

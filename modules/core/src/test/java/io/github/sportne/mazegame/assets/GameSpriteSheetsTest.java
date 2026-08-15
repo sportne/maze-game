@@ -19,6 +19,11 @@ final class GameSpriteSheetsTest {
   }
 
   @Test
+  void trashCanUsesTheFourthGoalFrame() {
+    assertRegion(GameSpriteSheets.trashCan(new TestTexture()), 384, 0);
+  }
+
+  @Test
   void randomBehaviorUsesTheRightFacingClassicMouse() {
     assertRegion(GameSpriteSheets.randomSolver(new TestTexture()), 384, 0);
   }
@@ -26,6 +31,11 @@ final class GameSpriteSheetsTest {
   @Test
   void scoutBehaviorUsesTheRightFacingBasicSquirrel() {
     assertRegion(GameSpriteSheets.scoutSquirrel(new TestTexture()), 384, 384);
+  }
+
+  @Test
+  void trackerBehaviorUsesTheRightFacingBasicRaccoon() {
+    assertRegion(GameSpriteSheets.trackerRaccoon(new TestTexture()), 384, 256);
   }
 
   @Test
@@ -47,6 +57,16 @@ final class GameSpriteSheetsTest {
     assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 384);
     assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 384);
     assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 384);
+  }
+
+  @Test
+  void trackerBehaviorMapsGridDirectionsToBasicRaccoonColumns() {
+    DirectionalSpriteSet sprites = GameSpriteSheets.trackerRaccoonSprites(new TestTexture());
+
+    assertRegion(sprites.sprite(CardinalDirection.SOUTH), 0, 256);
+    assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 256);
+    assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 256);
+    assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 256);
   }
 
   private static void assertRegion(TextureRegion region, int expectedX, int expectedY) {

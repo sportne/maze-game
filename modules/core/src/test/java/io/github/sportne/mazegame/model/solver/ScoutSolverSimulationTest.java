@@ -200,9 +200,11 @@ final class ScoutSolverSimulationTest {
   }
 
   @Test
-  void solverBehaviorsRemainAClosedTwoValueSet() {
+  void solverBehaviorsRemainAClosedThreeValueSet() {
     assertArrayEquals(
-        new SolverBehavior[] {SolverBehavior.RANDOM, SolverBehavior.LEFT_PRIORITY},
+        new SolverBehavior[] {
+          SolverBehavior.RANDOM, SolverBehavior.LEFT_PRIORITY, SolverBehavior.LEAST_VISITED
+        },
         SolverBehavior.values());
   }
 

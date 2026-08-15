@@ -10,6 +10,7 @@ import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.model.solver.CardinalDirection;
+import io.github.sportne.mazegame.model.solver.SolverDecisionState;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.model.solver.SolverSimulation;
@@ -251,6 +252,11 @@ public final class GameSession {
   /** Returns each active solver's latest movement direction in authored order. */
   public List<Optional<CardinalDirection>> solverDirections() {
     return solverSimulations.stream().map(SolverSimulation::lastDirection).toList();
+  }
+
+  /** Returns each active solver's immutable decision memory in authored order. */
+  public List<SolverDecisionState> solverDecisionStates() {
+    return solverSimulations.stream().map(SolverSimulation::decisionState).toList();
   }
 
   /**

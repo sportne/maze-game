@@ -9,7 +9,10 @@ import io.github.sportne.mazegame.model.cell.CellSupply;
 import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import org.junit.jupiter.api.Test;
 
 final class BrowserBuildGestureFixtureTest {
@@ -52,5 +55,8 @@ final class BrowserBuildGestureFixtureTest {
     assertEquals(CellSupply.finite(2), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
     assertEquals(FixedCellType.WALL, level.fixedCellAt(new GridPosition(1, 0)).orElseThrow());
     assertEquals(FixedCellType.SLOW_FLOOR, level.fixedCellAt(new GridPosition(1, 4)).orElseThrow());
+    assertEquals(SolverBehavior.LEAST_VISITED, level.primarySolver().behavior());
+    assertEquals(SolverAppearance.TRACKER_RACCOON, level.primarySolver().appearance());
+    assertEquals(GoalType.TRASH_CAN, level.primarySolver().goalType());
   }
 }

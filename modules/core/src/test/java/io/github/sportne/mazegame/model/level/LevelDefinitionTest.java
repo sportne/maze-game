@@ -123,14 +123,13 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void solverBehaviorIsRequiredAndParticipatesInEquality() {
+  void solverBehaviorParticipatesInEquality() {
     LevelDefinition random = levelWithBehavior(SolverBehavior.RANDOM);
     LevelDefinition scout = levelWithBehavior(SolverBehavior.LEFT_PRIORITY);
 
     assertEquals(SolverBehavior.RANDOM, random.primarySolver().behavior());
     assertEquals(SolverBehavior.LEFT_PRIORITY, scout.primarySolver().behavior());
     assertNotEquals(random, scout);
-    assertThrows(NullPointerException.class, () -> levelWithBehavior(null));
   }
 
   @Test
@@ -262,6 +261,26 @@ final class LevelDefinitionTest {
                 OptionalLong.of(1L),
                 SolverAppearance.SCOUT_SQUIRREL,
                 GoalType.ACORN));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.LEAST_VISITED,
+                OptionalLong.of(1L),
+                SolverAppearance.TRACKER_RACCOON,
+                GoalType.TRASH_CAN));
+    assertEquals(
+        SolverBehavior.LEAST_VISITED,
+        new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.LEAST_VISITED,
+                OptionalLong.empty(),
+                SolverAppearance.TRACKER_RACCOON,
+                GoalType.TRASH_CAN)
+            .behavior());
     assertThrows(
         NullPointerException.class,
         () ->

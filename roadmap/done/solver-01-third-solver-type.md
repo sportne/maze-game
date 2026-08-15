@@ -1,6 +1,6 @@
 # SOLVER-01: Design and Deliver a Third Solver Type
 
-Status: proposed
+Status: complete
 
 Depends on: completion of the Milestone 4 release baseline
 

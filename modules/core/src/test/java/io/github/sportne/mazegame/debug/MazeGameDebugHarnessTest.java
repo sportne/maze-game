@@ -9,8 +9,10 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverDecisionState;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -98,6 +100,33 @@ final class MazeGameDebugHarnessTest {
             java.util.List.of());
 
     assertTrue(snapshot.paletteState().isEmpty());
+  }
+
+  @Test
+  void canonicalSnapshotDefensivelyCopiesSolverDecisionMemory() {
+    MazeGameDebugSnapshot current = new MazeGameDebugHarness().snapshot();
+    java.util.List<SolverDecisionState> mutable =
+        new java.util.ArrayList<>(
+            java.util.List.of(new SolverDecisionState(Map.of(new GridPosition(4, 2), 1))));
+
+    MazeGameDebugSnapshot snapshot =
+        new MazeGameDebugSnapshot(
+            current.gamePhase(),
+            current.mazeState(),
+            current.buildTimeRemainingSeconds(),
+            current.rejectedPosition(),
+            current.solverRunResult(),
+            current.bestResult(),
+            current.resultPassed(),
+            current.hasNextLevel(),
+            current.paletteState(),
+            mutable);
+    mutable.clear();
+
+    assertEquals(1, snapshot.solverDecisionStates().size());
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> snapshot.solverDecisionStates().add(SolverDecisionState.empty()));
   }
 
   @Test

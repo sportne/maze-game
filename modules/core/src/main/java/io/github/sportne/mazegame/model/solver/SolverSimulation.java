@@ -28,4 +28,9 @@ public interface SolverSimulation {
   default Optional<CardinalDirection> lastDirection() {
     return Optional.empty();
   }
+
+  /** Returns immutable behavior decision memory for replay and debug inspection. */
+  default SolverDecisionState decisionState() {
+    return SolverDecisionState.empty();
+  }
 }

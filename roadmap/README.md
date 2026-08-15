@@ -122,8 +122,10 @@ Status: complete.
 - [GRID-01: Add fixed authored grid cells](done/grid-01-fixed-authored-cells.md) is complete. The
   accepted [fixed-cell contract](../docs/fixed-authored-cells.md) keeps level-owned geometry separate
   from editable player inventory.
-- [SOLVER-01: Design and deliver a third solver type](solver-01-third-solver-type.md) selects,
+- [SOLVER-01: Design and deliver a third solver type](done/solver-01-third-solver-type.md) selects,
   specifies, implements, and presents one behavior distinct from Random and Scout.
+- [SOLVER-02: Design and deliver a Tracker level](solver-02-tracker-level.md) is the follow-up
+  authored-level and balancing task produced by SOLVER-01.
 
 ## Deferred Ideas
 
@@ -133,7 +135,7 @@ milestone, while completed foundations are not yet used by a released level:
 - Grid progression beyond the five authored levels.
 - [Cell types beyond Wall and Slow Floor](gameplay-01-additional-cell-types.md).
 - [Fixed authored grid cells](done/grid-01-fixed-authored-cells.md).
-- [A third solver type](solver-01-third-solver-type.md).
+- [A third solver type](done/solver-01-third-solver-type.md).
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and solver behaviors.
 

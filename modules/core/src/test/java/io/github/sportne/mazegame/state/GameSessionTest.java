@@ -12,12 +12,16 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.model.solver.CardinalDirection;
+import io.github.sportne.mazegame.model.solver.SolverDecisionState;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.time.Duration;
@@ -26,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -190,6 +195,82 @@ final class GameSessionTest {
     assertEquals(List.of(Optional.of(CardinalDirection.NORTH)), session.solverDirections());
     session.retryLevel();
     assertTrue(session.solverDirections().isEmpty());
+  }
+
+  @Test
+  void exposesTrackerDecisionMemoryAndRecreatesItForReplay() {
+    LevelDefinition trackerLevel =
+        singleSolverLevel(
+            "tracker-session",
+            "Tracker Session",
+            GridSize.square(3),
+            new GridPosition(2, 1),
+            new GridPosition(0, 1),
+            Duration.ofSeconds(1),
+            Duration.ofMillis(250),
+            Duration.ofSeconds(2),
+            Duration.ofMillis(250),
+            PlaceableCellSupply.unlimitedWallsOnly(),
+            SolverBehavior.LEAST_VISITED,
+            1L);
+    GameSession session = sessionFor(trackerLevel);
+
+    assertTrue(session.solverDecisionStates().isEmpty());
+    session.startRun();
+    assertEquals(
+        List.of(new SolverDecisionState(Map.of(trackerLevel.primarySolver().start(), 1))),
+        session.solverDecisionStates());
+    session.updateSolverRun(0.25F);
+    List<SolverDecisionState> firstDecision = session.solverDecisionStates();
+    session.updateSolverRun(0.25F);
+    session.replayRun();
+    session.updateSolverRun(0.25F);
+
+    assertEquals(firstDecision, session.solverDecisionStates());
+  }
+
+  @Test
+  void trackerParticipatesInFirstGoalMultiSolverStopping() {
+    LevelSolver random =
+        new LevelSolver(
+            new GridPosition(2, 0),
+            new GridPosition(0, 0),
+            SolverBehavior.RANDOM,
+            OptionalLong.of(1L),
+            SolverAppearance.CLASSIC_MOUSE,
+            GoalType.CHEESE);
+    LevelSolver tracker =
+        new LevelSolver(
+            new GridPosition(2, 2),
+            new GridPosition(1, 2),
+            SolverBehavior.LEAST_VISITED,
+            OptionalLong.empty(),
+            SolverAppearance.TRACKER_RACCOON,
+            GoalType.TRASH_CAN);
+    LevelDefinition level =
+        new LevelDefinition(
+            "tracker-multi",
+            "Tracker Multi",
+            GridSize.square(3),
+            Duration.ofSeconds(1),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(2),
+            Duration.ofMillis(250),
+            PlaceableCellSupply.unlimitedWallsOnly(),
+            List.of(random, tracker));
+    GameSession session = sessionFor(level);
+
+    session.startRun();
+    session.updateSolverRun(1.0F);
+
+    assertEquals(GamePhase.RESULT, session.gamePhase());
+    assertEquals(SolverRunStatus.RUNNING, session.solverRunResults().get(0).status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, session.solverRunResults().get(1).status());
+    assertEquals(Duration.ofMillis(250), session.solverRunResults().get(0).elapsedTime());
+    assertEquals(Duration.ofMillis(250), session.solverRunResults().get(1).elapsedTime());
+    assertEquals(
+        new SolverDecisionState(Map.of(tracker.start(), 1, tracker.goal(), 1)),
+        session.solverDecisionStates().get(1));
   }
 
   @Test
@@ -752,6 +833,13 @@ final class GameSessionTest {
   private static GameSession startedSession() {
     GameSession session = new GameSession();
     session.startLevel(Levels.levelOne().id());
+    return session;
+  }
+
+  private static GameSession sessionFor(LevelDefinition level) {
+    GameSession session =
+        new GameSession(new LevelCatalog(List.of(level)), level.id(), BestResultStore.none());
+    session.startLevel(level.id());
     return session;
   }
 

@@ -804,6 +804,33 @@ final class MazeGameRendererTest {
     assertFalse(spriteBatch.drawnRegionXs().contains(10));
     assertTrue(spriteBatch.drawnRegionXs().contains(2));
     assertFalse(spriteBatch.drawnRegionXs().contains(1));
+
+    LevelDefinition trackerLevel = trackerLevel();
+    SolverRunResult trackerResult =
+        new SolverRunResult(
+            trackerLevel.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
+    spriteBatch.drawnRegionXs().clear();
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.SOLVER_RUNNING, 1280, 720, trackerLevel.gridSize(), true, 1, false),
+        snapshot(
+            GamePhase.SOLVER_RUNNING,
+            trackerLevel,
+            MazeState.empty(trackerLevel),
+            30.0F,
+            null,
+            0.0F,
+            trackerResult,
+            null,
+            List.of(),
+            true,
+            false,
+            false));
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(30));
+    assertFalse(spriteBatch.drawnRegionXs().contains(10));
+    assertFalse(spriteBatch.drawnRegionXs().contains(20));
+    assertTrue(spriteBatch.drawnRegionXs().contains(3));
   }
 
   @Test
@@ -850,7 +877,7 @@ final class MazeGameRendererTest {
 
   @Test
   void solverSpritesFollowEachCharactersMostRecentMovementDirection() {
-    LevelDefinition level = Levels.levelFive();
+    LevelDefinition level = threeSolverLevel();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     MazeGameRenderer renderer =
         new MazeGameRenderer(
@@ -859,14 +886,22 @@ final class MazeGameRendererTest {
             recordingFont(),
             sprite(1),
             sprite(2),
+            sprite(3),
             directionalSprites(100),
-            directionalSprites(200));
+            directionalSprites(200),
+            directionalSprites(300));
     List<SolverRunResult> results =
         List.of(
             new SolverRunResult(
                 level.solvers().get(0).start(), Duration.ZERO, 1, SolverRunStatus.RUNNING),
             new SolverRunResult(
                 level.solvers().get(1).start(), Duration.ZERO, 1, SolverRunStatus.RUNNING));
+    results =
+        List.of(
+            results.get(0),
+            results.get(1),
+            new SolverRunResult(
+                level.solvers().get(2).start(), Duration.ZERO, 1, SolverRunStatus.RUNNING));
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
             GamePhase.SOLVER_RUNNING,
@@ -884,7 +919,10 @@ final class MazeGameRendererTest {
             false,
             false,
             results,
-            List.of(Optional.of(CardinalDirection.NORTH), Optional.of(CardinalDirection.WEST)));
+            List.of(
+                Optional.of(CardinalDirection.NORTH),
+                Optional.of(CardinalDirection.WEST),
+                Optional.of(CardinalDirection.EAST)));
 
     renderer.render(
         MazeGameLayout.forPhase(
@@ -893,8 +931,10 @@ final class MazeGameRendererTest {
 
     assertTrue(spriteBatch.drawnRegionXs().contains(110));
     assertTrue(spriteBatch.drawnRegionXs().contains(220));
+    assertTrue(spriteBatch.drawnRegionXs().contains(330));
     assertFalse(spriteBatch.drawnRegionXs().contains(130));
     assertFalse(spriteBatch.drawnRegionXs().contains(230));
+    assertFalse(spriteBatch.drawnRegionXs().contains(300));
   }
 
   @Test
@@ -948,12 +988,11 @@ final class MazeGameRendererTest {
     GameRenderSnapshot snapshot = resultSnapshot(level, results);
 
     assertEquals(
-        "Level 1 | Solver 1 + Scout + Solver 2",
+        "Level 1 | Solver + Scout + Tracker",
         MazeGameRenderer.levelTitle(level, false, Float.MAX_VALUE));
-    assertEquals("Solver 1 + Scout + Solver 2", MazeGameRenderer.levelTitle(level, true, 300.0F));
+    assertEquals("Solver + Scout + Tracker", MazeGameRenderer.levelTitle(level, true, 300.0F));
     assertEquals(
-        "Solver 1 1.00s/4  Scout 2.00s/8  Solver 2 3.00s/12",
-        MazeGameRenderer.resultStats(snapshot));
+        "Solver 1.00s/4  Scout 2.00s/8  Tracker 3.00s/12", MazeGameRenderer.resultStats(snapshot));
     assertThrows(
         IllegalArgumentException.class,
         () -> MazeGameRenderer.resultStats(resultSnapshot(level, results.subList(0, 2))));
@@ -977,7 +1016,15 @@ final class MazeGameRendererTest {
   private static MazeGameRenderer renderer(
       RecordingSpriteBatch spriteBatch, RecordingShapeRenderer shapeRenderer, RecordingFont font) {
     return new MazeGameRenderer(
-        spriteBatch, shapeRenderer, font, sprite(1), sprite(2), sprite(10), sprite(20));
+        spriteBatch,
+        shapeRenderer,
+        font,
+        sprite(1),
+        sprite(2),
+        sprite(3),
+        DirectionalSpriteSet.single(sprite(10)),
+        DirectionalSpriteSet.single(sprite(20)),
+        DirectionalSpriteSet.single(sprite(30)));
   }
 
   private static TextureRegion sprite(int regionX) {
@@ -1090,10 +1137,30 @@ final class MazeGameRendererTest {
             new LevelSolver(
                 new GridPosition(4, 4),
                 new GridPosition(0, 4),
-                SolverBehavior.RANDOM,
-                OptionalLong.of(2L),
-                SolverAppearance.CLASSIC_MOUSE,
-                GoalType.CHEESE)));
+                SolverBehavior.LEAST_VISITED,
+                OptionalLong.empty(),
+                SolverAppearance.TRACKER_RACCOON,
+                GoalType.TRASH_CAN)));
+  }
+
+  private static LevelDefinition trackerLevel() {
+    return new LevelDefinition(
+        LEVEL.id(),
+        "Tracker Fixture",
+        LEVEL.gridSize(),
+        LEVEL.buildTime(),
+        LEVEL.targetSolveTime(),
+        LEVEL.maximumSolveTime(),
+        LEVEL.solverMoveInterval(),
+        LEVEL.placeableCellSupplies(),
+        List.of(
+            new LevelSolver(
+                LEVEL.primarySolver().start(),
+                LEVEL.primarySolver().goal(),
+                SolverBehavior.LEAST_VISITED,
+                OptionalLong.empty(),
+                SolverAppearance.TRACKER_RACCOON,
+                GoalType.TRASH_CAN)));
   }
 
   private static GameRenderSnapshot resultSnapshot(

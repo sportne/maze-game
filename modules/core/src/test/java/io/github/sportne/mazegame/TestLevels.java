@@ -30,15 +30,22 @@ public final class TestLevels {
       List<PlaceableCellSupply> supplies,
       SolverBehavior behavior,
       long randomSeed) {
-    boolean random = behavior == SolverBehavior.RANDOM;
+    OptionalLong randomSeedValue =
+        behavior == SolverBehavior.RANDOM ? OptionalLong.of(randomSeed) : OptionalLong.empty();
+    SolverAppearance appearance =
+        switch (behavior) {
+          case RANDOM -> SolverAppearance.CLASSIC_MOUSE;
+          case LEFT_PRIORITY -> SolverAppearance.SCOUT_SQUIRREL;
+          case LEAST_VISITED -> SolverAppearance.TRACKER_RACCOON;
+        };
+    GoalType goalType =
+        switch (behavior) {
+          case RANDOM -> GoalType.CHEESE;
+          case LEFT_PRIORITY -> GoalType.ACORN;
+          case LEAST_VISITED -> GoalType.TRASH_CAN;
+        };
     LevelSolver solver =
-        new LevelSolver(
-            start,
-            goal,
-            behavior,
-            random ? OptionalLong.of(randomSeed) : OptionalLong.empty(),
-            random ? SolverAppearance.CLASSIC_MOUSE : SolverAppearance.SCOUT_SQUIRREL,
-            random ? GoalType.CHEESE : GoalType.ACORN);
+        new LevelSolver(start, goal, behavior, randomSeedValue, appearance, goalType);
     return new LevelDefinition(
         id,
         name,

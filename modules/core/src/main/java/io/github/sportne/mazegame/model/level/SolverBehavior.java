@@ -6,5 +6,8 @@ public enum SolverBehavior {
   RANDOM,
 
   /** Deterministic preference for left, straight, right, then reverse. */
-  LEFT_PRIORITY
+  LEFT_PRIORITY,
+
+  /** Deterministic preference for least-visited cells, goal distance, then absolute direction. */
+  LEAST_VISITED
 }

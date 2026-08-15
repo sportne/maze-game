@@ -6,5 +6,8 @@ public enum GoalType {
   CHEESE,
 
   /** Acorn goal artwork. */
-  ACORN
+  ACORN,
+
+  /** Trash-can goal artwork. */
+  TRASH_CAN
 }

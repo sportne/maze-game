@@ -33,6 +33,15 @@ final class SolverSimulationFactoryTest {
   }
 
   @Test
+  void createsTrackerSimulationForLeastVisitedBehavior() {
+    LevelDefinition level = withBehavior(Levels.levelOne(), SolverBehavior.LEAST_VISITED);
+
+    SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level));
+
+    assertInstanceOf(TrackerSolverSimulation.class, simulation);
+  }
+
+  @Test
   void requiresAMaze() {
     assertThrows(NullPointerException.class, () -> SolverSimulationFactory.create(null));
   }

@@ -465,10 +465,10 @@ final class BrowserSmokeTest {
         new LevelSolver(
             new GridPosition(4, 2),
             new GridPosition(0, 2),
-            SolverBehavior.RANDOM,
-            OptionalLong.of(1L),
-            SolverAppearance.CLASSIC_MOUSE,
-            GoalType.CHEESE);
+            SolverBehavior.LEAST_VISITED,
+            OptionalLong.empty(),
+            SolverAppearance.TRACKER_RACCOON,
+            GoalType.TRASH_CAN);
     return new LevelDefinition(
         "browser-build-gesture-fixture",
         "Build Gesture Fixture",
