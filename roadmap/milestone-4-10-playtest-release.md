@@ -18,7 +18,7 @@ on desktop and phone before accepting the Milestone 4 release baseline.
 - Confirm the fourth level feels meaningfully different and rewards both types rather than inventory
   trial and error.
 - Tune only accepted Level 4 parameters or bounded thresholds/layout values supported by observations;
-  do not add another type, mouse, tutorial system, or persistence feature.
+  do not add another type, solver, tutorial system, or persistence feature.
 - Re-run deterministic fixtures after every parameter change.
 - Record device/browser versions when available, orientations, qualitative evidence, screenshots,
   accepted parameters, support claims, unobserved criteria, and known limitations in a Milestone 4

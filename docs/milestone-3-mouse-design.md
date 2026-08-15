@@ -1,8 +1,8 @@
-# Milestone 3 Scout Mouse Design
+# Milestone 3 Scout Solver Design
 
 ## Player-Facing Rule
 
-Milestone 3 introduces **Scout**, a deterministic mouse that internally prefers turns in this order:
+Milestone 3 introduces **Scout**, a deterministic solver that internally prefers turns in this order:
 
 1. Left relative to its current direction.
 2. Straight ahead.
@@ -12,7 +12,7 @@ Milestone 3 introduces **Scout**, a deterministic mouse that internally prefers 
 The exact order is deliberately not shown before play. Level-selection cards retain the simple
 level-name and best-result format used by earlier levels, and the build screen identifies Scout by
 name without describing its search. The player discovers the preference by watching runs while
-still trying to delay the mouse and preserve a valid path to the goal. Result feedback may prompt
+still trying to delay the solver and preserve a valid path to the goal. Result feedback may prompt
 the player to watch Scout's choices at intersections, but must not state the order.
 
 ## Complete Decision Rules
@@ -31,8 +31,8 @@ At each movement interval:
   reversed heading.
 - If no candidate is legal, remain in place with the heading unchanged. The decision still consumes
   one movement interval and increments the move count, matching the existing simulation contract.
-- Reaching the cheese wins the mouse run immediately. Reaching the authored maximum solve time first
-  produces a timeout. Exact-boundary behavior remains shared with the random mouse.
+- Reaching the cheese wins the solver run immediately. Reaching the authored maximum solve time first
+  produces a timeout. Exact-boundary behavior remains shared with the random solver.
 
 Scout never consults the level random seed. Replay is deterministic from the immutable maze, initial
 north heading, movement interval, and timeout. Splitting elapsed time across update calls must not
@@ -56,25 +56,25 @@ maze whose deterministic detour reaches the authored timeout before Scout reache
 
 ## Minimal Runtime Contract
 
-The immutable level definition gains one closed mouse-behavior value with exactly the two supported
+The immutable level definition gains one closed solver-behavior value with exactly the two supported
 choices: `RANDOM` and `LEFT_PRIORITY`. Existing levels select `RANDOM`; the new third level selects
 `LEFT_PRIORITY`.
 The session creates a simulation through one small shared simulation contract rather than depending
-directly on `RandomMouseSimulation`.
+directly on `RandomSolverSimulation`.
 
 The shared contract exposes only update and current-result operations already used by the session.
 There is no behavior registry, plugin system, reflection, service loading, scriptable AI, or generic
-behavior configuration. Random-seed behavior remains unchanged for the existing mouse, and Scout's
+behavior configuration. Random-seed behavior remains unchanged for the existing solver, and Scout's
 north initial heading stays inside its concrete rule until another real level requires authoring it.
 
 ## Authored Level Baseline
 
 Milestone 3 adds one new 7x7 level after Milestone 2. Keeping the same grid size, normal walls, and
-build interaction isolates the new mouse behavior as the source of difficulty.
+build interaction isolates the new solver behavior as the source of difficulty.
 
 - Stable id: `milestone-3`
-- Working display name: `Milestone 3`
-- Mouse: Scout (`LEFT_PRIORITY` internally)
+- Display name: `Level 3`
+- Solver: Scout (`LEFT_PRIORITY` internally)
 - Grid: 7x7
 - Start: bottom center
 - Cheese: top center
@@ -121,7 +121,7 @@ The accepted traces, including the starting cell, are:
   (2,2) → (2,1) → (3,1) → (4,1) → (4,2) → (4,1) → (5,1) → (5,0) → (6,0) →
   (5,0) → (4,0) → (3,0) → (2,0) → (1,0) → (0,0) → (0,1)`.
 
-For behavior comparison, the reference suite runs both mice over three accepted Milestone 2 mazes:
+For behavior comparison, the reference suite runs both solvers over three accepted Milestone 2 mazes:
 
 | Milestone 2 fixture | Seeded Random | Scout |
 | --- | --- | --- |
@@ -137,10 +137,10 @@ configuration.
 
 Scout uses the basic squirrel from the normalized character sheet, paired with an acorn goal. Its
 silhouette distinguishes Scout without relying only on color and does not reveal the turning
-preference. Random behavior uses the classic mouse paired with cheese. Both identities come from
+preference. Random behavior uses the classic mouse artwork paired with cheese. Both identities come from
 the checked-in processed sprite pipeline rather than one-off derivatives.
 
-Build, running, and result presentation identify the active mouse by the player-facing name. Level
+Build, running, and result presentation identify the active solver by the player-facing name. Level
 selection intentionally uses the same concise level-name and best-result structure for every card.
 Before the first run, the UI reveals no behavioral description. Subsequent result text may encourage
 observation without naming the left-first rule or adding a tutorial flow.
@@ -148,7 +148,7 @@ observation without naming the left-first rule or adding a tutorial flow.
 ## Compatibility and Release Boundaries
 
 - Existing level ids, results, unlocks, random paths, replays, and saved data remain compatible.
-- Mouse behavior is authored level data, not stored separately in browser preferences or results.
+- Solver behavior is authored level data, not stored separately in browser preferences or results.
 - Desktop, JavaScript, WebAssembly, portrait touch, constrained-landscape touch, and branded Safari
   must exercise the new level without duplicating domain assertions in every harness.
 - New cell types, inventories, palette selection, and drag/drop editing remain Milestone 4 work.

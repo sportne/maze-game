@@ -1,10 +1,10 @@
-# Milestone 5 Multi-Mouse Level Design
+# Milestone 5 Multi-Solver Level Design
 
 ## Authored Layout
 
 Milestone 5 uses a 7x7 grid and combines both released character behaviors in one maze:
 
-- Random Mouse starts at `(6,0)` and pursues the cheese at the center cell `(3,3)` with seed `23`.
+- Random starts at `(6,0)` and pursues the cheese at the center cell `(3,3)` with seed `23`.
 - Scout starts at `(1,4)` and pursues the acorn at `(2,4)`, one cell diagonally from the cheese.
 - The build timer is 25 seconds, the target is 5 seconds, and the run timeout is 10 seconds.
 - Inventory is five Walls and four Slow Floors.

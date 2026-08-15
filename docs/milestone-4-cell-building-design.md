@@ -2,7 +2,7 @@
 
 ## Player Goal
 
-Milestone 4 keeps the released objective: delay the mouse beyond the level target while preserving
+Milestone 4 keeps the released objective: delay the solver beyond the level target while preserving
 at least one viable path to the cheese. It changes the build phase from one implicit wall tool to a
 small authored palette with per-level supplies.
 
@@ -13,8 +13,8 @@ The initial palette contains exactly two placeable cell types:
 | Wall | `NORMAL_WALL` | Blocks entry for Random and Scout | Existing solid white brick treatment | Infinite on released levels; finite or infinite on new levels |
 | Slow Floor | `SLOW_FLOOR` | Walkable; entering it adds one movement interval before the next decision | Amber floor with a high-contrast crosshatch/hourglass mark | Finite on its introductory level |
 
-Empty cells, the mouse start, and the cheese are board contents but are not palette items. No arrow,
-one-way, teleport, trap, damage, mouse-specific, or player-authored start/cheese type is included.
+Empty cells, the solver start, and the cheese are board contents but are not palette items. No arrow,
+one-way, teleport, trap, damage, solver-specific, or player-authored start/cheese type is included.
 
 ## Released-Game Evidence
 
@@ -33,15 +33,15 @@ specific limits while preserving the accepted tap-again, Back, minimum-target, a
 
 ## Slow Floor Timing
 
-Slow Floor never changes which adjacent cells are legal or how either mouse ranks them. Random uses
-the same seeded direction choice and Scout uses the same relative priority. After a mouse enters a
+Slow Floor never changes which adjacent cells are legal or how either solver ranks them. Random uses
+the same seeded direction choice and Scout uses the same relative priority. After a solver enters a
 Slow Floor cell, its next movement decision is delayed by exactly one authored movement interval.
 The entry itself counts as one move; the added wait does not increment the move count.
 
 The shared timed-simulation boundary owns the delay so Random and Scout cannot interpret it
 differently. Elapsed-time chunking, replay, cheese arrival, and maximum-timeout precedence remain
 deterministic. If a delay reaches the maximum solve time, the existing timeout wins without another
-movement decision. A Slow Floor under the mouse start or cheese is invalid because those cells are
+movement decision. A Slow Floor under the solver start or cheese is invalid because those cells are
 protected and cannot contain a player item.
 
 ## Authored Supply
@@ -54,9 +54,9 @@ Every level explicitly authors one supply for each supported placeable type:
 - Catalog order is also palette order unless a later accepted requirement needs separate ordering.
 
 The three released levels migrate to infinite Wall and finite-zero Slow Floor, preserving their
-exact build behavior. The new Milestone 4 level uses finite supplies of both Wall and Slow Floor, so
+exact build behavior. The new Level 4 uses finite supplies of both Wall and Slow Floor, so
 the release exercises infinite and finite authoring without giving its inventory challenge an
-unlimited shortcut. Exact grid, mouse, counts, target, timeout, and accepted fixtures are balancing
+unlimited shortcut. Exact grid, solver, counts, target, timeout, and accepted fixtures are balancing
 outputs of M4-01 rather than guesses in this planning task.
 
 Runtime inventory is derived fresh from the level definition for each attempt. Finite placement from
@@ -146,7 +146,7 @@ type removes it and returns one finite item, while an empty or different-type de
 Pointer cancel, capture loss, window blur, resize, and orientation change cancel the gesture without
 a domain edit. Releasing outside the grid also cancels. When the build timer expires or Start is
 pressed, the controller cancels any gesture before the session freezes the final maze and begins the
-mouse run. All editing input is ignored outside the build phase.
+solver run. All editing input is ignored outside the build phase.
 
 Desktop right-click continues to remove a placed item without changing the selected palette type.
 The mobile tap-again behavior remains available: with a type active, tapping a cell already containing
@@ -182,12 +182,12 @@ rather than silently shrinking targets.
   replays remain unchanged.
 - Released levels retain infinite Wall placement and have no usable Slow Floor supply.
 - `CellContent` may gain the new rendered content, while player-placeable identity remains a small
-  closed type separate from fixed mouse/cheese contents.
+  closed type separate from fixed solver/cheese contents.
 - `MazeState` generalizes from a wall set to immutable placed-cell data and remaining inventory. The
   normal-only `WallType` is replaced by the closed placeable type; old wall-specific methods may
   remain temporarily only as tested compatibility adapters during the ordered migration and must be
   removed when no caller needs them.
-- Mouse simulations depend on traversability and entry delay, not UI types or level ids.
+- Solver simulations depend on traversability and entry delay, not UI types or level ids.
 - Best-result storage needs compatibility tests but no schema change.
 - JavaScript remains the production default and WebAssembly remains the equivalent opt-in preview.
 
@@ -244,7 +244,7 @@ prove the same Slow Floor timing rule preserves its route and move count. Random
 even on the empty board at `(4,3)` after 26 moves; the combined board also times out, at `(4,4)`
 after 25 moves. Because its do-nothing and combined layouts both pass, it does not provide Scout's
 deliberate, teachable combined-type threshold; Scout is therefore retained for Level 4. The
-test-side wall-only traces for both mouse behaviors are cross-checked against the existing production
+test-side wall-only traces for both solver behaviors are cross-checked against the existing production
 simulation implementations so the reference timing model cannot silently redefine route choice.
 
 Every implementation card retains formatting, static analysis, coverage, architecture, desktop,

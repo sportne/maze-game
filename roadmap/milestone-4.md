@@ -6,12 +6,12 @@ Status: in progress
 
 Replace the single implicit wall tool with a small, authored cell palette whose finite or infinite
 supplies support selection, placement, replacement, and pre-run repositioning without changing the
-released win condition or mouse identities.
+released win condition or solver identities.
 
 ## Product Decisions
 
 - The initial placeable set is exactly Wall and Slow Floor.
-- Wall blocks both mice. Slow Floor remains walkable and adds one movement interval before the next
+- Wall blocks both solvers. Slow Floor remains walkable and adds one movement interval before the next
   decision, without changing route choice or move count.
 - Every level explicitly authors finite-zero-or-greater or infinite supply for both types.
 - The three released levels retain infinite Walls and zero Slow Floors.
@@ -25,18 +25,18 @@ released win condition or mouse identities.
   selection and availability cues.
 - Milestone 4 adds one authored level with finite Wall and Slow Floor supplies that demonstrates both
   types while allowing a four-Wall fallback; released levels provide the infinite-Wall compatibility
-  case. It does not add another mouse.
+  case. It does not add another solver.
 
 The exact mechanic and gesture contract is recorded in
 [`docs/milestone-4-cell-building-design.md`](../docs/milestone-4-cell-building-design.md).
 
 ## Out of Scope
 
-- More placeable types, directional cells, teleporters, traps, or mouse-specific effects.
+- More placeable types, directional cells, teleporters, traps, or solver-specific effects.
 - Inventory purchases, random drops, crafting, an item registry, or externally scripted effects.
 - Swapping two occupied cells, multi-cell pieces, rotation, stacking, undo/redo history, or saving
   unfinished layouts.
-- Multiple mice, another mouse behavior, or player-selected mouse behavior.
+- Multiple solvers, another solver behavior, or player-selected solver behavior.
 - Changes to the win condition, best-result format, or JavaScript-first release strategy.
 - Keyboard navigation and comprehensive screen-reader support beyond preserving current behavior;
   pointer and touch are the supported build inputs.
@@ -62,7 +62,7 @@ The exact mechanic and gesture contract is recorded in
 
 1. [M4-01: Validate cell mechanics and balance Level 4](done/milestone-4-01-cell-design.md)
 2. [M4-02: Add authored supplies and transactional maze inventory](done/milestone-4-02-domain-inventory.md)
-3. [M4-03: Apply Slow Floor timing to both mouse simulations](done/milestone-4-03-slow-floor-simulation.md)
+3. [M4-03: Apply Slow Floor timing to both solver simulations](done/milestone-4-03-slow-floor-simulation.md)
 4. [M4-04: Integrate selected tools and atomic edits into the build session](done/milestone-4-04-session-editing.md)
 5. [M4-05: Render the responsive palette and support select-then-place](done/milestone-4-05-palette-placement.md)
 6. [M4-06: Add drag-from-palette placement](done/milestone-4-06-palette-drag.md)
