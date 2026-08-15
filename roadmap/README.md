@@ -98,7 +98,7 @@ Status: planned.
 
 Add a fifth 7x7 level where Random and Scout run concurrently from different starts. Random pursues
 centered cheese while Scout pursues an acorn one diagonal cell away. Both routes must remain valid,
-and both characters must exceed the target for the level to pass.
+and the first character to reach its goal must do so after the target for the level to pass.
 
 See the accepted [multi-solver level design](../docs/milestone-5-level-design.md) and completed
 [implementation card](done/milestone-5-01-fifth-level.md).
@@ -152,14 +152,15 @@ Completed task cards are retained in the [done archive](done/README.md).
 - Replay re-runs the same seeded AI from the beginning, producing the same path.
 - Scout begins facing north and deterministically prefers left, straight, right, then back, while the
   initial player-facing UI gives no description of its search behavior.
-- A level is passed when every solver exceeds the target time, whether it reaches its goal or times
-  out.
+- A level is passed when no solver reaches its goal until after the target time; a run where every
+  solver times out also passes.
 - The next level option only appears when a next level exists.
 - Milestone 4 adds Wall and Slow Floor only; Slow Floor adds one movement interval after entry without
   changing route choice or move count.
 - Each level explicitly authors finite or infinite supply for every placeable type.
-- Multi-solver levels protect every start and goal, preserve every matching route, and pass only when
-  every character exceeds the target; the weakest elapsed time is the saved score.
+- Multi-solver levels protect every start and goal, preserve every matching route, and stop when the
+  first character reaches its goal. The shared stop time is the saved score; if nobody reaches a
+  goal, the run ends after every character times out.
 - Palette drag and select-then-place use one atomic edit, and existing-item drag never changes inventory.
 - Fixed authored cells affect pathfinding and solver timing but cannot be edited and never consume or
   return player inventory.

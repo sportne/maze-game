@@ -121,7 +121,7 @@ final class MilestoneFiveLevelTest {
   }
 
   @Test
-  void sessionRunsBothSolversAndScoresTheWeakerDelay() {
+  void sessionStopsBothSolversAtTheFirstGoalAndScoresTheSharedStopTime() {
     GameSession session =
         new GameSession(
             new LevelCatalog(java.util.List.of(LEVEL)), LEVEL.id(), BestResultStore.none());
@@ -139,16 +139,38 @@ final class MilestoneFiveLevelTest {
 
     assertEquals(GamePhase.RESULT, session.gamePhase());
     assertTrue(session.resultPassed());
-    assertEquals(Duration.ofSeconds(10), session.solverRunResults().get(0).elapsedTime());
+    assertEquals(Duration.ofSeconds(9), session.solverRunResults().get(0).elapsedTime());
+    assertEquals(SolverRunStatus.RUNNING, session.solverRunResults().get(0).status());
     assertEquals(Duration.ofSeconds(9), session.solverRunResults().get(1).elapsedTime());
+    assertEquals(SolverRunStatus.REACHED_GOAL, session.solverRunResults().get(1).status());
     assertEquals(session.solverRunResults().get(0), session.solverRunResult());
-    assertEquals(new BestResult(Duration.ofSeconds(9), 72), session.bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(9), 69), session.bestResult());
     assertFalse(session.hasNextLevel());
 
     java.util.List<SolverRunResult> firstRun = session.solverRunResults();
     session.replayRun();
     session.updateSolverRun(10.0F);
     assertEquals(firstRun, session.solverRunResults());
+  }
+
+  @Test
+  void emptySessionEndsWhenScoutWinsWithoutAdvancingRandomPastThatTime() {
+    GameSession session =
+        new GameSession(
+            new LevelCatalog(java.util.List.of(LEVEL)), LEVEL.id(), BestResultStore.none());
+    assertTrue(session.startLevel(LEVEL.id()));
+
+    session.startRun();
+    session.updateSolverRun(10.0F);
+
+    assertEquals(GamePhase.RESULT, session.gamePhase());
+    assertFalse(session.resultPassed());
+    assertEquals(Duration.ofMillis(750), session.solverRunResults().get(0).elapsedTime());
+    assertEquals(SolverRunStatus.RUNNING, session.solverRunResults().get(0).status());
+    assertEquals(Duration.ofMillis(750), session.solverRunResults().get(1).elapsedTime());
+    assertEquals(SolverRunStatus.REACHED_GOAL, session.solverRunResults().get(1).status());
+    assertEquals(3, session.solverRunResults().get(0).moveCount());
+    assertEquals(3, session.solverRunResults().get(1).moveCount());
   }
 
   private static SolverRunResult run(MazeState maze, LevelSolver solver) {

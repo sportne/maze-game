@@ -2,6 +2,7 @@ package io.github.sportne.mazegame.state;
 
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,7 +29,7 @@ public final class GameResultEvaluator {
     return solverRunResult.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0;
   }
 
-  /** Returns whether every solver in a completed multi-solver run exceeded the target. */
+  /** Returns whether every solver remained active past the target before the attempt ended. */
   public static boolean passedAll(
       GamePhase phase, List<SolverRunResult> solverRunResults, LevelDefinition levelDefinition) {
     Objects.requireNonNull(phase, "phase");
@@ -39,7 +40,14 @@ public final class GameResultEvaluator {
         || solverRunResults.isEmpty()) {
       return false;
     }
-    return solverRunResults.stream()
-        .allMatch(result -> result.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0);
+    boolean reachedGoal =
+        solverRunResults.stream()
+            .anyMatch(result -> result.status() == SolverRunStatus.REACHED_GOAL);
+    boolean allTimedOut =
+        solverRunResults.stream().allMatch(result -> result.status() == SolverRunStatus.TIMED_OUT);
+    return (reachedGoal || allTimedOut)
+        && solverRunResults.stream()
+            .allMatch(
+                result -> result.elapsedTime().compareTo(levelDefinition.targetSolveTime()) > 0);
   }
 }

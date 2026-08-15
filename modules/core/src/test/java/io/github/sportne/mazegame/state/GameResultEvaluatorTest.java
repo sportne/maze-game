@@ -48,7 +48,7 @@ final class GameResultEvaluatorTest {
   }
 
   @Test
-  void multiSolverPassRequiresEveryAuthoredResultPastTheTarget() {
+  void multiSolverPassRequiresTheFirstGoalOrAllTimeoutsAfterTheTarget() {
     LevelDefinition level = Levels.levelFive();
     SolverRunResult passing =
         new SolverRunResult(
@@ -59,9 +59,25 @@ final class GameResultEvaluatorTest {
             level.targetSolveTime(),
             18,
             SolverRunStatus.REACHED_GOAL);
+    SolverRunResult runningPastTarget =
+        new SolverRunResult(
+            level.solvers().get(1).start(), Duration.ofSeconds(6), 18, SolverRunStatus.RUNNING);
+    SolverRunResult timedOut =
+        new SolverRunResult(
+            level.solvers().get(1).start(),
+            level.maximumSolveTime(),
+            30,
+            SolverRunStatus.TIMED_OUT);
 
     assertTrue(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, passing), level));
+    assertTrue(
+        GameResultEvaluator.passedAll(
+            GamePhase.RESULT, List.of(passing, runningPastTarget), level));
+    assertTrue(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(timedOut, timedOut), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, exact), level));
+    assertFalse(
+        GameResultEvaluator.passedAll(
+            GamePhase.RESULT, List.of(runningPastTarget, runningPastTarget), level));
     assertFalse(
         GameResultEvaluator.passedAll(GamePhase.SOLVER_RUNNING, List.of(passing, passing), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing), level));

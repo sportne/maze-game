@@ -16,11 +16,14 @@ character to its own goal.
 
 Random and Scout run independently and concurrently against the same completed maze. Each retains
 its released movement behavior, movement interval, Slow Floor timing, and deterministic replay.
-The attempt ends when both runs have reached their goals or timed out.
+The attempt ends as soon as either character reaches its matching goal. The other character stops
+at the same shared simulation time and can therefore still have a `RUNNING` result in the final
+snapshot. If neither character reaches a goal, the attempt ends after both have timed out.
 
-The level passes only when both elapsed times exceed the target. The saved score uses the shorter of
-the two elapsed times, because that is the limiting delay, and the combined move count breaks equal
-time ties. Result presentation reports each character's time and moves separately.
+The level passes only when the first goal arrival occurs after the target; equivalently, both
+elapsed times in the synchronized final snapshot must exceed the target. The saved score uses the
+shared stop time, and the combined move count up to that point breaks equal-time ties. Result
+presentation reports each character's time and moves separately.
 
 ## Balance Fixtures
 
@@ -32,5 +35,5 @@ The accepted passing fixture is:
 - Walls: `(0,2)`, `(1,3)`, `(3,2)`, `(4,0)`, `(6,1)`
 - Slow Floors: `(1,2)`, `(2,2)`, `(2,5)`, `(6,3)`
 
-Random times out after 10 seconds and 39 moves. Scout reaches the acorn after 9 seconds and 33
-moves. Replay reproduces both results exactly.
+Scout reaches the acorn after 9 seconds and 33 moves, ending the attempt. Random is still running at
+the shared 9-second stop with 36 moves. Replay reproduces both results exactly.

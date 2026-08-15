@@ -510,21 +510,43 @@ public final class GameSession {
     }
     boolean shouldRecordBestResult = gamePhase == GamePhase.SOLVER_RUNNING;
     long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
-    List<SolverRunResult> updatedResults = new ArrayList<>();
-    for (int index = 0; index < solverSimulations.size(); index++) {
-      SolverRunResult current = solverRunResults.get(index);
-      updatedResults.add(
-          current.status() == SolverRunStatus.RUNNING
-              ? solverSimulations.get(index).update(Duration.ofMillis(deltaMillis))
-              : current);
+    Duration remainingDelta = Duration.ofMillis(deltaMillis);
+    Duration maximumStep = levelDefinition.solverMoveInterval();
+    while (!remainingDelta.isZero() && !solverRunHasEnded()) {
+      Duration step = shorterDuration(remainingDelta, maximumStep);
+      List<SolverRunResult> updatedResults = new ArrayList<>();
+      for (int index = 0; index < solverSimulations.size(); index++) {
+        SolverRunResult current = solverRunResults.get(index);
+        updatedResults.add(
+            current.status() == SolverRunStatus.RUNNING
+                ? solverSimulations.get(index).update(step)
+                : current);
+      }
+      solverRunResults = List.copyOf(updatedResults);
+      remainingDelta = remainingDelta.minus(step);
     }
-    solverRunResults = List.copyOf(updatedResults);
-    if (solverRunResults.stream().noneMatch(result -> result.status() == SolverRunStatus.RUNNING)) {
+    if (solverRunHasEnded()) {
       gamePhase = GamePhase.RESULT;
       if (shouldRecordBestResult && resultPassed()) {
         recordBestResult(bestResultFromCompletedRuns());
       }
     }
+  }
+
+  private boolean solverRunHasEnded() {
+    boolean goalReached =
+        solverRunResults.stream()
+            .anyMatch(result -> result.status() == SolverRunStatus.REACHED_GOAL);
+    boolean solverStillRunning =
+        solverRunResults.stream().anyMatch(result -> result.status() == SolverRunStatus.RUNNING);
+    return goalReached || !solverStillRunning;
+  }
+
+  private static Duration shorterDuration(Duration first, Duration second) {
+    if (first.compareTo(second) <= 0) {
+      return first;
+    }
+    return second;
   }
 
   private BestResult bestResultFromCompletedRuns() {
