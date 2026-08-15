@@ -114,13 +114,25 @@ Status: complete.
   non-gating follow-up for selecting a short production loop, adding a modern browser format with
   fallback, and bounding music transfer and decode costs.
 
+### Future Gameplay Foundations
+
+- [GAMEPLAY-01: Brainstorm and select additional cell types](gameplay-01-additional-cell-types.md)
+  compares candidate mechanics and produces a bounded, evidence-backed shortlist before the closed
+  production cell model changes.
+- [GRID-01: Add fixed authored grid cells](grid-01-fixed-authored-cells.md) adds level-owned,
+  prepopulated cells that affect play but cannot be changed or counted as player inventory.
+- [SOLVER-01: Design and deliver a third solver type](solver-01-third-solver-type.md) selects,
+  specifies, implements, and presents one behavior distinct from Random and Scout.
+
 ## Deferred Ideas
 
-These remain outside the planned Milestone 4 scope:
+These remain outside the planned Milestone 4 scope. The linked items now have proposed task cards but
+are not committed to a release milestone:
 
 - Grid progression beyond the five authored levels.
-- Cell types beyond Wall and Slow Floor.
-- Additional solver types beyond Random and Scout.
+- [Cell types beyond Wall and Slow Floor](gameplay-01-additional-cell-types.md).
+- [Fixed authored grid cells](grid-01-fixed-authored-cells.md).
+- [A third solver type](solver-01-third-solver-type.md).
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and solver behaviors.
 
