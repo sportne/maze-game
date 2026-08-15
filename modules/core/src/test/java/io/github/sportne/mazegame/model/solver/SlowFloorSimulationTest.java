@@ -4,10 +4,12 @@ import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.FixedCell;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -141,6 +143,33 @@ final class SlowFloorSimulationTest {
     assertEquals(
         SolverSimulationFactory.create(maze).update(TIMEOUT),
         SolverSimulationFactory.create(maze).update(TIMEOUT));
+  }
+
+  @ParameterizedTest
+  @MethodSource("behaviors")
+  void fixedAndPlayerPlacedEffectsProduceIdenticalTraces(SolverBehavior behavior) {
+    long seed = behavior == SolverBehavior.RANDOM ? 41L : 53L;
+    LevelDefinition playerLevel = level(behavior, seed, TIMEOUT);
+    List<FixedCell> fixedCells = new ArrayList<>();
+    PASSING_WALLS.forEach(position -> fixedCells.add(new FixedCell(position, FixedCellType.WALL)));
+    PASSING_SLOW_FLOORS.forEach(
+        position -> fixedCells.add(new FixedCell(position, FixedCellType.SLOW_FLOOR)));
+    LevelDefinition fixedLevel =
+        new LevelDefinition(
+            playerLevel.id(),
+            playerLevel.name(),
+            playerLevel.gridSize(),
+            playerLevel.buildTime(),
+            playerLevel.targetSolveTime(),
+            playerLevel.maximumSolveTime(),
+            playerLevel.solverMoveInterval(),
+            playerLevel.placeableCellSupplies(),
+            fixedCells,
+            playerLevel.solvers());
+
+    assertEquals(
+        trace(maze(playerLevel, PASSING_WALLS, PASSING_SLOW_FLOORS)),
+        trace(MazeState.empty(fixedLevel)));
   }
 
   @Test

@@ -60,9 +60,11 @@ without a working OpenAL/PipeWire setup, disable audio with `--no-audio`,
 
 Runtime character art is generated with `./gradlew processSpriteSheets` from the source masters in
 `assets`. The Random solver uses the classic mouse artwork with cheese; Scout uses the basic
-squirrel with an acorn. Both goals come from the processed goal sheet. The checked-in 128-pixel
-sheets use a shared frame grid, nearest-neighbor filtering, and an indexed palette of at most 256
-colors without dithering. The quality gate verifies that generated outputs are current.
+squirrel with an acorn. Each character displays the front, back, left, or right frame matching its
+most recent movement, retaining the right-facing frame before its first move. Both goals come from
+the processed goal sheet. The checked-in 128-pixel sheets use a shared frame grid, nearest-neighbor
+filtering, and an indexed palette of at most 256 colors without dithering. The quality gate verifies
+that generated outputs are current.
 
 When run under WSLg, the Gradle JVM and native-image run tasks default OpenAL to WSLg's
 PulseAudio socket at `/mnt/wslg/PulseServer`. Gradle also passes `MAZE_GAME_ASSETS_DIR`

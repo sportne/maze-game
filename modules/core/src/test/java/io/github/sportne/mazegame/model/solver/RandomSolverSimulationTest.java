@@ -14,6 +14,7 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,7 @@ final class RandomSolverSimulationTest {
     assertEquals(Duration.ZERO, result.elapsedTime());
     assertEquals(0, result.moveCount());
     assertEquals(SolverRunStatus.RUNNING, result.status());
+    assertEquals(Optional.empty(), simulation.lastDirection());
   }
 
   @Test
@@ -66,6 +68,26 @@ final class RandomSolverSimulationTest {
   }
 
   @Test
+  void simulationContractDefaultsToNoKnownMovementDirection() {
+    SolverRunResult unchanged =
+        new SolverRunResult(new GridPosition(0, 0), Duration.ZERO, 0, SolverRunStatus.RUNNING);
+    SolverSimulation compatibilitySimulation =
+        new SolverSimulation() {
+          @Override
+          public SolverRunResult update(Duration deltaTime) {
+            return unchanged;
+          }
+
+          @Override
+          public SolverRunResult result() {
+            return unchanged;
+          }
+        };
+
+    assertEquals(Optional.empty(), compatibilitySimulation.lastDirection());
+  }
+
+  @Test
   void onlyMovesToOpenNeighboringCells() {
     MazeState maze =
         withWalls(
@@ -81,6 +103,7 @@ final class RandomSolverSimulationTest {
 
     assertEquals(new GridPosition(3, 2), result.position());
     assertEquals(1, result.moveCount());
+    assertEquals(Optional.of(CardinalDirection.NORTH), simulation.lastDirection());
   }
 
   @Test
@@ -105,6 +128,7 @@ final class RandomSolverSimulationTest {
 
     assertEquals(level.primarySolver().start(), result.position());
     assertEquals(2, result.moveCount());
+    assertEquals(Optional.of(CardinalDirection.SOUTH), simulation.lastDirection());
   }
 
   @Test

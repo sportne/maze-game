@@ -1,6 +1,7 @@
 package io.github.sportne.mazegame.model.solver;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /** Timed solver movement used by a game session. */
 public interface SolverSimulation {
@@ -18,4 +19,13 @@ public interface SolverSimulation {
    * @return immutable snapshot of position, time, move count, and status
    */
   SolverRunResult result();
+
+  /**
+   * Returns the direction of the most recent actual move.
+   *
+   * @return movement direction, or empty before the first move
+   */
+  default Optional<CardinalDirection> lastDirection() {
+    return Optional.empty();
+  }
 }

@@ -8,8 +8,8 @@ public final class GameSpriteSheets {
   /** Width and height of every normalized runtime frame. */
   private static final int CELL_SIZE = 128;
 
-  /** Column containing the right-facing character pose. */
-  private static final int RIGHT_FACING_COLUMN = 3;
+  /** Number of directional frames stored for each character. */
+  private static final int DIRECTION_COUNT = 4;
 
   /** Row containing the basic squirrel in the basic-character sheet. */
   private static final int SQUIRREL_ROW = 3;
@@ -44,7 +44,12 @@ public final class GameSpriteSheets {
    * @return classic mouse sprite region
    */
   public static TextureRegion randomSolver(Texture classicMouse) {
-    return frame(classicMouse, RIGHT_FACING_COLUMN, 0);
+    return randomSolverSprites(classicMouse).defaultSprite();
+  }
+
+  /** Returns every directional frame for the classic mouse used by Random behavior. */
+  public static DirectionalSpriteSet randomSolverSprites(Texture classicMouse) {
+    return directionalFrames(classicMouse, 0);
   }
 
   /**
@@ -54,7 +59,20 @@ public final class GameSpriteSheets {
    * @return basic squirrel sprite region
    */
   public static TextureRegion scoutSquirrel(Texture basicCharacters) {
-    return frame(basicCharacters, RIGHT_FACING_COLUMN, SQUIRREL_ROW);
+    return scoutSquirrelSprites(basicCharacters).defaultSprite();
+  }
+
+  /** Returns every directional frame for the basic squirrel used by Scout behavior. */
+  public static DirectionalSpriteSet scoutSquirrelSprites(Texture basicCharacters) {
+    return directionalFrames(basicCharacters, SQUIRREL_ROW);
+  }
+
+  private static DirectionalSpriteSet directionalFrames(Texture sheet, int row) {
+    TextureRegion[] frames = new TextureRegion[DIRECTION_COUNT];
+    for (int column = 0; column < frames.length; column++) {
+      frames[column] = frame(sheet, column, row);
+    }
+    return new DirectionalSpriteSet(frames[0], frames[1], frames[2], frames[3]);
   }
 
   private static TextureRegion frame(Texture sheet, int column, int row) {

@@ -42,6 +42,9 @@ final class LevelDefinitionTest {
     assertEquals(
         List.of("milestone-1", "milestone-2", "milestone-3", "milestone-4", "milestone-5"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
+    assertEquals(
+        List.of(List.of(), List.of(), List.of(), List.of(), List.of()),
+        Levels.catalog().levels().stream().map(LevelDefinition::fixedCells).toList());
   }
 
   @Test

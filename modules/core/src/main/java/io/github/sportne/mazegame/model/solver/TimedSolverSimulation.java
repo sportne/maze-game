@@ -5,6 +5,7 @@ import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Shared fixed-step timing and terminal-state handling for solver simulations. */
 abstract class TimedSolverSimulation implements SolverSimulation {
@@ -15,6 +16,7 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   private Duration timeUntilDecision;
   private boolean delayedDecision;
   private int moveCount;
+  private CardinalDirection lastDirection;
   private SolverRunStatus status = SolverRunStatus.RUNNING;
 
   TimedSolverSimulation(MazeState mazeState) {
@@ -71,6 +73,11 @@ abstract class TimedSolverSimulation implements SolverSimulation {
     return new SolverRunResult(position, elapsedTime, moveCount, status);
   }
 
+  @Override
+  public final Optional<CardinalDirection> lastDirection() {
+    return Optional.ofNullable(lastDirection);
+  }
+
   /** Makes one behavior-specific movement decision. */
   abstract void moveOnce();
 
@@ -79,7 +86,9 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   }
 
   final void moveTo(GridPosition destination) {
-    position = Objects.requireNonNull(destination, "destination");
+    GridPosition nextPosition = Objects.requireNonNull(destination, "destination");
+    lastDirection = CardinalDirection.between(position, nextPosition);
+    position = nextPosition;
   }
 
   final boolean isOpen(GridPosition candidate) {

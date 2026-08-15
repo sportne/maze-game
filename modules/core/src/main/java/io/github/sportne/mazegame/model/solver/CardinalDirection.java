@@ -2,9 +2,10 @@ package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import java.util.List;
+import java.util.Objects;
 
-/** Absolute grid direction with Scout's relative candidate ordering. */
-enum CardinalDirection {
+/** Absolute grid movement direction used by simulation and character presentation. */
+public enum CardinalDirection {
   NORTH(-1, 0),
   EAST(0, 1),
   SOUTH(1, 0),
@@ -29,5 +30,18 @@ enum CardinalDirection {
 
   GridPosition move(GridPosition origin) {
     return new GridPosition(origin.row() + rowChange, origin.column() + columnChange);
+  }
+
+  static CardinalDirection between(GridPosition origin, GridPosition destination) {
+    Objects.requireNonNull(origin, "origin");
+    Objects.requireNonNull(destination, "destination");
+    int rowDifference = destination.row() - origin.row();
+    int columnDifference = destination.column() - origin.column();
+    for (CardinalDirection direction : values()) {
+      if (direction.rowChange == rowDifference && direction.columnChange == columnDifference) {
+        return direction;
+      }
+    }
+    throw new IllegalArgumentException("movement must be to an orthogonally adjacent cell");
   }
 }

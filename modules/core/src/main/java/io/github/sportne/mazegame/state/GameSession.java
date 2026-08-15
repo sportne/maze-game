@@ -9,6 +9,7 @@ import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.model.solver.SolverSimulation;
@@ -245,6 +246,11 @@ public final class GameSession {
   /** Returns current results in authored solver order, or an empty list before a run starts. */
   public List<SolverRunResult> solverRunResults() {
     return List.copyOf(solverRunResults);
+  }
+
+  /** Returns each active solver's latest movement direction in authored order. */
+  public List<Optional<CardinalDirection>> solverDirections() {
+    return solverSimulations.stream().map(SolverSimulation::lastDirection).toList();
   }
 
   /**

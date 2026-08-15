@@ -13,10 +13,12 @@ import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.FixedCell;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
@@ -156,6 +158,41 @@ final class MazeGameBuildGestureTest {
     assertFalse(outside.validDestination());
     assertTrue(game.handlePointerUp(0, 0, 0, WIDTH, HEIGHT).isEmpty());
     assertEquals(PlaceableCellType.SLOW_FLOOR, game.mazeState().placedCellAt(EXHAUSTION_SOURCE));
+  }
+
+  @Test
+  void fixedCellsRejectPaletteDropsAndCannotBecomePlacedCellDrags() {
+    GridPosition fixedPosition = new GridPosition(2, 2);
+    LevelDefinition base = level(CellSupply.infinite(), CellSupply.infinite(), GridSize.square(5));
+    LevelDefinition fixedLevel =
+        new LevelDefinition(
+            base.id(),
+            base.name(),
+            base.gridSize(),
+            base.buildTime(),
+            base.targetSolveTime(),
+            base.maximumSolveTime(),
+            base.solverMoveInterval(),
+            base.placeableCellSupplies(),
+            List.of(new FixedCell(fixedPosition, FixedCellType.SLOW_FLOOR)),
+            base.solvers());
+    MazeGame game = game(fixedLevel);
+    ScreenPoint palette = paletteCenter(game, PlaceableCellType.WALL);
+    ScreenPoint fixedCell = cellCenter(game, fixedPosition);
+
+    beginDrag(game, palette, fixedCell, 0);
+    assertFalse(game.paletteDragPreview(WIDTH, HEIGHT).validDestination());
+    MazeEditResult rejected =
+        game.handlePointerUp(fixedCell.x(), fixedCell.y(), 0, WIDTH, HEIGHT).orElseThrow();
+    assertEquals(MazeEditStatus.REJECTED_FIXED_CELL, rejected.status());
+    assertTrue(game.mazeState().placedCells().isEmpty());
+
+    assertTrue(
+        game.handlePointerDown(fixedCell.x(), fixedCell.y(), 1, Input.Buttons.LEFT, WIDTH, HEIGHT));
+    assertTrue(game.handlePointerDragged(fixedCell.x() + 20, fixedCell.y(), 1));
+    assertNull(game.paletteDragPreview(WIDTH, HEIGHT));
+    assertTrue(game.handlePointerUp(fixedCell.x() + 20, fixedCell.y(), 1, WIDTH, HEIGHT).isEmpty());
+    assertTrue(game.mazeState().hasFixedCellAt(fixedPosition));
   }
 
   @Test

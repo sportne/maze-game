@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
+import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import org.junit.jupiter.api.Test;
 
@@ -48,5 +50,7 @@ final class BrowserBuildGestureFixtureTest {
 
     assertEquals(CellSupply.finite(2), level.supplyFor(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(2), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
+    assertEquals(FixedCellType.WALL, level.fixedCellAt(new GridPosition(1, 0)).orElseThrow());
+    assertEquals(FixedCellType.SLOW_FLOOR, level.fixedCellAt(new GridPosition(1, 4)).orElseThrow());
   }
 }

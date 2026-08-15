@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import org.junit.jupiter.api.Test;
 
 final class GameSpriteSheetsTest {
@@ -25,6 +26,27 @@ final class GameSpriteSheetsTest {
   @Test
   void scoutBehaviorUsesTheRightFacingBasicSquirrel() {
     assertRegion(GameSpriteSheets.scoutSquirrel(new TestTexture()), 384, 384);
+  }
+
+  @Test
+  void randomBehaviorMapsGridDirectionsToClassicMouseColumns() {
+    DirectionalSpriteSet sprites = GameSpriteSheets.randomSolverSprites(new TestTexture());
+
+    assertRegion(sprites.sprite(CardinalDirection.SOUTH), 0, 0);
+    assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 0);
+    assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 0);
+    assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 0);
+    assertRegion(sprites.defaultSprite(), 384, 0);
+  }
+
+  @Test
+  void scoutBehaviorMapsGridDirectionsToBasicSquirrelColumns() {
+    DirectionalSpriteSet sprites = GameSpriteSheets.scoutSquirrelSprites(new TestTexture());
+
+    assertRegion(sprites.sprite(CardinalDirection.SOUTH), 0, 384);
+    assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 384);
+    assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 384);
+    assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 384);
   }
 
   private static void assertRegion(TextureRegion region, int expectedX, int expectedY) {

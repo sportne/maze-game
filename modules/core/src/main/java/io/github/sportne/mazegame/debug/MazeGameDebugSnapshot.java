@@ -12,7 +12,7 @@ import java.util.List;
  * Immutable view of the game state exposed by the debug harness.
  *
  * @param gamePhase current high-level game phase
- * @param mazeState current maze walls and level definition
+ * @param mazeState current fixed/player-authored maze and level definition
  * @param buildTimeRemainingSeconds seconds left in the build phase
  * @param rejectedPosition most recent rejected placement cell, or null when no flash is active
  * @param solverRunResult current solver simulation result, or null before a run starts

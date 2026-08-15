@@ -25,10 +25,12 @@ import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.FixedCell;
 import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.LevelSolver;
@@ -422,6 +424,13 @@ final class BrowserSmokeTest {
         GridPosition wallDestination = new GridPosition(2, 0);
         GridPosition slowSource = new GridPosition(3, 4);
         GridPosition slowDestination = new GridPosition(2, 4);
+        GridPosition fixedWall = new GridPosition(1, 0);
+        GridPosition fixedSlowFloor = new GridPosition(1, 4);
+        assertWallCell(page, controls.cellCenter(level, fixedWall));
+        assertSlowFloorCell(page, controls.cellCenter(level, fixedSlowFloor));
+        controls.dragPaletteToCell(
+            GamePhase.BUILDING, level, false, PlaceableCellType.WALL, fixedSlowFloor);
+        assertSlowFloorCell(page, controls.cellCenter(level, fixedSlowFloor));
         controls.dragPaletteToCell(
             GamePhase.BUILDING, level, false, PlaceableCellType.WALL, wallSource);
         controls.dragPaletteToCell(
@@ -435,6 +444,9 @@ final class BrowserSmokeTest {
         assertWallCell(page, controls.cellCenter(level, wallDestination));
         assertOpenCell(page, controls.cellCenter(level, slowSource));
         assertSlowFloorCell(page, controls.cellCenter(level, slowDestination));
+        controls.dragPlacedCell(level, wallDestination, fixedSlowFloor);
+        assertWallCell(page, controls.cellCenter(level, wallDestination));
+        assertSlowFloorCell(page, controls.cellCenter(level, fixedSlowFloor));
         controls.clickButton(GamePhase.BUILDING, level, false, MazeGameLayout.BUILD_START);
         controls.waitForButton(GamePhase.RESULT, level, false, MazeGameLayout.RESULT_RETRY);
         assertTrue(
@@ -466,6 +478,9 @@ final class BrowserSmokeTest {
         Duration.ofSeconds(3),
         Duration.ofMillis(50),
         supplies,
+        List.of(
+            new FixedCell(new GridPosition(1, 0), FixedCellType.WALL),
+            new FixedCell(new GridPosition(1, 4), FixedCellType.SLOW_FLOOR)),
         List.of(solver));
   }
 

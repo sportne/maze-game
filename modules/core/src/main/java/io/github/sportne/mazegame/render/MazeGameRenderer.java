@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Align;
+import io.github.sportne.mazegame.assets.DirectionalSpriteSet;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
@@ -16,6 +17,7 @@ import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
@@ -24,6 +26,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Draws Maze Game screens using libGDX primitives. */
 public final class MazeGameRenderer {
@@ -48,7 +51,7 @@ public final class MazeGameRenderer {
   /** Fill color for the solver start cell before the solver sprite is active. */
   private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
 
-  /** Fill color for player-placed wall cells. */
+  /** Fill color for wall cells. */
   private static final Color CELL_WALL = new Color(Color.WHITE);
 
   /** Amber fill for the walkable Slow Floor cell. */
@@ -99,11 +102,11 @@ public final class MazeGameRenderer {
   /** Cropped acorn sprite drawn as Scout's endpoint goal. */
   private final TextureRegion acornSprite;
 
-  /** Cropped solver sprite drawn at the current solver position. */
-  private final TextureRegion solverSprite;
+  /** Directional classic-mouse sprites drawn for Random solver appearances. */
+  private final DirectionalSpriteSet solverSprites;
 
-  /** Distinct Scout sprite drawn for left-priority levels. */
-  private final TextureRegion scoutSprite;
+  /** Directional squirrel sprites drawn for Scout appearances. */
+  private final DirectionalSpriteSet scoutSprites;
 
   /**
    * Creates a renderer around libGDX drawing resources.
@@ -113,9 +116,27 @@ public final class MazeGameRenderer {
    * @param font bitmap font
    * @param cheeseSprite cheese sprite region
    * @param acornSprite acorn sprite region
-   * @param solverSprite solver sprite region
-   * @param scoutSprite Scout sprite region
+   * @param solverSprites classic-mouse directional frames
+   * @param scoutSprites Scout squirrel directional frames
    */
+  public MazeGameRenderer(
+      SpriteBatch spriteBatch,
+      ShapeRenderer shapeRenderer,
+      BitmapFont font,
+      TextureRegion cheeseSprite,
+      TextureRegion acornSprite,
+      DirectionalSpriteSet solverSprites,
+      DirectionalSpriteSet scoutSprites) {
+    this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
+    this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
+    this.font = Objects.requireNonNull(font, "font");
+    this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
+    this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
+    this.solverSprites = Objects.requireNonNull(solverSprites, "solverSprites");
+    this.scoutSprites = Objects.requireNonNull(scoutSprites, "scoutSprites");
+  }
+
+  /** Creates a compatibility renderer that uses one frame for every direction. */
   public MazeGameRenderer(
       SpriteBatch spriteBatch,
       ShapeRenderer shapeRenderer,
@@ -124,13 +145,14 @@ public final class MazeGameRenderer {
       TextureRegion acornSprite,
       TextureRegion solverSprite,
       TextureRegion scoutSprite) {
-    this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
-    this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
-    this.font = Objects.requireNonNull(font, "font");
-    this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
-    this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
-    this.solverSprite = new TextureRegion(Objects.requireNonNull(solverSprite, "solverSprite"));
-    this.scoutSprite = new TextureRegion(Objects.requireNonNull(scoutSprite, "scoutSprite"));
+    this(
+        spriteBatch,
+        shapeRenderer,
+        font,
+        cheeseSprite,
+        acornSprite,
+        DirectionalSpriteSet.single(solverSprite),
+        DirectionalSpriteSet.single(scoutSprite));
   }
 
   /**
@@ -184,6 +206,7 @@ public final class MazeGameRenderer {
     ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
     drawGrid(grid, snapshot);
     drawSlowFloorMarks(grid, snapshot);
+    drawFixedCellMarks(grid, snapshot);
     drawCellSprites(grid, snapshot);
     drawRejectedMark(grid, snapshot);
     drawSolver(grid, snapshot);
@@ -287,7 +310,11 @@ public final class MazeGameRenderer {
     if (snapshot.solverRunResults().isEmpty()) {
       if (snapshot.levelDefinition().solvers().size() > 1) {
         for (LevelSolver solver : snapshot.levelDefinition().solvers()) {
-          drawSpriteInCell(grid, snapshot.levelDefinition(), solver.start(), solverSprite(solver));
+          drawSpriteInCell(
+              grid,
+              snapshot.levelDefinition(),
+              solver.start(),
+              solverSprite(solver, Optional.empty()));
         }
       }
       return;
@@ -297,7 +324,9 @@ public final class MazeGameRenderer {
           grid,
           snapshot.levelDefinition(),
           snapshot.solverRunResults().get(index).position(),
-          solverSprite(snapshot.levelDefinition().solvers().get(index)));
+          solverSprite(
+              snapshot.levelDefinition().solvers().get(index),
+              snapshot.solverDirections().get(index)));
     }
   }
 
@@ -312,13 +341,65 @@ public final class MazeGameRenderer {
         .forEach(
             (position, type) -> {
               if (type == PlaceableCellType.SLOW_FLOOR) {
-                ScreenRectangle mark =
-                    insetCellBounds(grid, snapshot.levelDefinition(), position, inset);
-                shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.top(), 2.0F);
-                shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.y(), 2.0F);
-                shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.top(), 2.0F);
-                shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.y(), 2.0F);
+                drawSlowFloorMark(grid, snapshot.levelDefinition(), position, inset);
               }
+            });
+    snapshot
+        .levelDefinition()
+        .fixedCells()
+        .forEach(
+            cell -> {
+              if (cell.type().delaysNextDecision()) {
+                drawSlowFloorMark(grid, snapshot.levelDefinition(), cell.position(), inset);
+              }
+            });
+    shapeRenderer.end();
+  }
+
+  private void drawSlowFloorMark(
+      ScreenRectangle grid, LevelDefinition levelDefinition, GridPosition position, float inset) {
+    ScreenRectangle mark = insetCellBounds(grid, levelDefinition, position, inset);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.top(), 2.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.y(), 2.0F);
+    shapeRenderer.rectLine(mark.x(), mark.top(), mark.right(), mark.top(), 2.0F);
+    shapeRenderer.rectLine(mark.x(), mark.y(), mark.right(), mark.y(), 2.0F);
+  }
+
+  private void drawFixedCellMarks(ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    float cellSize = grid.width() / snapshot.levelDefinition().gridSize().columns();
+    float lockSize = Math.max(10.0F, cellSize * 0.22F);
+    float inset = Math.max(4.0F, cellSize * 0.08F);
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+    shapeRenderer.setColor(GRID_LINE);
+    snapshot
+        .levelDefinition()
+        .fixedCells()
+        .forEach(
+            cell -> {
+              ScreenRectangle bounds =
+                  insetCellBounds(grid, snapshot.levelDefinition(), cell.position(), inset);
+              float left = bounds.x();
+              float bottom = bounds.top() - lockSize;
+              float bodyTop = bottom + lockSize * 0.62F;
+              float shackleInset = lockSize * 0.22F;
+              shapeRenderer.rectLine(left, bottom, left + lockSize, bottom, 2.0F);
+              shapeRenderer.rectLine(left, bodyTop, left + lockSize, bodyTop, 2.0F);
+              shapeRenderer.rectLine(left, bottom, left, bodyTop, 2.0F);
+              shapeRenderer.rectLine(left + lockSize, bottom, left + lockSize, bodyTop, 2.0F);
+              shapeRenderer.rectLine(
+                  left + shackleInset, bodyTop, left + shackleInset, bottom + lockSize, 2.0F);
+              shapeRenderer.rectLine(
+                  left + lockSize - shackleInset,
+                  bodyTop,
+                  left + lockSize - shackleInset,
+                  bottom + lockSize,
+                  2.0F);
+              shapeRenderer.rectLine(
+                  left + shackleInset,
+                  bottom + lockSize,
+                  left + lockSize - shackleInset,
+                  bottom + lockSize,
+                  2.0F);
             });
     shapeRenderer.end();
   }
@@ -448,11 +529,14 @@ public final class MazeGameRenderer {
     return Math.max(minimum, Math.min(value, maximum));
   }
 
-  private TextureRegion solverSprite(LevelSolver solver) {
-    return switch (solver.appearance()) {
-      case CLASSIC_MOUSE -> solverSprite;
-      case SCOUT_SQUIRREL -> scoutSprite;
-    };
+  private TextureRegion solverSprite(
+      LevelSolver solver, Optional<CardinalDirection> lastDirection) {
+    DirectionalSpriteSet sprites =
+        switch (solver.appearance()) {
+          case CLASSIC_MOUSE -> solverSprites;
+          case SCOUT_SQUIRREL -> scoutSprites;
+        };
+    return lastDirection.map(sprites::sprite).orElseGet(sprites::defaultSprite);
   }
 
   private void drawCellSprites(ScreenRectangle grid, GameRenderSnapshot snapshot) {

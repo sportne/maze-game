@@ -45,6 +45,10 @@ and planned cards remain in the parent `roadmap/` directory.
 
 - [M5-01: Add a fifth level with Random and Scout](milestone-5-01-fifth-level.md)
 
+## Gameplay Foundations
+
+- [GRID-01: Add fixed authored grid cells](grid-01-fixed-authored-cells.md)
+
 ## TeaVM and GitHub Pages
 
 - [WEB-01: Align the TeaVM toolchain](teavm-01-toolchain-alignment.md)

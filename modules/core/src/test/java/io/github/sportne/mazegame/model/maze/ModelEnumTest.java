@@ -2,6 +2,7 @@ package io.github.sportne.mazegame.model.maze;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,12 @@ final class ModelEnumTest {
   }
 
   @Test
+  void fixedCellTypesIncludeWallAndSlowFloorEffects() {
+    assertArrayEquals(
+        new FixedCellType[] {FixedCellType.WALL, FixedCellType.SLOW_FLOOR}, FixedCellType.values());
+  }
+
+  @Test
   void mazeEditStatusesCoverEveryTransactionalOutcome() {
     assertArrayEquals(
         new MazeEditStatus[] {
@@ -25,6 +32,7 @@ final class ModelEnumTest {
           MazeEditStatus.NO_OP,
           MazeEditStatus.REJECTED_OUTSIDE_GRID,
           MazeEditStatus.REJECTED_PROTECTED_CELL,
+          MazeEditStatus.REJECTED_FIXED_CELL,
           MazeEditStatus.REJECTED_MISSING_SOURCE,
           MazeEditStatus.REJECTED_OCCUPIED_DESTINATION,
           MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY,

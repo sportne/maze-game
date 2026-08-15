@@ -1,10 +1,12 @@
 package io.github.sportne.mazegame.teavm;
 
 import io.github.sportne.mazegame.MazeGame;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.FixedCell;
 import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
@@ -58,6 +60,9 @@ final class BrowserBuildGestureFixture {
         List.of(
             PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
+        List.of(
+            new FixedCell(new GridPosition(1, 0), FixedCellType.WALL),
+            new FixedCell(new GridPosition(1, 4), FixedCellType.SLOW_FLOOR)),
         List.of(
             new LevelSolver(
                 new GridPosition(4, 2),

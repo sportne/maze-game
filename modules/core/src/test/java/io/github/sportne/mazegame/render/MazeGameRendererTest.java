@@ -15,14 +15,17 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import io.github.sportne.mazegame.assets.DirectionalSpriteSet;
 import io.github.sportne.mazegame.layout.MazeGameLayout;
 import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.FixedCell;
 import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.LevelSolver;
@@ -31,6 +34,7 @@ import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.state.CellPaletteState;
@@ -42,6 +46,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
@@ -433,6 +438,45 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void fixedCellsKeepTheirEffectsAndAddANonColorLockMarker() {
+    LevelDefinition base = paletteLevel();
+    GridPosition wall = new GridPosition(1, 0);
+    GridPosition slowFloor = new GridPosition(1, 4);
+    LevelDefinition fixedLevel =
+        new LevelDefinition(
+            base.id(),
+            base.name(),
+            base.gridSize(),
+            base.buildTime(),
+            base.targetSolveTime(),
+            base.maximumSolveTime(),
+            base.solverMoveInterval(),
+            base.placeableCellSupplies(),
+            List.of(
+                new FixedCell(wall, FixedCellType.WALL),
+                new FixedCell(slowFloor, FixedCellType.SLOW_FLOOR)),
+            base.solvers());
+    MazeState maze = MazeState.empty(fixedLevel);
+    RecordingShapeRenderer withoutFixed = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer withFixed = allocate(RecordingShapeRenderer.class);
+
+    renderer(allocate(RecordingSpriteBatch.class), withoutFixed, recordingFont())
+        .render(
+            MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, base.gridSize()),
+            buildSnapshot(base));
+    renderer(allocate(RecordingSpriteBatch.class), withFixed, recordingFont())
+        .render(
+            MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, fixedLevel.gridSize()),
+            buildSnapshot(fixedLevel));
+
+    assertEquals(Color.WHITE, MazeGameRenderer.cellColor(maze, null, 0.0F, wall));
+    assertEquals(
+        new Color(0.62F, 0.36F, 0.08F, 1.0F),
+        MazeGameRenderer.cellColor(maze, null, 0.0F, slowFloor));
+    assertEquals(withoutFixed.rectLines + 18, withFixed.rectLines);
+  }
+
+  @Test
   void paletteTooltipStaysWithinTheViewport() {
     ScreenRectangle viewport = new ScreenRectangle(0.0F, 0.0F, 390.0F, 286.0F);
     ScreenRectangle leftItem = new ScreenRectangle(0.0F, 240.0F, 56.0F, 44.0F);
@@ -805,6 +849,83 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void solverSpritesFollowEachCharactersMostRecentMovementDirection() {
+    LevelDefinition level = Levels.levelFive();
+    RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
+    MazeGameRenderer renderer =
+        new MazeGameRenderer(
+            spriteBatch,
+            allocate(RecordingShapeRenderer.class),
+            recordingFont(),
+            sprite(1),
+            sprite(2),
+            directionalSprites(100),
+            directionalSprites(200));
+    List<SolverRunResult> results =
+        List.of(
+            new SolverRunResult(
+                level.solvers().get(0).start(), Duration.ZERO, 1, SolverRunStatus.RUNNING),
+            new SolverRunResult(
+                level.solvers().get(1).start(), Duration.ZERO, 1, SolverRunStatus.RUNNING));
+    GameRenderSnapshot snapshot =
+        new GameRenderSnapshot(
+            GamePhase.SOLVER_RUNNING,
+            level,
+            MazeState.empty(level),
+            0.0F,
+            null,
+            0.0F,
+            null,
+            List.of(new LevelProgress(level, true, null)),
+            List.of(),
+            null,
+            null,
+            true,
+            false,
+            false,
+            results,
+            List.of(Optional.of(CardinalDirection.NORTH), Optional.of(CardinalDirection.WEST)));
+
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.SOLVER_RUNNING, 1280, 720, level.gridSize(), true, 1, false),
+        snapshot);
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(110));
+    assertTrue(spriteBatch.drawnRegionXs().contains(220));
+    assertFalse(spriteBatch.drawnRegionXs().contains(130));
+    assertFalse(spriteBatch.drawnRegionXs().contains(230));
+  }
+
+  @Test
+  void renderSnapshotRequiresOneDirectionEntryPerSolverResult() {
+    SolverRunResult result =
+        new SolverRunResult(
+            LEVEL.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new GameRenderSnapshot(
+                GamePhase.SOLVER_RUNNING,
+                LEVEL,
+                MazeState.empty(LEVEL),
+                0.0F,
+                null,
+                0.0F,
+                null,
+                List.of(),
+                List.of(),
+                null,
+                null,
+                true,
+                false,
+                false,
+                List.of(result),
+                List.of()));
+  }
+
+  @Test
   void arbitrarySolverCountsReceiveStableDisambiguatedTitlesAndStats() {
     LevelDefinition level = threeSolverLevel();
     List<SolverRunResult> results =
@@ -861,6 +982,14 @@ final class MazeGameRendererTest {
 
   private static TextureRegion sprite(int regionX) {
     return new TextureRegion(new TestTexture(), regionX, 0, 100, 100);
+  }
+
+  private static DirectionalSpriteSet directionalSprites(int firstRegionX) {
+    return new DirectionalSpriteSet(
+        sprite(firstRegionX),
+        sprite(firstRegionX + 10),
+        sprite(firstRegionX + 20),
+        sprite(firstRegionX + 30));
   }
 
   private static ScreenLayout layout(GamePhase phase) {

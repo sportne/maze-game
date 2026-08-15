@@ -17,6 +17,7 @@ import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.time.Duration;
@@ -173,6 +174,22 @@ final class GameSessionTest {
     assertEquals(GamePhase.RESULT, session.gamePhase());
     assertEquals(SolverRunStatus.TIMED_OUT, session.solverRunResult().status());
     assertTrue(session.resultPassed());
+  }
+
+  @Test
+  void exposesLatestSolverDirectionsAndResetsThemWithTheRun() {
+    GameSession session = startedSession();
+    addVerticalCorridorWalls(session);
+
+    assertTrue(session.solverDirections().isEmpty());
+    session.startRun();
+    assertEquals(List.of(Optional.empty()), session.solverDirections());
+
+    session.updateSolverRun(0.25F);
+
+    assertEquals(List.of(Optional.of(CardinalDirection.NORTH)), session.solverDirections());
+    session.retryLevel();
+    assertTrue(session.solverDirections().isEmpty());
   }
 
   @Test

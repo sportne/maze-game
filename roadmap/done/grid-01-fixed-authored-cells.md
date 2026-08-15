@@ -1,6 +1,8 @@
 # GRID-01: Add Fixed Authored Grid Cells
 
-Status: proposed
+Status: complete
+
+Archived: yes
 
 Depends on: none
 

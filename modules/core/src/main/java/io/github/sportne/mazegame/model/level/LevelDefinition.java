@@ -1,20 +1,25 @@
 package io.github.sportne.mazegame.model.level;
 
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
+import io.github.sportne.mazegame.model.grid.GridPathfinder;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Immutable authoring data for one playable level.
  *
  * <p>A level definition contains the static data shared by maze editing, solver simulation, and
- * result evaluation. It does not contain player-placed walls; those live in {@link
+ * result evaluation. It does not contain player-placed cells; those live in {@link
  * io.github.sportne.mazegame.model.maze.MazeState}.
  *
  * @param id stable machine-readable level identifier
@@ -25,6 +30,7 @@ import java.util.Objects;
  * @param maximumSolveTime timeout that ends the run if the goal is not reached
  * @param solverMoveInterval time between solver movement decisions
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
+ * @param fixedCells level-owned cells that player editing cannot change
  * @param solvers authored solvers in stable presentation order
  */
 public record LevelDefinition(
@@ -36,7 +42,32 @@ public record LevelDefinition(
     Duration maximumSolveTime,
     Duration solverMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
+    List<FixedCell> fixedCells,
     List<LevelSolver> solvers) {
+  /** Creates a level without fixed authored cells. */
+  public LevelDefinition(
+      String id,
+      String name,
+      GridSize gridSize,
+      Duration buildTime,
+      Duration targetSolveTime,
+      Duration maximumSolveTime,
+      Duration solverMoveInterval,
+      List<PlaceableCellSupply> placeableCellSupplies,
+      List<LevelSolver> solvers) {
+    this(
+        id,
+        name,
+        gridSize,
+        buildTime,
+        targetSolveTime,
+        maximumSolveTime,
+        solverMoveInterval,
+        placeableCellSupplies,
+        List.of(),
+        solvers);
+  }
+
   /**
    * Creates validated level authoring data.
    *
@@ -53,6 +84,7 @@ public record LevelDefinition(
     requirePositive(solverMoveInterval, "solverMoveInterval");
     placeableCellSupplies = validateSupplies(placeableCellSupplies);
     solvers = validateSolvers(solvers, gridSize);
+    fixedCells = validateFixedCells(fixedCells, gridSize, solvers);
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
     }
@@ -80,6 +112,21 @@ public record LevelDefinition(
   @Override
   public List<PlaceableCellSupply> placeableCellSupplies() {
     return List.copyOf(placeableCellSupplies);
+  }
+
+  /** Returns immutable fixed cells in authored order. */
+  @Override
+  public List<FixedCell> fixedCells() {
+    return List.copyOf(fixedCells);
+  }
+
+  /** Returns the fixed effect at a position, or empty for an editable cell. */
+  public Optional<FixedCellType> fixedCellAt(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    return fixedCells.stream()
+        .filter(cell -> cell.position().equals(position))
+        .map(FixedCell::type)
+        .findFirst();
   }
 
   /** Returns an immutable defensive copy of the authored solvers in presentation order. */
@@ -127,6 +174,43 @@ public record LevelDefinition(
       if (!protectedPositions.add(solver.goal())) {
         throw new IllegalArgumentException("solver starts and goals must not overlap");
       }
+    }
+    return copied;
+  }
+
+  private static List<FixedCell> validateFixedCells(
+      List<FixedCell> authoredCells, GridSize gridSize, List<LevelSolver> solvers) {
+    Objects.requireNonNull(authoredCells, "fixedCells");
+    List<FixedCell> copied = List.copyOf(authoredCells);
+    Set<GridPosition> occupied = new HashSet<>();
+    for (FixedCell cell : copied) {
+      Objects.requireNonNull(cell, "fixedCells entry");
+      requireWithinGrid(cell.position(), gridSize, "fixed cell");
+      if (!occupied.add(cell.position())) {
+        throw new IllegalArgumentException("fixed cells must occupy unique positions");
+      }
+      if (solvers.stream()
+          .anyMatch(
+              solver ->
+                  cell.position().equals(solver.start())
+                      || cell.position().equals(solver.goal()))) {
+        throw new IllegalArgumentException("fixed cell must not overlap a solver start or goal");
+      }
+    }
+    if (solvers.stream()
+        .anyMatch(
+            solver ->
+                !GridPathfinder.hasPath(
+                    gridSize,
+                    solver.start(),
+                    solver.goal(),
+                    position ->
+                        copied.stream()
+                            .noneMatch(
+                                cell ->
+                                    cell.position().equals(position)
+                                        && cell.type().blocksMovement())))) {
+      throw new IllegalArgumentException("fixed cells must keep a path for every solver");
     }
     return copied;
   }

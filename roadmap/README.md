@@ -119,19 +119,20 @@ Status: complete.
 - [GAMEPLAY-01: Brainstorm and select additional cell types](gameplay-01-additional-cell-types.md)
   compares candidate mechanics and produces a bounded, evidence-backed shortlist before the closed
   production cell model changes.
-- [GRID-01: Add fixed authored grid cells](grid-01-fixed-authored-cells.md) adds level-owned,
-  prepopulated cells that affect play but cannot be changed or counted as player inventory.
+- [GRID-01: Add fixed authored grid cells](done/grid-01-fixed-authored-cells.md) is complete. The
+  accepted [fixed-cell contract](../docs/fixed-authored-cells.md) keeps level-owned geometry separate
+  from editable player inventory.
 - [SOLVER-01: Design and deliver a third solver type](solver-01-third-solver-type.md) selects,
   specifies, implements, and presents one behavior distinct from Random and Scout.
 
 ## Deferred Ideas
 
-These remain outside the planned Milestone 4 scope. The linked items now have proposed task cards but
-are not committed to a release milestone:
+These remain outside the planned Milestone 4 scope. Proposed items are not committed to a release
+milestone, while completed foundations are not yet used by a released level:
 
 - Grid progression beyond the five authored levels.
 - [Cell types beyond Wall and Slow Floor](gameplay-01-additional-cell-types.md).
-- [Fixed authored grid cells](grid-01-fixed-authored-cells.md).
+- [Fixed authored grid cells](done/grid-01-fixed-authored-cells.md).
 - [A third solver type](solver-01-third-solver-type.md).
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and solver behaviors.
@@ -160,3 +161,5 @@ Completed task cards are retained in the [done archive](done/README.md).
 - Multi-solver levels protect every start and goal, preserve every matching route, and pass only when
   every character exceeds the target; the weakest elapsed time is the saved score.
 - Palette drag and select-then-place use one atomic edit, and existing-item drag never changes inventory.
+- Fixed authored cells affect pathfinding and solver timing but cannot be edited and never consume or
+  return player inventory.

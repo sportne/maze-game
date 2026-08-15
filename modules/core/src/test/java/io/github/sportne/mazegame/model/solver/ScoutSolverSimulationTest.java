@@ -16,6 +16,7 @@ import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -88,8 +89,23 @@ final class ScoutSolverSimulationTest {
             withWalls(level, Set.of(position(1, 0), position(0, 1), position(1, 2))));
 
     assertEquals(position(2, 1), scout.update(MOVE_INTERVAL).position());
+    assertEquals(Optional.of(CardinalDirection.SOUTH), scout.lastDirection());
     assertEquals(position(2, 2), scout.update(MOVE_INTERVAL).position());
+    assertEquals(Optional.of(CardinalDirection.EAST), scout.lastDirection());
     assertEquals(SolverRunStatus.REACHED_GOAL, scout.result().status());
+  }
+
+  @Test
+  void cardinalDirectionRequiresOneOrthogonallyAdjacentMovement() {
+    GridPosition origin = position(1, 1);
+
+    assertEquals(CardinalDirection.NORTH, CardinalDirection.between(origin, position(0, 1)));
+    assertEquals(CardinalDirection.EAST, CardinalDirection.between(origin, position(1, 2)));
+    assertEquals(CardinalDirection.SOUTH, CardinalDirection.between(origin, position(2, 1)));
+    assertEquals(CardinalDirection.WEST, CardinalDirection.between(origin, position(1, 0)));
+    assertThrows(IllegalArgumentException.class, () -> CardinalDirection.between(origin, origin));
+    assertThrows(
+        IllegalArgumentException.class, () -> CardinalDirection.between(origin, position(0, 0)));
   }
 
   @Test

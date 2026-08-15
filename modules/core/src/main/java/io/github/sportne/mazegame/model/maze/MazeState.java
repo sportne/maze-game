@@ -1,17 +1,15 @@
 package io.github.sportne.mazegame.model.maze;
 
 import io.github.sportne.mazegame.model.cell.CellSupply;
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
+import io.github.sportne.mazegame.model.grid.GridPathfinder;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import java.util.ArrayDeque;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
 
 /** Immutable player-placed cells and derived inventory for one authored level. */
 public record MazeState(
@@ -96,6 +94,9 @@ public record MazeState(
     if (!source.isWithin(levelDefinition.gridSize())) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_OUTSIDE_GRID);
     }
+    if (levelDefinition.fixedCellAt(source).isPresent()) {
+      return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_FIXED_CELL);
+    }
     PlaceableCellType type = placedCells.get(source);
     if (type == null) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_MISSING_SOURCE);
@@ -129,19 +130,30 @@ public record MazeState(
   public boolean isTraversable(GridPosition position) {
     Objects.requireNonNull(position, "position");
     return position.isWithin(levelDefinition.gridSize())
-        && placedCells.get(position) != PlaceableCellType.WALL;
+        && placedCells.get(position) != PlaceableCellType.WALL
+        && levelDefinition.fixedCellAt(position).map(type -> !type.blocksMovement()).orElse(true);
   }
 
   /** Returns whether entering a cell delays the next solver decision by one movement interval. */
   public boolean delaysNextDecisionAt(GridPosition position) {
     requireInsideGrid(position);
-    return placedCells.get(position) == PlaceableCellType.SLOW_FLOOR;
+    return placedCells.get(position) == PlaceableCellType.SLOW_FLOOR
+        || levelDefinition
+            .fixedCellAt(position)
+            .map(FixedCellType::delaysNextDecision)
+            .orElse(false);
   }
 
   /** Returns the placeable type at a position, or null when the cell is empty or protected. */
   public PlaceableCellType placedCellAt(GridPosition position) {
     requireInsideGrid(position);
     return placedCells.get(position);
+  }
+
+  /** Returns whether a level-owned fixed cell occupies a grid position. */
+  public boolean hasFixedCellAt(GridPosition position) {
+    requireInsideGrid(position);
+    return levelDefinition.fixedCellAt(position).isPresent();
   }
 
   /** Returns the content rendered for one grid position. */
@@ -152,6 +164,13 @@ public record MazeState(
     }
     if (levelDefinition.solvers().stream().anyMatch(solver -> position.equals(solver.goal()))) {
       return CellContent.GOAL;
+    }
+    FixedCellType fixedType = levelDefinition.fixedCellAt(position).orElse(null);
+    if (fixedType != null) {
+      return switch (fixedType) {
+        case WALL -> CellContent.NORMAL_WALL;
+        case SLOW_FLOOR -> CellContent.SLOW_FLOOR;
+      };
     }
     return switch (placedCells.get(position)) {
       case WALL -> CellContent.NORMAL_WALL;
@@ -180,6 +199,9 @@ public record MazeState(
         .anyMatch(solver -> position.equals(solver.start()) || position.equals(solver.goal()))) {
       return MazeEditStatus.REJECTED_PROTECTED_CELL;
     }
+    if (levelDefinition.fixedCellAt(position).isPresent()) {
+      return MazeEditStatus.REJECTED_FIXED_CELL;
+    }
     return null;
   }
 
@@ -200,6 +222,9 @@ public record MazeState(
     if (levelDefinition.solvers().stream()
         .anyMatch(solver -> position.equals(solver.start()) || position.equals(solver.goal()))) {
       throw new IllegalArgumentException("placed cell must not be protected");
+    }
+    if (levelDefinition.fixedCellAt(position).isPresent()) {
+      throw new IllegalArgumentException("placed cell must not overlap a fixed cell");
     }
   }
 
@@ -222,38 +247,13 @@ public record MazeState(
   private static boolean hasPathsForEverySolver(
       LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
     return levelDefinition.solvers().stream()
-        .allMatch(solver -> hasPath(levelDefinition, placedCells, solver.start(), solver.goal()));
-  }
-
-  private static boolean hasPath(
-      LevelDefinition levelDefinition,
-      Map<GridPosition, PlaceableCellType> placedCells,
-      GridPosition start,
-      GridPosition goal) {
-    Queue<GridPosition> frontier = new ArrayDeque<>();
-    Set<GridPosition> visited = new HashSet<>();
-    frontier.add(start);
-    visited.add(start);
-    while (!frontier.isEmpty()) {
-      GridPosition current = frontier.remove();
-      if (current.equals(goal)) {
-        return true;
-      }
-      for (GridPosition neighbor : neighbors(current)) {
-        if (isOpen(levelDefinition, placedCells, neighbor) && visited.add(neighbor)) {
-          frontier.add(neighbor);
-        }
-      }
-    }
-    return false;
-  }
-
-  private static Set<GridPosition> neighbors(GridPosition position) {
-    return Set.of(
-        new GridPosition(position.row() - 1, position.column()),
-        new GridPosition(position.row() + 1, position.column()),
-        new GridPosition(position.row(), position.column() - 1),
-        new GridPosition(position.row(), position.column() + 1));
+        .allMatch(
+            solver ->
+                GridPathfinder.hasPath(
+                    levelDefinition.gridSize(),
+                    solver.start(),
+                    solver.goal(),
+                    position -> isOpen(levelDefinition, placedCells, position)));
   }
 
   private static boolean isOpen(
@@ -261,6 +261,7 @@ public record MazeState(
       Map<GridPosition, PlaceableCellType> placedCells,
       GridPosition position) {
     return position.isWithin(levelDefinition.gridSize())
-        && placedCells.get(position) != PlaceableCellType.WALL;
+        && placedCells.get(position) != PlaceableCellType.WALL
+        && levelDefinition.fixedCellAt(position).map(type -> !type.blocksMovement()).orElse(true);
   }
 }

@@ -10,10 +10,10 @@ public enum CellContent {
   /** A walkable cell with no special marker. */
   EMPTY,
 
-  /** A player-placed normal wall that blocks solver movement. */
+  /** A normal wall that blocks solver movement. */
   NORMAL_WALL,
 
-  /** A player-placed walkable floor that delays the next solver decision. */
+  /** A walkable floor that delays the next solver decision. */
   SLOW_FLOOR,
 
   /** The fixed cell where the solver begins a run. */
