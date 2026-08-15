@@ -409,7 +409,7 @@ final class MazeGameTest {
     game.updateSolverRun(1.0F);
 
     assertEquals(GamePhase.RESULT, game.gamePhase());
-    assertEquals(SolverRunStatus.REACHED_CHEESE, game.solverRunResult().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, game.solverRunResult().status());
     assertFalse(game.resultPassed());
   }
 
@@ -550,7 +550,7 @@ final class MazeGameTest {
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
     assertEquals(
         new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.milestoneOne().solverStart()));
-    assertEquals(Color.BLACK, game.cellColor(Levels.milestoneOne().cheese()));
+    assertEquals(Color.BLACK, game.cellColor(Levels.milestoneOne().goal()));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertEquals(Color.WHITE, game.cellColor(wall));

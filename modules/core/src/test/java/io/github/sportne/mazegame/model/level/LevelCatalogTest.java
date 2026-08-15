@@ -48,7 +48,7 @@ final class LevelCatalogTest {
         "Test Level",
         FIRST_LEVEL.gridSize(),
         FIRST_LEVEL.solverStart(),
-        FIRST_LEVEL.cheese(),
+        FIRST_LEVEL.goal(),
         FIRST_LEVEL.buildTime(),
         FIRST_LEVEL.targetSolveTime(),
         FIRST_LEVEL.maximumSolveTime(),

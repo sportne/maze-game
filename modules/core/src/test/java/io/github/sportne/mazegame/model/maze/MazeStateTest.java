@@ -23,10 +23,10 @@ final class MazeStateTest {
   }
 
   @Test
-  void emptyMazeHasPathFromStartToCheese() {
+  void emptyMazeHasPathFromStartToGoal() {
     MazeState maze = MazeState.empty(LEVEL);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
   }
 
   @Test
@@ -89,7 +89,7 @@ final class MazeStateTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> assertTrue(new MazeState(LEVEL, blockingRow).hasPathFromStartToCheese()));
+        () -> assertTrue(new MazeState(LEVEL, blockingRow).hasPathFromStartToGoal()));
   }
 
   @Test
@@ -113,18 +113,18 @@ final class MazeStateTest {
   }
 
   @Test
-  void rejectsWallOnCheese() {
+  void rejectsWallOnGoal() {
     MazeState maze = MazeState.empty(LEVEL);
 
     assertThrows(
-        IllegalArgumentException.class, () -> assertEquals(maze, maze.withWall(LEVEL.cheese())));
+        IllegalArgumentException.class, () -> assertEquals(maze, maze.withWall(LEVEL.goal())));
   }
 
   @Test
-  void placeWallRejectsCheeseWithoutMutatingMaze() {
+  void placeWallRejectsGoalWithoutMutatingMaze() {
     MazeState maze = MazeState.empty(LEVEL);
 
-    WallPlacementResult result = maze.placeWall(LEVEL.cheese());
+    WallPlacementResult result = maze.placeWall(LEVEL.goal());
 
     assertFalse(result.accepted());
     assertEquals(WallPlacementStatus.REJECTED_PROTECTED_CELL, result.status());
@@ -202,16 +202,16 @@ final class MazeStateTest {
     MazeState maze = MazeState.empty(LEVEL);
 
     assertTrue(maze.isProtected(LEVEL.solverStart()));
-    assertTrue(maze.isProtected(LEVEL.cheese()));
+    assertTrue(maze.isProtected(LEVEL.goal()));
     assertFalse(maze.isProtected(new GridPosition(2, 2)));
   }
 
   @Test
-  void cellContentIdentifiesStartCheeseWallAndEmptyCells() {
+  void cellContentIdentifiesStartGoalWallAndEmptyCells() {
     MazeState maze = MazeState.empty(LEVEL).withWall(new GridPosition(2, 2));
 
     assertEquals(CellContent.SOLVER_START, maze.cellContentAt(LEVEL.solverStart()));
-    assertEquals(CellContent.CHEESE, maze.cellContentAt(LEVEL.cheese()));
+    assertEquals(CellContent.GOAL, maze.cellContentAt(LEVEL.goal()));
     assertEquals(CellContent.NORMAL_WALL, maze.cellContentAt(new GridPosition(2, 2)));
     assertEquals(CellContent.EMPTY, maze.cellContentAt(new GridPosition(1, 1)));
   }
@@ -239,6 +239,6 @@ final class MazeStateTest {
                 new GridPosition(4, 3),
                 new GridPosition(4, 4)));
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
   }
 }

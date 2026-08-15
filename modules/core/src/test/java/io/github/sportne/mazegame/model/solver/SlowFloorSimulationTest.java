@@ -25,7 +25,7 @@ final class SlowFloorSimulationTest {
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
   private static final Duration TIMEOUT = Duration.ofMillis(6500);
   private static final GridPosition START = position(6, 3);
-  private static final GridPosition CHEESE = position(0, 3);
+  private static final GridPosition GOAL = position(0, 3);
 
   private static final Set<GridPosition> PASSING_WALLS =
       Set.of(position(0, 0), position(1, 1), position(2, 2));
@@ -46,16 +46,16 @@ final class SlowFloorSimulationTest {
     LevelDefinition level = level(SolverBehavior.LEFT_PRIORITY, 53L, TIMEOUT);
 
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(GOAL, Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
         run(maze(level, Set.of(), Set.of())));
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(GOAL, Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_GOAL),
         run(maze(level, PASSING_WALLS, Set.of())));
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(GOAL, Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_GOAL),
         run(maze(level, Set.of(), PASSING_SLOW_FLOORS)));
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(GOAL, Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_GOAL),
         run(maze(level, PASSING_WALLS, PASSING_SLOW_FLOORS)));
     assertEquals(
         new SolverRunResult(position(1, 3), TIMEOUT, 19, SolverRunStatus.TIMED_OUT),
@@ -94,7 +94,7 @@ final class SlowFloorSimulationTest {
     assertEquals(
         Duration.ofMillis(250), slowed.result().elapsedTime().minus(normal.result().elapsedTime()));
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofMillis(4250), 16, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(GOAL, Duration.ofMillis(4250), 16, SolverRunStatus.REACHED_GOAL),
         slowed.result());
   }
 
@@ -157,7 +157,7 @@ final class SlowFloorSimulationTest {
   }
 
   @Test
-  void cheeseArrivalEndsImmediatelyAfterACompletedSlowWait() {
+  void goalArrivalEndsImmediatelyAfterACompletedSlowWait() {
     LevelDefinition level = corridorLevel(Duration.ofSeconds(1));
     MazeState maze =
         maze(
@@ -166,17 +166,16 @@ final class SlowFloorSimulationTest {
             Set.of(position(1, 1)));
 
     assertEquals(
-        new SolverRunResult(
-            level.cheese(), Duration.ofMillis(750), 2, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(level.goal(), Duration.ofMillis(750), 2, SolverRunStatus.REACHED_GOAL),
         run(maze));
   }
 
   @Test
-  void cheeseArrivalStillWinsANormalDecisionAtTheTimeoutBoundary() {
+  void goalArrivalStillWinsANormalDecisionAtTheTimeoutBoundary() {
     LevelDefinition level =
         new LevelDefinition(
-            "cheese-boundary",
-            "Cheese Boundary",
+            "goal-boundary",
+            "Goal Boundary",
             GridSize.square(3),
             position(1, 1),
             position(0, 1),
@@ -190,7 +189,7 @@ final class SlowFloorSimulationTest {
     MazeState maze = maze(level, Set.of(position(1, 0), position(1, 2)), Set.of());
 
     assertEquals(
-        new SolverRunResult(level.cheese(), MOVE_INTERVAL, 1, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(level.goal(), MOVE_INTERVAL, 1, SolverRunStatus.REACHED_GOAL),
         run(maze));
   }
 
@@ -230,7 +229,7 @@ final class SlowFloorSimulationTest {
         "Slow Floor " + behavior,
         GridSize.square(7),
         START,
-        CHEESE,
+        GOAL,
         Duration.ofSeconds(25),
         Duration.ofMillis(5500),
         maximumSolveTime,

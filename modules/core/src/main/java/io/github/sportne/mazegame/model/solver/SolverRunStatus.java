@@ -7,12 +7,12 @@ package io.github.sportne.mazegame.model.solver;
  * game to the result phase.
  */
 public enum SolverRunStatus {
-  /** The solver can still move and has not reached the cheese or timed out. */
+  /** The solver can still move and has not reached its goal or timed out. */
   RUNNING,
 
-  /** The solver reached the cheese before the maximum solve time elapsed. */
-  REACHED_CHEESE,
+  /** The solver reached its goal before the maximum solve time elapsed. */
+  REACHED_GOAL,
 
-  /** The maximum solve time elapsed before the solver reached the cheese. */
+  /** The maximum solve time elapsed before the solver reached its goal. */
   TIMED_OUT
 }

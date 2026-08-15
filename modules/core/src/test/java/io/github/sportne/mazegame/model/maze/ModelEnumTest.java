@@ -51,7 +51,7 @@ final class ModelEnumTest {
   void solverRunStatusesCoverRunningAndTerminalOutcomes() {
     assertArrayEquals(
         new SolverRunStatus[] {
-          SolverRunStatus.RUNNING, SolverRunStatus.REACHED_CHEESE, SolverRunStatus.TIMED_OUT
+          SolverRunStatus.RUNNING, SolverRunStatus.REACHED_GOAL, SolverRunStatus.TIMED_OUT
         },
         SolverRunStatus.values());
   }

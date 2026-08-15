@@ -268,7 +268,7 @@ final class GameSessionTest {
             "Scout Session",
             source.gridSize(),
             source.solverStart(),
-            source.cheese(),
+            source.goal(),
             source.buildTime(),
             source.targetSolveTime(),
             source.maximumSolveTime(),
@@ -506,7 +506,7 @@ final class GameSessionTest {
     session.updateSolverRun(3.0F);
     SolverRunResult failedResult = session.solverRunResult();
     assertFalse(session.resultPassed());
-    assertEquals(SolverRunStatus.REACHED_CHEESE, failedResult.status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, failedResult.status());
 
     session.replayRun();
     session.updateSolverRun(15.0F);
@@ -601,10 +601,10 @@ final class GameSessionTest {
     assertTrue(session.resultPassed());
     assertEquals(
         new SolverRunResult(
-            Levels.milestoneThree().cheese(),
+            Levels.milestoneThree().goal(),
             Duration.ofMillis(6500),
             26,
-            SolverRunStatus.REACHED_CHEESE),
+            SolverRunStatus.REACHED_GOAL),
         firstRun);
     assertEquals(Levels.milestoneThree().id(), store.savedLevelId);
     assertEquals(firstBest, store.results.get(Levels.milestoneOne().id()));
@@ -662,10 +662,10 @@ final class GameSessionTest {
     assertTrue(session.resultPassed());
     assertEquals(
         new SolverRunResult(
-            Levels.milestoneFour().cheese(),
+            Levels.milestoneFour().goal(),
             Duration.ofMillis(5750),
             20,
-            SolverRunStatus.REACHED_CHEESE),
+            SolverRunStatus.REACHED_GOAL),
         firstRun);
     assertEquals(Levels.milestoneFour().id(), store.savedLevelId);
     assertEquals(1, store.saveCount);
@@ -713,8 +713,8 @@ final class GameSessionTest {
 
     session.placeWall(level.solverStart());
     assertEquals(level.solverStart(), session.rejectedPosition());
-    session.placeWall(level.cheese());
-    assertEquals(level.cheese(), session.rejectedPosition());
+    session.placeWall(level.goal());
+    assertEquals(level.goal(), session.rejectedPosition());
     assertTrue(session.mazeState().walls().isEmpty());
   }
 

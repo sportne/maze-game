@@ -67,7 +67,7 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals("Level 2", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
     assertEquals(new GridPosition(6, 3), LEVEL.solverStart());
-    assertEquals(new GridPosition(0, 3), LEVEL.cheese());
+    assertEquals(new GridPosition(0, 3), LEVEL.goal());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(15), LEVEL.maximumSolveTime());
@@ -89,10 +89,9 @@ final class MilestoneTwoLevelDesignTest {
 
     SolverRunResult result = run(maze);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(
-        new SolverRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
         result);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, result, LEVEL));
   }
@@ -107,9 +106,9 @@ final class MilestoneTwoLevelDesignTest {
       Set<GridPosition> walls, Duration elapsedTime, int moveCount) {
     MazeState maze = new MazeState(LEVEL, walls);
     SolverRunResult expected =
-        new SolverRunResult(LEVEL.cheese(), elapsedTime, moveCount, SolverRunStatus.REACHED_CHEESE);
+        new SolverRunResult(LEVEL.goal(), elapsedTime, moveCount, SolverRunStatus.REACHED_GOAL);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(expected, run(maze));
     assertEquals(expected, run(maze));
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, expected, LEVEL));
@@ -121,7 +120,7 @@ final class MilestoneTwoLevelDesignTest {
 
     SolverRunResult result = run(maze);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(
         new SolverRunResult(
             new GridPosition(1, 2), Duration.ofSeconds(15), 60, SolverRunStatus.TIMED_OUT),

@@ -4,7 +4,7 @@ package io.github.sportne.mazegame.model.maze;
  * Render-independent cell content for one grid square.
  *
  * <p>The model reports these values so the libGDX layer can decide how to draw a cell without
- * duplicating start, cheese, and wall precedence rules.
+ * duplicating start, goal, and wall precedence rules.
  */
 public enum CellContent {
   /** A walkable cell with no special marker. */
@@ -20,5 +20,5 @@ public enum CellContent {
   SOLVER_START,
 
   /** The fixed endpoint cell that the solver tries to reach. */
-  CHEESE
+  GOAL
 }

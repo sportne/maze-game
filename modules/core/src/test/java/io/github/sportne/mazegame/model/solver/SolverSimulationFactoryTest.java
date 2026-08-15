@@ -39,7 +39,7 @@ final class SolverSimulationFactoryTest {
         source.name(),
         source.gridSize(),
         source.solverStart(),
-        source.cheese(),
+        source.goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),

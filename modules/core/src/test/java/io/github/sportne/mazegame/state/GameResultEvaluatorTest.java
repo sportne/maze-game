@@ -18,7 +18,7 @@ final class GameResultEvaluatorTest {
   @Test
   void passRequiresResultPhaseAndElapsedTimeAboveTarget() {
     SolverRunResult passingResult =
-        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, passingResult, LEVEL));
     assertFalse(GameResultEvaluator.passed(GamePhase.SOLVER_RUNNING, passingResult, LEVEL));
@@ -27,8 +27,7 @@ final class GameResultEvaluatorTest {
   @Test
   void equalOrFasterThanTargetDoesNotPass() {
     SolverRunResult exactTarget =
-        new SolverRunResult(
-            LEVEL.cheese(), LEVEL.targetSolveTime(), 8, SolverRunStatus.REACHED_CHEESE);
+        new SolverRunResult(LEVEL.goal(), LEVEL.targetSolveTime(), 8, SolverRunStatus.REACHED_GOAL);
 
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, exactTarget, LEVEL));
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, null, LEVEL));
@@ -37,7 +36,7 @@ final class GameResultEvaluatorTest {
   @Test
   void requiresPhaseAndLevelDefinition() {
     SolverRunResult result =
-        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertThrows(NullPointerException.class, () -> GameResultEvaluator.passed(null, result, LEVEL));
     assertThrows(
@@ -49,14 +48,13 @@ final class GameResultEvaluatorTest {
   void multiSolverPassRequiresEveryAuthoredResultPastTheTarget() {
     LevelDefinition level = Levels.milestoneFive();
     SolverRunResult passing =
-        new SolverRunResult(
-            level.cheese(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_CHEESE);
+        new SolverRunResult(level.goal(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_GOAL);
     SolverRunResult exact =
         new SolverRunResult(
             level.solvers().get(1).goal(),
             level.targetSolveTime(),
             18,
-            SolverRunStatus.REACHED_CHEESE);
+            SolverRunStatus.REACHED_GOAL);
 
     assertTrue(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, passing), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, exact), level));

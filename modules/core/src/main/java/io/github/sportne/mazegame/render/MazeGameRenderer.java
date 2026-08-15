@@ -157,7 +157,7 @@ public final class MazeGameRenderer {
           case NORMAL_WALL -> CELL_WALL;
           case SLOW_FLOOR -> CELL_SLOW_FLOOR;
           case SOLVER_START -> CELL_START;
-          case CHEESE -> CELL_OPEN;
+          case GOAL -> CELL_OPEN;
         };
     return new Color(color);
   }

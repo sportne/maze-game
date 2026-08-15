@@ -38,7 +38,7 @@ final class BestResultTest {
   void createsCandidateFromSolverRunResult() {
     SolverRunResult runResult =
         new SolverRunResult(
-            new GridPosition(0, 2), Duration.ofMillis(1250L), 5, SolverRunStatus.REACHED_CHEESE);
+            new GridPosition(0, 2), Duration.ofMillis(1250L), 5, SolverRunStatus.REACHED_GOAL);
 
     assertEquals(new BestResult(Duration.ofMillis(1250L), 5), BestResult.from(runResult));
   }

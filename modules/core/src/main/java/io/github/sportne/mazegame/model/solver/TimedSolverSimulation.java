@@ -97,8 +97,8 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   }
 
   private void updateStatus() {
-    if (position.equals(mazeState.levelDefinition().cheese())) {
-      status = SolverRunStatus.REACHED_CHEESE;
+    if (position.equals(mazeState.levelDefinition().goal())) {
+      status = SolverRunStatus.REACHED_GOAL;
     } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
       status = SolverRunStatus.TIMED_OUT;
     }

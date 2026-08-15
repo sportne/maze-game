@@ -227,7 +227,7 @@ final class MazeGameRendererTest {
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     SolverRunResult result =
-        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
             GamePhase.RESULT,
@@ -263,7 +263,7 @@ final class MazeGameRendererTest {
     LevelDefinition finalLevel = Levels.milestoneFive();
     SolverRunResult result =
         new SolverRunResult(
-            finalLevel.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+            finalLevel.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     List<LevelProgress> progress =
         Levels.catalog().levels().stream()
             .map(level -> new LevelProgress(level, true, null))
@@ -302,10 +302,9 @@ final class MazeGameRendererTest {
         new SolverRunResult(
             LEVEL.solverStart(), Duration.ofMillis(2500L), 10, SolverRunStatus.RUNNING);
     SolverRunResult result =
-        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10L), 40, SolverRunStatus.TIMED_OUT);
     SolverRunResult failedResult =
-        new SolverRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(2L), 8, SolverRunStatus.REACHED_CHEESE);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(2L), 8, SolverRunStatus.REACHED_GOAL);
 
     renderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
     renderer.render(layout(GamePhase.SOLVER_RUNNING), snapshot(GamePhase.SOLVER_RUNNING, running));
@@ -593,7 +592,7 @@ final class MazeGameRendererTest {
             false));
 
     SolverRunResult result =
-        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot resultSnapshot =
         new GameRenderSnapshot(
             GamePhase.RESULT,
@@ -636,7 +635,7 @@ final class MazeGameRendererTest {
             scoutLevel.solverStart(), Duration.ofSeconds(1), 4, SolverRunStatus.RUNNING);
     SolverRunResult result =
         new SolverRunResult(
-            scoutLevel.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE);
+            scoutLevel.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL);
     List<LevelProgress> progress =
         List.of(
             new LevelProgress(Levels.milestoneOne(), true, null),
@@ -697,7 +696,7 @@ final class MazeGameRendererTest {
             LEVEL.name(),
             LEVEL.gridSize(),
             LEVEL.solverStart(),
-            LEVEL.cheese(),
+            LEVEL.goal(),
             LEVEL.buildTime(),
             LEVEL.targetSolveTime(),
             LEVEL.maximumSolveTime(),
@@ -832,7 +831,7 @@ final class MazeGameRendererTest {
         result == null ? null : new BestResult(Duration.ofMillis(6500), 26),
         progress,
         true,
-        result != null && result.status() == SolverRunStatus.REACHED_CHEESE,
+        result != null && result.status() == SolverRunStatus.REACHED_GOAL,
         false);
   }
 

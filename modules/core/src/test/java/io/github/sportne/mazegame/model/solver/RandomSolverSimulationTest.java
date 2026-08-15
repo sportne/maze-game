@@ -82,14 +82,14 @@ final class RandomSolverSimulationTest {
   }
 
   @Test
-  void reachesCheeseWhenRandomWalkArrivesThere() {
+  void reachesGoalWhenRandomWalkArrivesThere() {
     MazeState maze = verticalCorridor(Levels.milestoneOne());
     RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
     SolverRunResult result = simulation.update(Duration.ofSeconds(1));
 
-    assertEquals(Levels.milestoneOne().cheese(), result.position());
-    assertEquals(SolverRunStatus.REACHED_CHEESE, result.status());
+    assertEquals(Levels.milestoneOne().goal(), result.position());
+    assertEquals(SolverRunStatus.REACHED_GOAL, result.status());
     assertEquals(4, result.moveCount());
   }
 
@@ -157,7 +157,7 @@ final class RandomSolverSimulationTest {
         "Seed " + seed,
         milestoneOne.gridSize(),
         milestoneOne.solverStart(),
-        milestoneOne.cheese(),
+        milestoneOne.goal(),
         milestoneOne.buildTime(),
         milestoneOne.targetSolveTime(),
         milestoneOne.maximumSolveTime(),

@@ -87,7 +87,7 @@ final class ScoutSolverSimulationTest {
 
     assertEquals(position(2, 1), scout.update(MOVE_INTERVAL).position());
     assertEquals(position(2, 2), scout.update(MOVE_INTERVAL).position());
-    assertEquals(SolverRunStatus.REACHED_CHEESE, scout.result().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, scout.result().status());
   }
 
   @Test
@@ -119,7 +119,7 @@ final class ScoutSolverSimulationTest {
 
     assertEquals(
         new SolverRunResult(
-            level.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE),
+            level.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL),
         expected);
     assertEquals(expected, chunked.result());
   }
@@ -186,8 +186,8 @@ final class ScoutSolverSimulationTest {
   }
 
   private static void assertFirstMove(
-      GridPosition cheese, GridPosition expected, Set<GridPosition> walls) {
-    LevelDefinition level = level(GridSize.square(3), position(1, 1), cheese, 1L);
+      GridPosition goal, GridPosition expected, Set<GridPosition> walls) {
+    LevelDefinition level = level(GridSize.square(3), position(1, 1), goal, 1L);
 
     SolverRunResult result =
         new ScoutSolverSimulation(new MazeState(level, walls)).update(MOVE_INTERVAL);
@@ -208,13 +208,13 @@ final class ScoutSolverSimulationTest {
   }
 
   private static LevelDefinition level(
-      GridSize gridSize, GridPosition start, GridPosition cheese, long seed) {
+      GridSize gridSize, GridPosition start, GridPosition goal, long seed) {
     return new LevelDefinition(
         "scout-" + seed,
         "Scout " + seed,
         gridSize,
         start,
-        cheese,
+        goal,
         Duration.ofSeconds(25),
         Duration.ofSeconds(6),
         Duration.ofSeconds(8),

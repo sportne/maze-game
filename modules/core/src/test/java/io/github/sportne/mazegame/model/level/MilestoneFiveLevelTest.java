@@ -8,6 +8,7 @@ import io.github.sportne.mazegame.model.cell.CellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeEditStatus;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
@@ -69,17 +70,19 @@ final class MilestoneFiveLevelTest {
           MazeEditStatus.REJECTED_PROTECTED_CELL,
           maze.placeOrReplace(PlaceableCellType.WALL, protectedPosition).status());
     }
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertEquals(CellContent.GOAL, maze.cellContentAt(RANDOM.goal()));
+    assertEquals(CellContent.GOAL, maze.cellContentAt(SCOUT.goal()));
+    assertTrue(maze.hasPathFromStartToGoal());
   }
 
   @Test
   void emptyLayoutFailsQuicklyButTheAuthoredFixtureDelaysBothSolversPastTheTarget() {
     MazeState empty = MazeState.empty(LEVEL);
     assertEquals(
-        new SolverRunResult(CHEESE, Duration.ofMillis(1500), 6, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofMillis(1500), 6, SolverRunStatus.REACHED_GOAL),
         run(empty, RANDOM));
     assertEquals(
-        new SolverRunResult(ACORN, Duration.ofMillis(750), 3, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(ACORN, Duration.ofMillis(750), 3, SolverRunStatus.REACHED_GOAL),
         run(empty, SCOUT));
 
     MazeState passing = new MazeState(LEVEL, PASSING_CELLS);
@@ -89,7 +92,7 @@ final class MilestoneFiveLevelTest {
         new SolverRunResult(position(2, 5), Duration.ofSeconds(10), 39, SolverRunStatus.TIMED_OUT),
         randomResult);
     assertEquals(
-        new SolverRunResult(ACORN, Duration.ofSeconds(9), 33, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(ACORN, Duration.ofSeconds(9), 33, SolverRunStatus.REACHED_GOAL),
         scoutResult);
     assertTrue(randomResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0);
     assertTrue(scoutResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0);

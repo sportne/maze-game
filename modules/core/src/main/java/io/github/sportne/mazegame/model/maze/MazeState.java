@@ -156,7 +156,7 @@ public record MazeState(
       return CellContent.SOLVER_START;
     }
     if (levelDefinition.solvers().stream().anyMatch(solver -> position.equals(solver.goal()))) {
-      return CellContent.CHEESE;
+      return CellContent.GOAL;
     }
     return switch (placedCells.get(position)) {
       case WALL -> CellContent.NORMAL_WALL;
@@ -165,8 +165,8 @@ public record MazeState(
     };
   }
 
-  /** Returns whether the start remains connected to the cheese through walkable cells. */
-  public boolean hasPathFromStartToCheese() {
+  /** Returns whether every solver start remains connected to its goal through walkable cells. */
+  public boolean hasPathFromStartToGoal() {
     return hasPathsForEverySolver(levelDefinition, placedCells);
   }
 
@@ -218,7 +218,7 @@ public record MazeState(
     return remove(position).mazeState();
   }
 
-  /** Returns whether a position is reserved for the solver start or cheese. */
+  /** Returns whether a position is reserved for a solver start or goal. */
   public boolean isProtected(GridPosition position) {
     requireInsideGrid(position);
     return levelDefinition.solvers().stream()

@@ -114,7 +114,7 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals("Level 3", PROPOSED_LEVEL.name());
     assertEquals(GridSize.square(7), PROPOSED_LEVEL.gridSize());
     assertEquals(position(6, 3), PROPOSED_LEVEL.solverStart());
-    assertEquals(position(0, 3), PROPOSED_LEVEL.cheese());
+    assertEquals(position(0, 3), PROPOSED_LEVEL.goal());
     assertEquals(Duration.ofSeconds(25), PROPOSED_LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), PROPOSED_LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(8), PROPOSED_LEVEL.maximumSolveTime());
@@ -201,7 +201,7 @@ final class MilestoneThreeLevelDesignTest {
             position(0, 2),
             position(0, 3)),
         scout.trace());
-    assertEquals(SolverRunStatus.REACHED_CHEESE, scout.result().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, scout.result().status());
   }
 
   @Test
@@ -225,12 +225,12 @@ final class MilestoneThreeLevelDesignTest {
     assertPassingLayout(
         PASSING_LAYOUT_A,
         new SolverRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE),
+            PROPOSED_LEVEL.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL),
         PASSING_TRACE_A);
     assertPassingLayout(
         PASSING_LAYOUT_B,
         new SolverRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE),
+            PROPOSED_LEVEL.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL),
         PASSING_TRACE_B);
   }
 
@@ -240,12 +240,12 @@ final class MilestoneThreeLevelDesignTest {
         PASSING_LAYOUT_A,
         PASSING_TRACE_A,
         new SolverRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE));
+            PROPOSED_LEVEL.goal(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_GOAL));
     assertProductionTrace(
         PASSING_LAYOUT_B,
         PASSING_TRACE_B,
         new SolverRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE));
+            PROPOSED_LEVEL.goal(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_GOAL));
     assertProductionTrace(
         TIMEOUT_LAYOUT,
         TIMEOUT_TRACE,
@@ -258,10 +258,10 @@ final class MilestoneThreeLevelDesignTest {
     MazeState empty = MazeState.empty(PROPOSED_LEVEL);
     SolverRunResult emptyResult = new ReferenceScout(empty).update(Duration.ofSeconds(8));
 
-    assertTrue(empty.hasPathFromStartToCheese());
+    assertTrue(empty.hasPathFromStartToGoal());
     assertEquals(
         new SolverRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
+            PROPOSED_LEVEL.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
         emptyResult);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, emptyResult, PROPOSED_LEVEL));
 
@@ -269,7 +269,7 @@ final class MilestoneThreeLevelDesignTest {
     ReferenceScout timeout = new ReferenceScout(timeoutMaze);
     SolverRunResult timeoutResult = timeout.update(PROPOSED_LEVEL.maximumSolveTime());
 
-    assertTrue(timeoutMaze.hasPathFromStartToCheese());
+    assertTrue(timeoutMaze.hasPathFromStartToGoal());
     assertEquals(
         new SolverRunResult(
             new GridPosition(0, 1), Duration.ofSeconds(8), 32, SolverRunStatus.TIMED_OUT),
@@ -281,7 +281,7 @@ final class MilestoneThreeLevelDesignTest {
     ReferenceScout extended = new ReferenceScout(new MazeState(extendedLevel, TIMEOUT_LAYOUT));
     assertEquals(
         new SolverRunResult(
-            extendedLevel.cheese(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_CHEESE),
+            extendedLevel.goal(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_GOAL),
         extended.update(extendedLevel.maximumSolveTime()));
     assertEquals(
         positions(0, 2, 0, 3),
@@ -295,23 +295,21 @@ final class MilestoneThreeLevelDesignTest {
         level,
         MILESTONE_TWO_PASSING_LAYOUT,
         new SolverRunResult(
-            level.cheese(), Duration.ofMillis(9500), 38, SolverRunStatus.REACHED_CHEESE),
-        new SolverRunResult(
-            level.cheese(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE));
+            level.goal(), Duration.ofMillis(9500), 38, SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(level.goal(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_GOAL));
     assertComparison(
         level,
         MILESTONE_TWO_PASSING_LAYOUT_B,
         new SolverRunResult(
-            level.cheese(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_CHEESE),
-        new SolverRunResult(
-            level.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE));
+            level.goal(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_GOAL),
+        new SolverRunResult(level.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL));
     assertComparison(
         level,
         MILESTONE_TWO_TIMEOUT_LAYOUT,
         new SolverRunResult(
             new GridPosition(1, 2), Duration.ofSeconds(15), 60, SolverRunStatus.TIMED_OUT),
         new SolverRunResult(
-            level.cheese(), Duration.ofMillis(3500), 14, SolverRunStatus.REACHED_CHEESE));
+            level.goal(), Duration.ofMillis(3500), 14, SolverRunStatus.REACHED_GOAL));
   }
 
   private static void assertPassingLayout(
@@ -320,7 +318,7 @@ final class MilestoneThreeLevelDesignTest {
     ReferenceScout first = new ReferenceScout(maze);
     ReferenceScout replay = new ReferenceScout(maze);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(expectedResult, first.update(PROPOSED_LEVEL.maximumSolveTime()));
     assertEquals(expectedResult, replay.update(PROPOSED_LEVEL.maximumSolveTime()));
     assertEquals(expectedTrace, first.trace());
@@ -360,7 +358,7 @@ final class MilestoneThreeLevelDesignTest {
         PROPOSED_LEVEL.name(),
         PROPOSED_LEVEL.gridSize(),
         PROPOSED_LEVEL.solverStart(),
-        PROPOSED_LEVEL.cheese(),
+        PROPOSED_LEVEL.goal(),
         PROPOSED_LEVEL.buildTime(),
         PROPOSED_LEVEL.targetSolveTime(),
         maximumSolveTime,
@@ -512,8 +510,8 @@ final class MilestoneThreeLevelDesignTest {
     }
 
     private void updateStatus() {
-      if (position.equals(mazeState.levelDefinition().cheese())) {
-        status = SolverRunStatus.REACHED_CHEESE;
+      if (position.equals(mazeState.levelDefinition().goal())) {
+        status = SolverRunStatus.REACHED_GOAL;
       } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
         status = SolverRunStatus.TIMED_OUT;
       }

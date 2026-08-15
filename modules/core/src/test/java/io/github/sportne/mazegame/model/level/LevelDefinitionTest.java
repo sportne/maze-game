@@ -23,7 +23,7 @@ final class LevelDefinitionTest {
     assertEquals("Level 1", level.name());
     assertEquals(GridSize.square(5), level.gridSize());
     assertEquals(new GridPosition(4, 2), level.solverStart());
-    assertEquals(new GridPosition(0, 2), level.cheese());
+    assertEquals(new GridPosition(0, 2), level.goal());
     assertEquals(Duration.ofSeconds(30), level.buildTime());
     assertEquals(Duration.ofSeconds(5), level.targetSolveTime());
     assertEquals(Duration.ofSeconds(10), level.maximumSolveTime());
@@ -64,14 +64,14 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void cheeseMustBeInsideGrid() {
+  void goalMustBeInsideGrid() {
     assertThrows(
         IllegalArgumentException.class,
         () -> level("level", "Level", new GridPosition(4, 2), new GridPosition(-1, 2)));
   }
 
   @Test
-  void solverStartAndCheeseMustBeDifferent() {
+  void solverStartAndGoalMustBeDifferent() {
     GridPosition position = new GridPosition(2, 2);
 
     assertThrows(IllegalArgumentException.class, () -> level("level", "Level", position, position));
@@ -267,13 +267,13 @@ final class LevelDefinitionTest {
   }
 
   private static LevelDefinition level(
-      String id, String name, GridPosition solverStart, GridPosition cheese) {
+      String id, String name, GridPosition solverStart, GridPosition goal) {
     return new LevelDefinition(
         id,
         name,
         GridSize.square(5),
         solverStart,
-        cheese,
+        goal,
         Duration.ofSeconds(30),
         Duration.ofSeconds(5),
         Duration.ofSeconds(10),
@@ -290,7 +290,7 @@ final class LevelDefinitionTest {
         source.name(),
         source.gridSize(),
         source.solverStart(),
-        source.cheese(),
+        source.goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
@@ -307,7 +307,7 @@ final class LevelDefinitionTest {
         "Supply Test",
         source.gridSize(),
         source.solverStart(),
-        source.cheese(),
+        source.goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
@@ -324,7 +324,7 @@ final class LevelDefinitionTest {
         "Multi Solver Test",
         source.gridSize(),
         source.solverStart(),
-        source.cheese(),
+        source.goal(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),

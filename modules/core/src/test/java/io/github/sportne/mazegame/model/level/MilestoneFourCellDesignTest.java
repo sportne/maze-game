@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 final class MilestoneFourCellDesignTest {
   private static final int GRID_SIZE = 7;
   private static final GridPosition START = position(6, 3);
-  private static final GridPosition CHEESE = position(0, 3);
+  private static final GridPosition GOAL = position(0, 3);
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
   private static final Duration TARGET = Duration.ofMillis(5500);
   private static final Duration TIMEOUT = Duration.ofMillis(6500);
@@ -63,7 +63,7 @@ final class MilestoneFourCellDesignTest {
 
     assertEquals(GRID_SIZE, board.gridSize());
     assertEquals(START, board.start());
-    assertEquals(CHEESE, board.cheese());
+    assertEquals(GOAL, board.goal());
     assertEquals(
         Map.of(CellType.WALL, Supply.finite(1), CellType.SLOW_FLOOR, Supply.finite(0)),
         board.remaining());
@@ -75,7 +75,7 @@ final class MilestoneFourCellDesignTest {
             4250L, 4500L, 4750L, 5000L, 5250L, 5500L, 5750L),
         run.decisionTimesMillis());
     assertEquals(
-        new RunResult(CHEESE, Duration.ofMillis(5750), 20, RunStatus.REACHED_CHEESE), run.result());
+        new RunResult(GOAL, Duration.ofMillis(5750), 20, RunStatus.REACHED_GOAL), run.result());
     assertTrue(passed(run.result()));
   }
 
@@ -84,17 +84,17 @@ final class MilestoneFourCellDesignTest {
     assertFixture(
         board(Set.of(), Set.of()),
         EMPTY_TRACE,
-        new RunResult(CHEESE, Duration.ofSeconds(3), 12, RunStatus.REACHED_CHEESE),
+        new RunResult(GOAL, Duration.ofSeconds(3), 12, RunStatus.REACHED_GOAL),
         false);
     assertFixture(
         board(PASSING_WALLS, Set.of()),
         PASSING_TRACE,
-        new RunResult(CHEESE, Duration.ofSeconds(5), 20, RunStatus.REACHED_CHEESE),
+        new RunResult(GOAL, Duration.ofSeconds(5), 20, RunStatus.REACHED_GOAL),
         false);
     assertFixture(
         board(Set.of(), PASSING_SLOW_FLOORS),
         EMPTY_TRACE,
-        new RunResult(CHEESE, Duration.ofMillis(3750), 12, RunStatus.REACHED_CHEESE),
+        new RunResult(GOAL, Duration.ofMillis(3750), 12, RunStatus.REACHED_GOAL),
         false);
   }
 
@@ -107,14 +107,13 @@ final class MilestoneFourCellDesignTest {
     }
 
     assertFalse(results.isEmpty());
-    assertTrue(results.stream().allMatch(result -> result.status() == RunStatus.REACHED_CHEESE));
+    assertTrue(results.stream().allMatch(result -> result.status() == RunStatus.REACHED_GOAL));
     assertEquals(
         TIMEOUT, results.stream().map(RunResult::elapsed).max(Duration::compareTo).orElseThrow());
     assertTrue(results.stream().anyMatch(MilestoneFourCellDesignTest::passed));
     RunResult fallback =
         ReferenceSimulation.scout(board(WALL_ONLY_FALLBACK, Set.of())).update(TIMEOUT).result();
-    assertEquals(
-        new RunResult(CHEESE, Duration.ofSeconds(6), 24, RunStatus.REACHED_CHEESE), fallback);
+    assertEquals(new RunResult(GOAL, Duration.ofSeconds(6), 24, RunStatus.REACHED_GOAL), fallback);
     assertTrue(passed(fallback));
   }
 
@@ -179,7 +178,7 @@ final class MilestoneFourCellDesignTest {
   @Test
   void editorRejectsProtectedAndOutsideDestinationsWithoutChangingInventory() {
     ReferenceBoard board = ReferenceBoard.empty();
-    for (GridPosition protectedCell : List.of(START, CHEESE)) {
+    for (GridPosition protectedCell : List.of(START, GOAL)) {
       EditResult result = board.placeOrReplace(CellType.SLOW_FLOOR, protectedCell);
       assertEquals(EditStatus.PROTECTED, result.status());
       assertFalse(result.accepted());
@@ -234,8 +233,7 @@ final class MilestoneFourCellDesignTest {
             4, 0, 4, 0, 3),
         slowed.trace());
     assertEquals(
-        new RunResult(CHEESE, Duration.ofMillis(4250), 16, RunStatus.REACHED_CHEESE),
-        slowed.result());
+        new RunResult(GOAL, Duration.ofMillis(4250), 16, RunStatus.REACHED_GOAL), slowed.result());
     assertEquals(
         Duration.ofMillis(250), slowed.result().elapsed().minus(normal.result().elapsed()));
   }
@@ -263,13 +261,13 @@ final class MilestoneFourCellDesignTest {
   }
 
   @Test
-  void cheeseArrivalWinsImmediatelyWithoutSchedulingItsSlowDelay() {
+  void goalArrivalWinsImmediatelyWithoutSchedulingItsSlowDelay() {
     ReferenceBoard board = board(Set.of(), Set.of(position(0, 2)));
     ReferenceRun run = ReferenceSimulation.scout(board).update(TIMEOUT);
 
     assertEquals(EMPTY_TRACE, run.trace());
     assertEquals(
-        new RunResult(CHEESE, Duration.ofMillis(3250), 12, RunStatus.REACHED_CHEESE), run.result());
+        new RunResult(GOAL, Duration.ofMillis(3250), 12, RunStatus.REACHED_GOAL), run.result());
   }
 
   @Test
@@ -279,7 +277,7 @@ final class MilestoneFourCellDesignTest {
         ReferenceSimulation.random(board(Set.of(), Set.of()), 53L).update(TIMEOUT);
     ReferenceRun randomCombined = ReferenceSimulation.random(acceptedBoard(), 53L).update(TIMEOUT);
 
-    assertEquals(RunStatus.REACHED_CHEESE, scout.result().status());
+    assertEquals(RunStatus.REACHED_GOAL, scout.result().status());
     assertEquals(Duration.ofMillis(5750), scout.result().elapsed());
     assertEquals(
         new RunResult(position(4, 3), TIMEOUT, 26, RunStatus.TIMED_OUT), randomEmpty.result());
@@ -297,7 +295,7 @@ final class MilestoneFourCellDesignTest {
             "Milestone 4 Reference",
             GridSize.square(GRID_SIZE),
             START,
-            CHEESE,
+            GOAL,
             Duration.ofSeconds(25),
             TARGET,
             TIMEOUT,
@@ -373,7 +371,7 @@ final class MilestoneFourCellDesignTest {
     for (int row = 0; row < GRID_SIZE; row++) {
       for (int column = 0; column < GRID_SIZE; column++) {
         GridPosition position = position(row, column);
-        if (!position.equals(START) && !position.equals(CHEESE)) {
+        if (!position.equals(START) && !position.equals(GOAL)) {
           positions.add(position);
         }
       }
@@ -414,7 +412,7 @@ final class MilestoneFourCellDesignTest {
 
   private enum RunStatus {
     RUNNING,
-    REACHED_CHEESE,
+    REACHED_GOAL,
     TIMED_OUT
   }
 
@@ -527,8 +525,8 @@ final class MilestoneFourCellDesignTest {
       return START;
     }
 
-    private GridPosition cheese() {
-      return CHEESE;
+    private GridPosition goal() {
+      return GOAL;
     }
 
     private Map<GridPosition, CellType> cells() {
@@ -545,7 +543,7 @@ final class MilestoneFourCellDesignTest {
       if (!isInside(destination)) {
         return new EditResult(this, EditStatus.OUTSIDE_GRID, false);
       }
-      if (destination.equals(START) || destination.equals(CHEESE)) {
+      if (destination.equals(START) || destination.equals(GOAL)) {
         return new EditResult(this, EditStatus.PROTECTED, false);
       }
       CellType existing = cells.get(destination);
@@ -575,7 +573,7 @@ final class MilestoneFourCellDesignTest {
       visited.add(START);
       while (!frontier.isEmpty()) {
         GridPosition current = frontier.remove();
-        if (current.equals(CHEESE)) {
+        if (current.equals(GOAL)) {
           return true;
         }
         for (Direction direction : Direction.values()) {
@@ -658,8 +656,8 @@ final class MilestoneFourCellDesignTest {
       moveCount++;
       trace.add(position);
       decisionTimesMillis.add(elapsed.toMillis());
-      if (position.equals(CHEESE)) {
-        status = RunStatus.REACHED_CHEESE;
+      if (position.equals(GOAL)) {
+        status = RunStatus.REACHED_GOAL;
       } else {
         delayedDecision = board.isSlow(position);
         untilDecision = delayedDecision ? MOVE_INTERVAL.multipliedBy(2) : MOVE_INTERVAL;

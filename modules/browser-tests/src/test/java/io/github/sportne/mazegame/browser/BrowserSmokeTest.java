@@ -226,7 +226,7 @@ final class BrowserSmokeTest {
     assertRenderedSolverPresentation(
         page,
         Levels.milestoneThree(),
-        Levels.milestoneThree().cheese(),
+        Levels.milestoneThree().goal(),
         false,
         SCOUT_STATUS_SIGNATURE,
         true);

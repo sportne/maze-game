@@ -36,7 +36,7 @@ final class MilestoneFourLevelTest {
     assertEquals("Level 4", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
     assertEquals(position(6, 3), LEVEL.solverStart());
-    assertEquals(position(0, 3), LEVEL.cheese());
+    assertEquals(position(0, 3), LEVEL.goal());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofMillis(5500), LEVEL.targetSolveTime());
     assertEquals(Duration.ofMillis(6500), LEVEL.maximumSolveTime());
@@ -51,26 +51,23 @@ final class MilestoneFourLevelTest {
   void emptyThreeWallAndSlowOnlyProductionFixturesFailWhileFourWallAndCombinedPass() {
     assertRun(
         MazeState.empty(LEVEL),
-        new SolverRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_GOAL),
         false);
     assertRun(
         maze(PASSING_WALLS, Set.of()),
-        new SolverRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_GOAL),
         false);
     assertRun(
         maze(Set.of(), PASSING_SLOW_FLOORS),
         new SolverRunResult(
-            LEVEL.cheese(), Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_CHEESE),
+            LEVEL.goal(), Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_GOAL),
         false);
 
     MazeState wallOnlyFallback = maze(WALL_ONLY_FALLBACK, Set.of());
     assertEquals(CellSupply.finite(0), wallOnlyFallback.remainingSupply(PlaceableCellType.WALL));
     assertRun(
         wallOnlyFallback,
-        new SolverRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(6), 24, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(LEVEL.goal(), Duration.ofSeconds(6), 24, SolverRunStatus.REACHED_GOAL),
         true);
 
     MazeState passing = maze(PASSING_WALLS, PASSING_SLOW_FLOORS);
@@ -79,7 +76,7 @@ final class MilestoneFourLevelTest {
     assertRun(
         passing,
         new SolverRunResult(
-            LEVEL.cheese(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
+            LEVEL.goal(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_GOAL),
         true);
   }
 
@@ -105,7 +102,7 @@ final class MilestoneFourLevelTest {
     assertRun(
         movement,
         new SolverRunResult(
-            LEVEL.cheese(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
+            LEVEL.goal(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_GOAL),
         true);
   }
 

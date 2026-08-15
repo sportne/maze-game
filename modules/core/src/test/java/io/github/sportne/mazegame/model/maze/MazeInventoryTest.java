@@ -167,7 +167,7 @@ final class MazeInventoryTest {
             position(2, 4), PlaceableCellType.WALL);
     MazeState maze = new MazeState(level, almostBlocking);
 
-    assertTrue(maze.hasPathFromStartToCheese());
+    assertTrue(maze.hasPathFromStartToGoal());
     assertEquals(CellContent.SLOW_FLOOR, maze.cellContentAt(position(2, 2)));
     assertRejectedSame(
         maze.placeOrReplace(PlaceableCellType.WALL, position(2, 2)),
@@ -212,9 +212,7 @@ final class MazeInventoryTest {
         placed,
         MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
-        placed.move(level.cheese(), position(4, 3)),
-        placed,
-        MazeEditStatus.REJECTED_MISSING_SOURCE);
+        placed.move(level.goal(), position(4, 3)), placed, MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
         placed.move(FIRST, SECOND), placed, MazeEditStatus.REJECTED_OCCUPIED_DESTINATION);
     assertRejectedSame(
@@ -257,7 +255,7 @@ final class MazeInventoryTest {
     assertSame(maze, empty.mazeState());
     assertEquals(MazeEditStatus.NO_OP, empty.status());
     assertRejectedSame(
-        maze.remove(maze.levelDefinition().cheese()), maze, MazeEditStatus.REJECTED_PROTECTED_CELL);
+        maze.remove(maze.levelDefinition().goal()), maze, MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(maze.remove(position(-1, 0)), maze, MazeEditStatus.REJECTED_OUTSIDE_GRID);
   }
 

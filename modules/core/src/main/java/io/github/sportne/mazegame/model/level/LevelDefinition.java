@@ -21,10 +21,10 @@ import java.util.Objects;
  * @param name display name for the level
  * @param gridSize dimensions of the level grid
  * @param solverStart fixed starting position for the solver
- * @param cheese fixed endpoint position for the cheese
+ * @param goal fixed endpoint position for the primary solver's goal
  * @param buildTime amount of time the player gets to place walls before auto-start
  * @param targetSolveTime solve time the solver must exceed for the player to pass
- * @param maximumSolveTime timeout that ends the run if the cheese is not reached
+ * @param maximumSolveTime timeout that ends the run if the goal is not reached
  * @param solverMoveInterval time between solver movement decisions
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
  * @param solverBehavior movement rule used by this level
@@ -36,7 +36,7 @@ public record LevelDefinition(
     String name,
     GridSize gridSize,
     GridPosition solverStart,
-    GridPosition cheese,
+    GridPosition goal,
     Duration buildTime,
     Duration targetSolveTime,
     Duration maximumSolveTime,
@@ -51,7 +51,7 @@ public record LevelDefinition(
       String name,
       GridSize gridSize,
       GridPosition solverStart,
-      GridPosition cheese,
+      GridPosition goal,
       Duration buildTime,
       Duration targetSolveTime,
       Duration maximumSolveTime,
@@ -64,7 +64,7 @@ public record LevelDefinition(
         name,
         gridSize,
         solverStart,
-        cheese,
+        goal,
         buildTime,
         targetSolveTime,
         maximumSolveTime,
@@ -72,21 +72,21 @@ public record LevelDefinition(
         placeableCellSupplies,
         solverBehavior,
         randomSeed,
-        List.of(new LevelSolver(solverStart, cheese, solverBehavior, randomSeed)));
+        List.of(new LevelSolver(solverStart, goal, solverBehavior, randomSeed)));
   }
 
   /**
    * Creates validated level authoring data.
    *
    * @throws IllegalArgumentException when metadata is blank, positions are invalid, durations are
-   *     non-positive, start and cheese overlap, or the target exceeds the timeout
+   *     non-positive, start and goal overlap, or the target exceeds the timeout
    */
   public LevelDefinition {
     id = requireNonBlank(id, "id");
     name = requireNonBlank(name, "name");
     Objects.requireNonNull(gridSize, "gridSize");
     Objects.requireNonNull(solverStart, "solverStart");
-    Objects.requireNonNull(cheese, "cheese");
+    Objects.requireNonNull(goal, "goal");
     requirePositive(buildTime, "buildTime");
     requirePositive(targetSolveTime, "targetSolveTime");
     requirePositive(maximumSolveTime, "maximumSolveTime");
@@ -95,13 +95,13 @@ public record LevelDefinition(
     Objects.requireNonNull(solverBehavior, "solverBehavior");
     solvers = validateSolvers(solvers, gridSize);
     requireWithinGrid(solverStart, gridSize, "solverStart");
-    requireWithinGrid(cheese, gridSize, "cheese");
-    if (solverStart.equals(cheese)) {
-      throw new IllegalArgumentException("solverStart and cheese must be different");
+    requireWithinGrid(goal, gridSize, "goal");
+    if (solverStart.equals(goal)) {
+      throw new IllegalArgumentException("solverStart and goal must be different");
     }
     LevelSolver primarySolver = solvers.get(0);
     if (!primarySolver.start().equals(solverStart)
-        || !primarySolver.goal().equals(cheese)
+        || !primarySolver.goal().equals(goal)
         || primarySolver.behavior() != solverBehavior
         || primarySolver.randomSeed() != randomSeed) {
       throw new IllegalArgumentException("primary solver fields must match the first solver");
