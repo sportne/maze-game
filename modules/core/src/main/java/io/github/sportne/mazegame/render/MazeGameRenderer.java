@@ -449,9 +449,9 @@ public final class MazeGameRenderer {
   }
 
   private TextureRegion solverSprite(LevelSolver solver) {
-    return switch (solver.behavior()) {
-      case RANDOM -> solverSprite;
-      case LEFT_PRIORITY -> scoutSprite;
+    return switch (solver.appearance()) {
+      case CLASSIC_MOUSE -> solverSprite;
+      case SCOUT_SQUIRREL -> scoutSprite;
     };
   }
 
@@ -459,9 +459,9 @@ public final class MazeGameRenderer {
     LevelDefinition levelDefinition = snapshot.levelDefinition();
     for (LevelSolver solver : levelDefinition.solvers()) {
       TextureRegion goalSprite =
-          switch (solver.behavior()) {
-            case RANDOM -> cheeseSprite;
-            case LEFT_PRIORITY -> acornSprite;
+          switch (solver.goalType()) {
+            case CHEESE -> cheeseSprite;
+            case ACORN -> acornSprite;
           };
       drawSpriteInCell(grid, levelDefinition, solver.goal(), goalSprite);
     }
@@ -637,7 +637,7 @@ public final class MazeGameRenderer {
 
   private void drawBuildText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     SolverPresentation presentation =
-        SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior());
+        SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver());
     font.setColor(TEXT);
     drawTextInRegion(
         levelTitle(snapshot.levelDefinition(), presentation, false, Float.MAX_VALUE),
@@ -710,7 +710,7 @@ public final class MazeGameRenderer {
           Locale.ROOT, "Tap or drag tools; delay both past %s; keep paths", target);
     }
     String goalName =
-        SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()).goalName();
+        SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()).goalName();
     return String.format(Locale.ROOT, "Delay past %s; keep a path to the %s", target, goalName);
   }
 
@@ -719,7 +719,7 @@ public final class MazeGameRenderer {
     String levelTitle =
         levelTitle(
             snapshot.levelDefinition(),
-            SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()),
+            SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()),
             true,
             status.width());
     font.setColor(TEXT);
@@ -739,7 +739,7 @@ public final class MazeGameRenderer {
     String levelTitle =
         levelTitle(
             snapshot.levelDefinition(),
-            SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()),
+            SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()),
             true,
             status.width());
     String outcome = snapshot.resultPassed() ? " | Success | >" : " | Failed | >";

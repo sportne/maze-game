@@ -128,7 +128,7 @@ public record LevelDefinition(
 
   /** Returns the primary solver's deterministic random seed. */
   public long randomSeed() {
-    return primarySolver().randomSeed();
+    return primarySolver().randomSeed().orElse(0L);
   }
 
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {

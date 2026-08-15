@@ -3,14 +3,21 @@ package io.github.sportne.mazegame.render;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.github.sportne.mazegame.model.grid.GridPosition;
+import io.github.sportne.mazegame.model.level.GoalType;
+import io.github.sportne.mazegame.model.level.LevelSolver;
+import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 final class SolverPresentationTest {
   @Test
-  void selectsThePlayerFacingIdentityFromTheClosedBehaviorValue() {
-    SolverPresentation random = SolverPresentation.forBehavior(SolverBehavior.RANDOM);
-    SolverPresentation scout = SolverPresentation.forBehavior(SolverBehavior.LEFT_PRIORITY);
+  void selectsPlayerFacingIdentityFromAppearanceAndGoalType() {
+    SolverPresentation random = SolverPresentation.forSolver(Levels.milestoneOne().primarySolver());
+    SolverPresentation scout =
+        SolverPresentation.forSolver(Levels.milestoneThree().primarySolver());
 
     assertEquals("Solver", random.name());
     assertEquals("cheese", random.goalName());
@@ -23,10 +30,27 @@ final class SolverPresentationTest {
   }
 
   @Test
-  void rejectsMissingBehaviorAndLevelName() {
-    assertThrows(NullPointerException.class, () -> SolverPresentation.forBehavior(null));
+  void presentationIsIndependentOfMovementBehavior() {
+    LevelSolver randomScoutWithCheese =
+        new LevelSolver(
+            new GridPosition(2, 1),
+            new GridPosition(0, 1),
+            SolverBehavior.RANDOM,
+            OptionalLong.of(7L),
+            SolverAppearance.SCOUT_SQUIRREL,
+            GoalType.CHEESE);
+
+    SolverPresentation presentation = SolverPresentation.forSolver(randomScoutWithCheese);
+
+    assertEquals("Scout", presentation.name());
+    assertEquals("cheese", presentation.goalName());
+  }
+
+  @Test
+  void rejectsMissingSolverAndLevelName() {
+    assertThrows(NullPointerException.class, () -> SolverPresentation.forSolver(null));
     assertThrows(
         NullPointerException.class,
-        () -> SolverPresentation.forBehavior(SolverBehavior.RANDOM).levelTitle(null));
+        () -> SolverPresentation.forSolver(Levels.milestoneOne().primarySolver()).levelTitle(null));
   }
 }

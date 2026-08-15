@@ -30,7 +30,7 @@ public final class RandomSolverSimulation extends TimedSolverSimulation {
 
   RandomSolverSimulation(MazeState mazeState, LevelSolver solver) {
     super(mazeState, solver);
-    random = new Random(solver.randomSeed());
+    random = new Random(solver.randomSeed().orElseThrow());
   }
 
   /** Makes one random legal movement decision. */

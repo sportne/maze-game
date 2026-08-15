@@ -83,7 +83,10 @@ final class BrowserSmokeTest {
     Path webApplication = requiredDirectory("mazeGame.webAppDirectory");
     Path artifactDirectory = requiredDirectory("mazeGame.artifactDirectory");
     Path reportDirectory = Path.of(requiredProperty("mazeGame.browserSmokeReportDirectory"));
-    BrowserLog browserLog = new BrowserLog(requiredAssets());
+    // Headless Chromium can run the asserted AudioContext without a physical output renderer.
+    BrowserLog browserLog =
+        new BrowserLog(
+            requiredAssets(), !Boolean.parseBoolean(requiredProperty("mazeGame.headedBrowser")));
     Page page = null;
 
     try (StaticWebServer server =
@@ -1211,10 +1214,6 @@ final class BrowserSmokeTest {
     private final Map<String, String> contentTypes = new HashMap<>();
     private final Set<String> requiredAssets;
     private final boolean ignoreAudioDeviceErrors;
-
-    private BrowserLog(Set<String> requiredAssets) {
-      this(requiredAssets, false);
-    }
 
     private BrowserLog(Set<String> requiredAssets, boolean ignoreAudioDeviceErrors) {
       this.requiredAssets = requiredAssets;

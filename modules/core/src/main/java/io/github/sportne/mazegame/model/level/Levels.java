@@ -6,6 +6,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 import java.util.List;
+import java.util.OptionalLong;
 
 /**
  * Catalog of authored levels.
@@ -20,15 +21,19 @@ public final class Levels {
           "milestone-1",
           "Level 1",
           GridSize.square(5),
-          new GridPosition(4, 2),
-          new GridPosition(0, 2),
           Duration.ofSeconds(30),
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          SolverBehavior.RANDOM,
-          1L);
+          List.of(
+              new LevelSolver(
+                  new GridPosition(4, 2),
+                  new GridPosition(0, 2),
+                  SolverBehavior.RANDOM,
+                  OptionalLong.of(1L),
+                  SolverAppearance.CLASSIC_MOUSE,
+                  GoalType.CHEESE)));
 
   /** Larger second level specified by the Milestone 2 design. */
   private static final LevelDefinition MILESTONE_TWO =
@@ -36,15 +41,19 @@ public final class Levels {
           "milestone-2",
           "Level 2",
           GridSize.square(7),
-          new GridPosition(6, 3),
-          new GridPosition(0, 3),
           Duration.ofSeconds(25),
           Duration.ofSeconds(6),
           Duration.ofSeconds(15),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          SolverBehavior.RANDOM,
-          38L);
+          List.of(
+              new LevelSolver(
+                  new GridPosition(6, 3),
+                  new GridPosition(0, 3),
+                  SolverBehavior.RANDOM,
+                  OptionalLong.of(38L),
+                  SolverAppearance.CLASSIC_MOUSE,
+                  GoalType.CHEESE)));
 
   /** Third 7x7 level introducing Scout's deterministic search pattern. */
   private static final LevelDefinition MILESTONE_THREE =
@@ -52,15 +61,19 @@ public final class Levels {
           "milestone-3",
           "Level 3",
           GridSize.square(7),
-          new GridPosition(6, 3),
-          new GridPosition(0, 3),
           Duration.ofSeconds(25),
           Duration.ofSeconds(6),
           Duration.ofSeconds(8),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          SolverBehavior.LEFT_PRIORITY,
-          53L);
+          List.of(
+              new LevelSolver(
+                  new GridPosition(6, 3),
+                  new GridPosition(0, 3),
+                  SolverBehavior.LEFT_PRIORITY,
+                  OptionalLong.empty(),
+                  SolverAppearance.SCOUT_SQUIRREL,
+                  GoalType.ACORN)));
 
   /** Fourth 7x7 level introducing finite Walls and Slow Floors with Scout. */
   private static final LevelDefinition MILESTONE_FOUR =
@@ -68,8 +81,6 @@ public final class Levels {
           "milestone-4",
           "Level 4",
           GridSize.square(7),
-          new GridPosition(6, 3),
-          new GridPosition(0, 3),
           Duration.ofSeconds(25),
           Duration.ofMillis(5500),
           Duration.ofMillis(6500),
@@ -77,8 +88,14 @@ public final class Levels {
           List.of(
               PlaceableCellSupply.finite(PlaceableCellType.WALL, 4),
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
-          SolverBehavior.LEFT_PRIORITY,
-          53L);
+          List.of(
+              new LevelSolver(
+                  new GridPosition(6, 3),
+                  new GridPosition(0, 3),
+                  SolverBehavior.LEFT_PRIORITY,
+                  OptionalLong.empty(),
+                  SolverAppearance.SCOUT_SQUIRREL,
+                  GoalType.ACORN)));
 
   /** Fifth 7x7 level combining Random and Scout with distinct starts and goals. */
   private static final LevelDefinition MILESTONE_FIVE =
@@ -95,12 +112,19 @@ public final class Levels {
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 4)),
           List.of(
               new LevelSolver(
-                  new GridPosition(6, 0), new GridPosition(3, 3), SolverBehavior.RANDOM, 23L),
+                  new GridPosition(6, 0),
+                  new GridPosition(3, 3),
+                  SolverBehavior.RANDOM,
+                  OptionalLong.of(23L),
+                  SolverAppearance.CLASSIC_MOUSE,
+                  GoalType.CHEESE),
               new LevelSolver(
                   new GridPosition(1, 4),
                   new GridPosition(2, 4),
                   SolverBehavior.LEFT_PRIORITY,
-                  53L)));
+                  OptionalLong.empty(),
+                  SolverAppearance.SCOUT_SQUIRREL,
+                  GoalType.ACORN)));
 
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =

@@ -54,6 +54,12 @@ final class MilestoneFiveLevelTest {
 
     assertEquals(new LevelSolver(position(6, 0), CHEESE, SolverBehavior.RANDOM, 23L), RANDOM);
     assertEquals(new LevelSolver(position(1, 4), ACORN, SolverBehavior.LEFT_PRIORITY, 53L), SCOUT);
+    assertEquals(23L, RANDOM.randomSeed().orElseThrow());
+    assertTrue(SCOUT.randomSeed().isEmpty());
+    assertEquals(SolverAppearance.CLASSIC_MOUSE, RANDOM.appearance());
+    assertEquals(SolverAppearance.SCOUT_SQUIRREL, SCOUT.appearance());
+    assertEquals(GoalType.CHEESE, RANDOM.goalType());
+    assertEquals(GoalType.ACORN, SCOUT.goalType());
     assertFalse(RANDOM.start().equals(SCOUT.start()));
     assertEquals(1, Math.abs(CHEESE.row() - ACORN.row()));
     assertEquals(1, Math.abs(CHEESE.column() - ACORN.column()));

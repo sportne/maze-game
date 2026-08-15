@@ -1,29 +1,27 @@
 package io.github.sportne.mazegame.render;
 
-import io.github.sportne.mazegame.model.level.SolverBehavior;
+import io.github.sportne.mazegame.model.level.GoalType;
+import io.github.sportne.mazegame.model.level.LevelSolver;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import java.util.Objects;
 
-/** Player-facing identity for one authored solver behavior. */
+/** Player-facing identity for one authored solver. */
 record SolverPresentation(String name, String goalName, boolean distinctIdentity) {
-  private static final SolverPresentation RANDOM =
-      new SolverPresentation("Solver", "cheese", false);
-  private static final SolverPresentation SCOUT = new SolverPresentation("Scout", "acorn", true);
-
   SolverPresentation {
     Objects.requireNonNull(name, "name");
     Objects.requireNonNull(goalName, "goalName");
   }
 
-  /** Returns the closed presentation choice for an authored behavior. */
-  static SolverPresentation forBehavior(SolverBehavior behavior) {
-    Objects.requireNonNull(behavior, "behavior");
-    return switch (behavior) {
-      case RANDOM -> RANDOM;
-      case LEFT_PRIORITY -> SCOUT;
-    };
+  /** Returns the presentation selected by authored appearance and goal type. */
+  static SolverPresentation forSolver(LevelSolver solver) {
+    Objects.requireNonNull(solver, "solver");
+    String name = solver.appearance() == SolverAppearance.CLASSIC_MOUSE ? "Solver" : "Scout";
+    String goalName = solver.goalType() == GoalType.CHEESE ? "cheese" : "acorn";
+    return new SolverPresentation(
+        name, goalName, solver.appearance() != SolverAppearance.CLASSIC_MOUSE);
   }
 
-  /** Adds the solver name only when the authored behavior has a special identity. */
+  /** Adds the solver name only when the authored appearance has a special identity. */
   String levelTitle(String levelName) {
     Objects.requireNonNull(levelName, "levelName");
     return distinctIdentity ? levelName + " | " + name : levelName;

@@ -12,6 +12,7 @@ import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 final class LevelDefinitionTest {
@@ -181,7 +182,7 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void levelSolverRequiresDistinctPositionsAndBehavior() {
+  void levelSolverRequiresValidMovementAndPresentationData() {
     GridPosition start = new GridPosition(4, 2);
     GridPosition goal = new GridPosition(0, 2);
 
@@ -193,6 +194,51 @@ final class LevelDefinitionTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> new LevelSolver(start, start, SolverBehavior.RANDOM, 1L));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.RANDOM,
+                OptionalLong.empty(),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.LEFT_PRIORITY,
+                OptionalLong.of(1L),
+                SolverAppearance.SCOUT_SQUIRREL,
+                GoalType.ACORN));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.RANDOM,
+                null,
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                start, goal, SolverBehavior.RANDOM, OptionalLong.of(1L), null, GoalType.CHEESE));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                null));
   }
 
   @Test
@@ -211,7 +257,7 @@ final class LevelDefinitionTest {
     assertEquals(primary.start(), level.solverStart());
     assertEquals(primary.goal(), level.goal());
     assertEquals(primary.behavior(), level.solverBehavior());
-    assertEquals(primary.randomSeed(), level.randomSeed());
+    assertEquals(primary.randomSeed(), OptionalLong.of(level.randomSeed()));
     assertThrows(NullPointerException.class, () -> multiSolverLevel(null));
     assertThrows(IllegalArgumentException.class, () -> multiSolverLevel(List.of()));
     assertThrows(

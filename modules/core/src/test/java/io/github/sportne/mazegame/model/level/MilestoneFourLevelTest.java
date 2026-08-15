@@ -44,7 +44,9 @@ final class MilestoneFourLevelTest {
     assertEquals(CellSupply.finite(4), LEVEL.supplyFor(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(3), LEVEL.supplyFor(PlaceableCellType.SLOW_FLOOR));
     assertEquals(SolverBehavior.LEFT_PRIORITY, LEVEL.solverBehavior());
-    assertEquals(53L, LEVEL.randomSeed());
+    assertTrue(LEVEL.primarySolver().randomSeed().isEmpty());
+    assertEquals(SolverAppearance.SCOUT_SQUIRREL, LEVEL.primarySolver().appearance());
+    assertEquals(GoalType.ACORN, LEVEL.primarySolver().goalType());
   }
 
   @Test

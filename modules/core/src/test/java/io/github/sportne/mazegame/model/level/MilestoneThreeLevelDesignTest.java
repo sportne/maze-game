@@ -120,7 +120,9 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals(Duration.ofSeconds(8), PROPOSED_LEVEL.maximumSolveTime());
     assertEquals(MOVE_INTERVAL, PROPOSED_LEVEL.solverMoveInterval());
     assertEquals(SolverBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.solverBehavior());
-    assertEquals(53L, PROPOSED_LEVEL.randomSeed());
+    assertTrue(PROPOSED_LEVEL.primarySolver().randomSeed().isEmpty());
+    assertEquals(SolverAppearance.SCOUT_SQUIRREL, PROPOSED_LEVEL.primarySolver().appearance());
+    assertEquals(GoalType.ACORN, PROPOSED_LEVEL.primarySolver().goalType());
     assertEquals(
         List.of(
             Levels.milestoneOne(),
@@ -357,15 +359,12 @@ final class MilestoneThreeLevelDesignTest {
         PROPOSED_LEVEL.id(),
         PROPOSED_LEVEL.name(),
         PROPOSED_LEVEL.gridSize(),
-        PROPOSED_LEVEL.solverStart(),
-        PROPOSED_LEVEL.goal(),
         PROPOSED_LEVEL.buildTime(),
         PROPOSED_LEVEL.targetSolveTime(),
         maximumSolveTime,
         PROPOSED_LEVEL.solverMoveInterval(),
         PROPOSED_LEVEL.placeableCellSupplies(),
-        PROPOSED_LEVEL.solverBehavior(),
-        PROPOSED_LEVEL.randomSeed());
+        List.of(PROPOSED_LEVEL.primarySolver()));
   }
 
   private static LevelDefinition smallLevel() {

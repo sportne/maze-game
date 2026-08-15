@@ -22,8 +22,11 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
+import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
@@ -38,6 +41,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameRendererTest {
@@ -676,7 +680,7 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void characterAndGoalSpriteSelectionUsesBehaviorInsteadOfLevelIdentity() {
+  void characterAndGoalSpriteSelectionUsesAuthoredPresentationInsteadOfBehavior() {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     MazeGameRenderer renderer =
         renderer(spriteBatch, allocate(RecordingShapeRenderer.class), recordingFont());
@@ -691,23 +695,27 @@ final class MazeGameRendererTest {
     assertTrue(spriteBatch.drawnRegionXs().contains(1));
     assertFalse(spriteBatch.drawnRegionXs().contains(2));
 
-    LevelDefinition scoutBehaviorOnFirstLevelIdentity =
+    LevelDefinition scoutAppearanceWithRandomBehavior =
         new LevelDefinition(
             LEVEL.id(),
             LEVEL.name(),
             LEVEL.gridSize(),
-            LEVEL.solverStart(),
-            LEVEL.goal(),
             LEVEL.buildTime(),
             LEVEL.targetSolveTime(),
             LEVEL.maximumSolveTime(),
             LEVEL.solverMoveInterval(),
             LEVEL.placeableCellSupplies(),
-            SolverBehavior.LEFT_PRIORITY,
-            LEVEL.randomSeed());
+            List.of(
+                new LevelSolver(
+                    LEVEL.solverStart(),
+                    LEVEL.goal(),
+                    SolverBehavior.RANDOM,
+                    OptionalLong.of(LEVEL.randomSeed()),
+                    SolverAppearance.SCOUT_SQUIRREL,
+                    GoalType.ACORN)));
     SolverRunResult scoutResult =
         new SolverRunResult(
-            scoutBehaviorOnFirstLevelIdentity.solverStart(),
+            scoutAppearanceWithRandomBehavior.solverStart(),
             Duration.ZERO,
             0,
             SolverRunStatus.RUNNING);
@@ -717,14 +725,14 @@ final class MazeGameRendererTest {
             GamePhase.SOLVER_RUNNING,
             1280,
             720,
-            scoutBehaviorOnFirstLevelIdentity.gridSize(),
+            scoutAppearanceWithRandomBehavior.gridSize(),
             true,
             3,
             false),
         new GameRenderSnapshot(
             GamePhase.SOLVER_RUNNING,
-            scoutBehaviorOnFirstLevelIdentity,
-            MazeState.empty(scoutBehaviorOnFirstLevelIdentity),
+            scoutAppearanceWithRandomBehavior,
+            MazeState.empty(scoutAppearanceWithRandomBehavior),
             30.0F,
             null,
             0.0F,
