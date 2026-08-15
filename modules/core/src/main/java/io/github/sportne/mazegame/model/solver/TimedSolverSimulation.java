@@ -4,6 +4,8 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -93,6 +95,18 @@ abstract class TimedSolverSimulation implements SolverSimulation {
 
   final boolean isOpen(GridPosition candidate) {
     return mazeState.isTraversable(candidate);
+  }
+
+  /** Returns legal neighbors in the exact supplied behavior-specific decision order. */
+  final List<GridPosition> openNeighbors(List<CardinalDirection> directionOrder) {
+    List<GridPosition> neighbors = new ArrayList<>();
+    for (CardinalDirection direction : directionOrder) {
+      GridPosition candidate = direction.move(position);
+      if (isOpen(candidate)) {
+        neighbors.add(candidate);
+      }
+    }
+    return List.copyOf(neighbors);
   }
 
   private Duration nextStep(Duration remainingDelta) {

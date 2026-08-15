@@ -26,6 +26,15 @@ final class SolverPresentationTest {
                 OptionalLong.empty(),
                 SolverAppearance.TRACKER_RACCOON,
                 GoalType.TRASH_CAN));
+    SolverPresentation seeker =
+        SolverPresentation.forSolver(
+            new LevelSolver(
+                new GridPosition(2, 1),
+                new GridPosition(0, 1),
+                SolverBehavior.LINE_OF_SIGHT,
+                OptionalLong.of(17L),
+                SolverAppearance.SEEKER_RABBIT,
+                GoalType.CARROT));
 
     assertEquals("Solver", random.name());
     assertEquals("cheese", random.goalName());
@@ -38,6 +47,8 @@ final class SolverPresentationTest {
     assertEquals("Tracker", tracker.name());
     assertEquals("trash can", tracker.goalName());
     assertEquals("Tracker", tracker.statusTitle("Tracker Fixture", 299.0F));
+    assertEquals("Seeker", seeker.name());
+    assertEquals("carrot", seeker.goalName());
   }
 
   @Test

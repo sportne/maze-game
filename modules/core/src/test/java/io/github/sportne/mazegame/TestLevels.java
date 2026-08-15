@@ -31,18 +31,20 @@ public final class TestLevels {
       SolverBehavior behavior,
       long randomSeed) {
     OptionalLong randomSeedValue =
-        behavior == SolverBehavior.RANDOM ? OptionalLong.of(randomSeed) : OptionalLong.empty();
+        behavior.requiresRandomSeed() ? OptionalLong.of(randomSeed) : OptionalLong.empty();
     SolverAppearance appearance =
         switch (behavior) {
           case RANDOM -> SolverAppearance.CLASSIC_MOUSE;
           case LEFT_PRIORITY -> SolverAppearance.SCOUT_SQUIRREL;
           case LEAST_VISITED -> SolverAppearance.TRACKER_RACCOON;
+          case LINE_OF_SIGHT -> SolverAppearance.SEEKER_RABBIT;
         };
     GoalType goalType =
         switch (behavior) {
           case RANDOM -> GoalType.CHEESE;
           case LEFT_PRIORITY -> GoalType.ACORN;
           case LEAST_VISITED -> GoalType.TRASH_CAN;
+          case LINE_OF_SIGHT -> GoalType.CARROT;
         };
     LevelSolver solver =
         new LevelSolver(start, goal, behavior, randomSeedValue, appearance, goalType);

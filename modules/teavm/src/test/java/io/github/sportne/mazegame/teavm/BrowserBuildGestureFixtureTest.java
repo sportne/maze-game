@@ -58,5 +58,10 @@ final class BrowserBuildGestureFixtureTest {
     assertEquals(SolverBehavior.LEAST_VISITED, level.primarySolver().behavior());
     assertEquals(SolverAppearance.TRACKER_RACCOON, level.primarySolver().appearance());
     assertEquals(GoalType.TRASH_CAN, level.primarySolver().goalType());
+    assertEquals(2, level.solvers().size());
+    assertEquals(SolverBehavior.LINE_OF_SIGHT, level.solvers().get(1).behavior());
+    assertEquals(17L, level.solvers().get(1).randomSeed().orElseThrow());
+    assertEquals(SolverAppearance.SEEKER_RABBIT, level.solvers().get(1).appearance());
+    assertEquals(GoalType.CARROT, level.solvers().get(1).goalType());
   }
 }

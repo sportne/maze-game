@@ -30,6 +30,7 @@ public final class SolverSimulationFactory {
       case RANDOM -> new RandomSolverSimulation(mazeState, solver);
       case LEFT_PRIORITY -> new ScoutSolverSimulation(mazeState, solver);
       case LEAST_VISITED -> new TrackerSolverSimulation(mazeState, solver);
+      case LINE_OF_SIGHT -> new LineOfSightSolverSimulation(mazeState, solver);
     };
   }
 }

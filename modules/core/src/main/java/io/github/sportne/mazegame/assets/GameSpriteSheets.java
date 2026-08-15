@@ -17,6 +17,9 @@ public final class GameSpriteSheets {
   /** Row containing the basic raccoon in the basic-character sheet. */
   private static final int RACCOON_ROW = 2;
 
+  /** Row containing the basic rabbit in the basic-character sheet. */
+  private static final int RABBIT_ROW = 0;
+
   /** Prevents instantiation of this static sprite helper. */
   private GameSpriteSheets() {}
 
@@ -43,6 +46,11 @@ public final class GameSpriteSheets {
   /** Selects the trash can used as Tracker's goal. */
   public static TextureRegion trashCan(Texture goals) {
     return frame(goals, 3, 0);
+  }
+
+  /** Selects the carrot used as Seeker's goal. */
+  public static TextureRegion carrot(Texture goals) {
+    return frame(goals, 1, 0);
   }
 
   /**
@@ -83,6 +91,16 @@ public final class GameSpriteSheets {
   /** Returns every directional frame for the basic raccoon used by Tracker behavior. */
   public static DirectionalSpriteSet trackerRaccoonSprites(Texture basicCharacters) {
     return directionalFrames(basicCharacters, RACCOON_ROW);
+  }
+
+  /** Selects the right-facing basic rabbit used by Seeker behavior. */
+  public static TextureRegion seekerRabbit(Texture basicCharacters) {
+    return seekerRabbitSprites(basicCharacters).defaultSprite();
+  }
+
+  /** Returns every directional frame for the basic rabbit used by Seeker behavior. */
+  public static DirectionalSpriteSet seekerRabbitSprites(Texture basicCharacters) {
+    return directionalFrames(basicCharacters, RABBIT_ROW);
   }
 
   private static DirectionalSpriteSet directionalFrames(Texture sheet, int row) {

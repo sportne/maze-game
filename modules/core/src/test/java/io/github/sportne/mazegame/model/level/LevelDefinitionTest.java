@@ -271,6 +271,16 @@ final class LevelDefinitionTest {
                 OptionalLong.of(1L),
                 SolverAppearance.TRACKER_RACCOON,
                 GoalType.TRASH_CAN));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.LINE_OF_SIGHT,
+                OptionalLong.empty(),
+                SolverAppearance.SEEKER_RABBIT,
+                GoalType.CARROT));
     assertEquals(
         SolverBehavior.LEAST_VISITED,
         new LevelSolver(
@@ -281,6 +291,17 @@ final class LevelDefinitionTest {
                 SolverAppearance.TRACKER_RACCOON,
                 GoalType.TRASH_CAN)
             .behavior());
+    assertEquals(
+        23L,
+        new LevelSolver(
+                start,
+                goal,
+                SolverBehavior.LINE_OF_SIGHT,
+                OptionalLong.of(23L),
+                SolverAppearance.SEEKER_RABBIT,
+                GoalType.CARROT)
+            .randomSeed()
+            .orElseThrow());
     assertThrows(
         NullPointerException.class,
         () ->

@@ -42,6 +42,15 @@ final class SolverSimulationFactoryTest {
   }
 
   @Test
+  void createsSeekerSimulationForLineOfSightBehavior() {
+    LevelDefinition level = withBehavior(Levels.levelOne(), SolverBehavior.LINE_OF_SIGHT);
+
+    SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level));
+
+    assertInstanceOf(LineOfSightSolverSimulation.class, simulation);
+  }
+
+  @Test
   void requiresAMaze() {
     assertThrows(NullPointerException.class, () -> SolverSimulationFactory.create(null));
   }

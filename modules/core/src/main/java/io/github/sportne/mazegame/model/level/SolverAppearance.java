@@ -9,5 +9,8 @@ public enum SolverAppearance {
   SCOUT_SQUIRREL,
 
   /** The raccoon artwork used by Tracker. */
-  TRACKER_RACCOON
+  TRACKER_RACCOON,
+
+  /** The rabbit artwork used by Seeker. */
+  SEEKER_RABBIT
 }

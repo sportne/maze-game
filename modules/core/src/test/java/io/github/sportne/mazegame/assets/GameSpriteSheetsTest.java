@@ -24,6 +24,11 @@ final class GameSpriteSheetsTest {
   }
 
   @Test
+  void carrotUsesTheSecondGoalFrame() {
+    assertRegion(GameSpriteSheets.carrot(new TestTexture()), 128, 0);
+  }
+
+  @Test
   void randomBehaviorUsesTheRightFacingClassicMouse() {
     assertRegion(GameSpriteSheets.randomSolver(new TestTexture()), 384, 0);
   }
@@ -36,6 +41,11 @@ final class GameSpriteSheetsTest {
   @Test
   void trackerBehaviorUsesTheRightFacingBasicRaccoon() {
     assertRegion(GameSpriteSheets.trackerRaccoon(new TestTexture()), 384, 256);
+  }
+
+  @Test
+  void seekerBehaviorUsesTheRightFacingBasicRabbit() {
+    assertRegion(GameSpriteSheets.seekerRabbit(new TestTexture()), 384, 0);
   }
 
   @Test
@@ -67,6 +77,16 @@ final class GameSpriteSheetsTest {
     assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 256);
     assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 256);
     assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 256);
+  }
+
+  @Test
+  void seekerBehaviorMapsGridDirectionsToBasicRabbitColumns() {
+    DirectionalSpriteSet sprites = GameSpriteSheets.seekerRabbitSprites(new TestTexture());
+
+    assertRegion(sprites.sprite(CardinalDirection.SOUTH), 0, 0);
+    assertRegion(sprites.sprite(CardinalDirection.NORTH), 128, 0);
+    assertRegion(sprites.sprite(CardinalDirection.WEST), 256, 0);
+    assertRegion(sprites.sprite(CardinalDirection.EAST), 384, 0);
   }
 
   private static void assertRegion(TextureRegion region, int expectedX, int expectedY) {

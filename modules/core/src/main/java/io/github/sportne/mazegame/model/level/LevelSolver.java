@@ -23,10 +23,10 @@ public record LevelSolver(
     if (start.equals(goal)) {
       throw new IllegalArgumentException("solver start and goal must be different");
     }
-    if (behavior == SolverBehavior.RANDOM && randomSeed.isEmpty()) {
-      throw new IllegalArgumentException("random behavior requires a seed");
+    if (behavior.requiresRandomSeed() && randomSeed.isEmpty()) {
+      throw new IllegalArgumentException("seeded behavior requires a seed");
     }
-    if (behavior != SolverBehavior.RANDOM && randomSeed.isPresent()) {
+    if (!behavior.requiresRandomSeed() && randomSeed.isPresent()) {
       throw new IllegalArgumentException("non-random behavior must not define a random seed");
     }
   }

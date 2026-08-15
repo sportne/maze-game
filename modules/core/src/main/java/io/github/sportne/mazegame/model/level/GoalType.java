@@ -9,5 +9,8 @@ public enum GoalType {
   ACORN,
 
   /** Trash-can goal artwork. */
-  TRASH_CAN
+  TRASH_CAN,
+
+  /** Carrot goal artwork. */
+  CARROT
 }

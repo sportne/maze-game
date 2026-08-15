@@ -831,6 +831,32 @@ final class MazeGameRendererTest {
     assertFalse(spriteBatch.drawnRegionXs().contains(10));
     assertFalse(spriteBatch.drawnRegionXs().contains(20));
     assertTrue(spriteBatch.drawnRegionXs().contains(3));
+
+    LevelDefinition seekerLevel = seekerLevel();
+    SolverRunResult seekerResult =
+        new SolverRunResult(
+            seekerLevel.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
+    spriteBatch.drawnRegionXs().clear();
+    renderer.render(
+        MazeGameLayout.forPhase(
+            GamePhase.SOLVER_RUNNING, 1280, 720, seekerLevel.gridSize(), true, 1, false),
+        snapshot(
+            GamePhase.SOLVER_RUNNING,
+            seekerLevel,
+            MazeState.empty(seekerLevel),
+            30.0F,
+            null,
+            0.0F,
+            seekerResult,
+            null,
+            List.of(),
+            true,
+            false,
+            false));
+
+    assertTrue(spriteBatch.drawnRegionXs().contains(40));
+    assertFalse(spriteBatch.drawnRegionXs().contains(30));
+    assertTrue(spriteBatch.drawnRegionXs().contains(4));
   }
 
   @Test
@@ -1022,9 +1048,11 @@ final class MazeGameRendererTest {
         sprite(1),
         sprite(2),
         sprite(3),
+        sprite(4),
         DirectionalSpriteSet.single(sprite(10)),
         DirectionalSpriteSet.single(sprite(20)),
-        DirectionalSpriteSet.single(sprite(30)));
+        DirectionalSpriteSet.single(sprite(30)),
+        DirectionalSpriteSet.single(sprite(40)));
   }
 
   private static TextureRegion sprite(int regionX) {
@@ -1161,6 +1189,22 @@ final class MazeGameRendererTest {
                 OptionalLong.empty(),
                 SolverAppearance.TRACKER_RACCOON,
                 GoalType.TRASH_CAN)));
+  }
+
+  private static LevelDefinition seekerLevel() {
+    return singleSolverLevel(
+        "seeker-fixture",
+        "Seeker Fixture",
+        LEVEL.gridSize(),
+        LEVEL.primarySolver().start(),
+        LEVEL.primarySolver().goal(),
+        LEVEL.buildTime(),
+        LEVEL.targetSolveTime(),
+        LEVEL.maximumSolveTime(),
+        LEVEL.solverMoveInterval(),
+        LEVEL.placeableCellSupplies(),
+        SolverBehavior.LINE_OF_SIGHT,
+        17L);
   }
 
   private static GameRenderSnapshot resultSnapshot(

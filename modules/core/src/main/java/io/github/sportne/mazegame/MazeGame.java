@@ -109,6 +109,9 @@ public final class MazeGame extends ApplicationAdapter {
   /** Cropped trash-can sprite drawn as Tracker's endpoint goal. */
   private TextureRegion trashCanSprite;
 
+  /** Cropped carrot sprite drawn as Seeker's endpoint goal. */
+  private TextureRegion carrotSprite;
+
   /** Directional classic-mouse sprites drawn for Random solvers. */
   private DirectionalSpriteSet solverSprites;
 
@@ -117,6 +120,9 @@ public final class MazeGame extends ApplicationAdapter {
 
   /** Directional raccoon sprites drawn when a level selects Tracker's appearance. */
   private DirectionalSpriteSet trackerSprites;
+
+  /** Directional rabbit sprites drawn when a level selects Seeker's appearance. */
+  private DirectionalSpriteSet seekerSprites;
 
   /** Renderer that draws the current frame. */
   private MazeGameRenderer renderer;
@@ -310,9 +316,11 @@ public final class MazeGame extends ApplicationAdapter {
     cheeseSprite = GameSpriteSheets.cheese(goalSpriteSheet);
     acornSprite = GameSpriteSheets.acorn(goalSpriteSheet);
     trashCanSprite = GameSpriteSheets.trashCan(goalSpriteSheet);
+    carrotSprite = GameSpriteSheets.carrot(goalSpriteSheet);
     solverSprites = GameSpriteSheets.randomSolverSprites(classicMouseSpriteSheet);
     scoutSprites = GameSpriteSheets.scoutSquirrelSprites(basicCharacterSpriteSheet);
     trackerSprites = GameSpriteSheets.trackerRaccoonSprites(basicCharacterSpriteSheet);
+    seekerSprites = GameSpriteSheets.seekerRabbitSprites(basicCharacterSpriteSheet);
     renderer =
         new MazeGameRenderer(
             spriteBatch,
@@ -321,9 +329,11 @@ public final class MazeGame extends ApplicationAdapter {
             cheeseSprite,
             acornSprite,
             trashCanSprite,
+            carrotSprite,
             solverSprites,
             scoutSprites,
-            trackerSprites);
+            trackerSprites,
+            seekerSprites);
     if (!runtimeConfiguration.audioRequiresUserGesture()) {
       startBackgroundMusic();
     }
@@ -397,9 +407,11 @@ public final class MazeGame extends ApplicationAdapter {
     cheeseSprite = null;
     acornSprite = null;
     trashCanSprite = null;
+    carrotSprite = null;
     solverSprites = null;
     scoutSprites = null;
     trackerSprites = null;
+    seekerSprites = null;
     renderer = null;
     if (shapeRenderer != null) {
       shapeRenderer.dispose();

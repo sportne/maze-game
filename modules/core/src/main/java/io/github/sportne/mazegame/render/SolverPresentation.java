@@ -19,12 +19,14 @@ record SolverPresentation(String name, String goalName, boolean distinctIdentity
           case CLASSIC_MOUSE -> "Solver";
           case SCOUT_SQUIRREL -> "Scout";
           case TRACKER_RACCOON -> "Tracker";
+          case SEEKER_RABBIT -> "Seeker";
         };
     String goalName =
         switch (solver.goalType()) {
           case CHEESE -> "cheese";
           case ACORN -> "acorn";
           case TRASH_CAN -> "trash can";
+          case CARROT -> "carrot";
         };
     return new SolverPresentation(
         name, goalName, solver.appearance() != SolverAppearance.CLASSIC_MOUSE);

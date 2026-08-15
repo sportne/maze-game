@@ -70,6 +70,13 @@ final class BrowserBuildGestureFixture {
                 SolverBehavior.LEAST_VISITED,
                 OptionalLong.empty(),
                 SolverAppearance.TRACKER_RACCOON,
-                GoalType.TRASH_CAN)));
+                GoalType.TRASH_CAN),
+            new LevelSolver(
+                new GridPosition(4, 4),
+                new GridPosition(0, 4),
+                SolverBehavior.LINE_OF_SIGHT,
+                OptionalLong.of(17L),
+                SolverAppearance.SEEKER_RABBIT,
+                GoalType.CARROT)));
   }
 }

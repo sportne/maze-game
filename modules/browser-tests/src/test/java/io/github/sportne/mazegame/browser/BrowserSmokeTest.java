@@ -461,7 +461,7 @@ final class BrowserSmokeTest {
         List.of(
             PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2));
-    LevelSolver solver =
+    LevelSolver tracker =
         new LevelSolver(
             new GridPosition(4, 2),
             new GridPosition(0, 2),
@@ -469,6 +469,14 @@ final class BrowserSmokeTest {
             OptionalLong.empty(),
             SolverAppearance.TRACKER_RACCOON,
             GoalType.TRASH_CAN);
+    LevelSolver seeker =
+        new LevelSolver(
+            new GridPosition(4, 4),
+            new GridPosition(0, 4),
+            SolverBehavior.LINE_OF_SIGHT,
+            OptionalLong.of(17L),
+            SolverAppearance.SEEKER_RABBIT,
+            GoalType.CARROT);
     return new LevelDefinition(
         "browser-build-gesture-fixture",
         "Build Gesture Fixture",
@@ -481,7 +489,7 @@ final class BrowserSmokeTest {
         List.of(
             new FixedCell(new GridPosition(1, 0), FixedCellType.WALL),
             new FixedCell(new GridPosition(1, 4), FixedCellType.SLOW_FLOOR)),
-        List.of(solver));
+        List.of(tracker, seeker));
   }
 
   private static void runMobileTouchFlow(
