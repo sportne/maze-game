@@ -636,11 +636,9 @@ public final class MazeGameRenderer {
   }
 
   private void drawBuildText(ScreenLayout layout, GameRenderSnapshot snapshot) {
-    SolverPresentation presentation =
-        SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver());
     font.setColor(TEXT);
     drawTextInRegion(
-        levelTitle(snapshot.levelDefinition(), presentation, false, Float.MAX_VALUE),
+        levelTitle(snapshot.levelDefinition(), false, Float.MAX_VALUE),
         layout.bounds(MazeGameLayout.BUILD_TITLE),
         0.0F);
     font.draw(
@@ -716,12 +714,7 @@ public final class MazeGameRenderer {
 
   private void drawRunningText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     ScreenRectangle status = layout.bounds(MazeGameLayout.RUN_STATUS);
-    String levelTitle =
-        levelTitle(
-            snapshot.levelDefinition(),
-            SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()),
-            true,
-            status.width());
+    String levelTitle = levelTitle(snapshot.levelDefinition(), true, status.width());
     font.setColor(TEXT);
     font.draw(
         spriteBatch,
@@ -736,21 +729,12 @@ public final class MazeGameRenderer {
 
   private void drawResultText(ScreenLayout layout, GameRenderSnapshot snapshot) {
     ScreenRectangle status = layout.bounds(MazeGameLayout.RESULT_STATUS);
-    String levelTitle =
-        levelTitle(
-            snapshot.levelDefinition(),
-            SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()),
-            true,
-            status.width());
+    String levelTitle = levelTitle(snapshot.levelDefinition(), true, status.width());
     String outcome = snapshot.resultPassed() ? " | Success | >" : " | Failed | >";
     font.setColor(TEXT);
     font.draw(
         spriteBatch, levelTitle + outcome + targetText(snapshot), status.x(), textBaseline(status));
-    font.draw(
-        spriteBatch,
-        resultStats(snapshot),
-        layout.bounds(MazeGameLayout.RESULT_STATS).x(),
-        textBaseline(layout.bounds(MazeGameLayout.RESULT_STATS)));
+    drawEllipsizedText(resultStats(snapshot), layout.bounds(MazeGameLayout.RESULT_STATS));
     font.setColor(PANEL_TEXT);
     font.draw(
         spriteBatch,
@@ -848,6 +832,20 @@ public final class MazeGameRenderer {
         "…");
   }
 
+  private void drawEllipsizedText(String text, ScreenRectangle region) {
+    font.draw(
+        spriteBatch,
+        text,
+        region.x(),
+        textBaseline(region),
+        0,
+        text.length(),
+        region.width(),
+        Align.left,
+        false,
+        "…");
+  }
+
   private static String levelSelectBestText(BestResult bestResult) {
     return "Best: " + bestResultValueText(bestResult);
   }
@@ -897,22 +895,20 @@ public final class MazeGameRenderer {
     return remainingMillis / 1000.0F;
   }
 
-  private static String levelTitle(
-      LevelDefinition level,
-      SolverPresentation presentation,
-      boolean compact,
-      float availableWidth) {
+  static String levelTitle(LevelDefinition level, boolean compact, float availableWidth) {
+    SolverPresentation presentation = SolverPresentation.forSolver(level.primarySolver());
     if (level.solvers().size() > 1) {
+      String identities = joinedSolverLabels(level);
       return compact && availableWidth < 360.0F
-          ? "Solver + Scout"
-          : String.format(Locale.ROOT, "%s | Solver + Scout", level.name());
+          ? identities
+          : String.format(Locale.ROOT, "%s | %s", level.name(), identities);
     }
     return compact
         ? presentation.statusTitle(level.name(), availableWidth)
         : presentation.levelTitle(level.name());
   }
 
-  private static String resultStats(GameRenderSnapshot snapshot) {
+  static String resultStats(GameRenderSnapshot snapshot) {
     if (snapshot.solverRunResults().size() <= 1) {
       return String.format(
           Locale.ROOT,
@@ -920,15 +916,48 @@ public final class MazeGameRenderer {
           snapshot.solverRunResult().elapsedTime().toMillis() / 1000.0F,
           snapshot.solverRunResult().moveCount());
     }
-    SolverRunResult random = snapshot.solverRunResults().get(0);
-    SolverRunResult scout = snapshot.solverRunResults().get(1);
-    return String.format(
-        Locale.ROOT,
-        "Solver %.2fs/%d  Scout %.2fs/%d",
-        random.elapsedTime().toMillis() / 1000.0F,
-        random.moveCount(),
-        scout.elapsedTime().toMillis() / 1000.0F,
-        scout.moveCount());
+    if (snapshot.levelDefinition().solvers().size() != snapshot.solverRunResults().size()) {
+      throw new IllegalArgumentException("solver result count must match authored solvers");
+    }
+    String stats = "";
+    for (int index = 0; index < snapshot.solverRunResults().size(); index++) {
+      SolverRunResult result = snapshot.solverRunResults().get(index);
+      String entry =
+          String.format(
+              Locale.ROOT,
+              "%s %.2fs/%d",
+              solverLabel(snapshot.levelDefinition(), index),
+              result.elapsedTime().toMillis() / 1000.0F,
+              result.moveCount());
+      String delimiter = index == 0 ? "" : "  ";
+      stats = String.format(Locale.ROOT, "%s%s%s", stats, delimiter, entry);
+    }
+    return stats;
+  }
+
+  private static String joinedSolverLabels(LevelDefinition level) {
+    String joined = "";
+    for (int index = 0; index < level.solvers().size(); index++) {
+      String delimiter = index == 0 ? "" : " + ";
+      joined = String.format(Locale.ROOT, "%s%s%s", joined, delimiter, solverLabel(level, index));
+    }
+    return joined;
+  }
+
+  private static String solverLabel(LevelDefinition level, int solverIndex) {
+    String name = SolverPresentation.forSolver(level.solvers().get(solverIndex)).name();
+    int matchingNames = 0;
+    int occurrence = 0;
+    for (int index = 0; index < level.solvers().size(); index++) {
+      String candidate = SolverPresentation.forSolver(level.solvers().get(index)).name();
+      if (name.equals(candidate)) {
+        matchingNames++;
+        if (index <= solverIndex) {
+          occurrence++;
+        }
+      }
+    }
+    return matchingNames == 1 ? name : String.format(Locale.ROOT, "%s %d", name, occurrence);
   }
 
   private static String formatSeconds(float seconds) {

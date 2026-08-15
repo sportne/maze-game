@@ -792,6 +792,40 @@ final class MazeGameRendererTest {
   }
 
   @Test
+  void arbitrarySolverCountsReceiveStableDisambiguatedTitlesAndStats() {
+    LevelDefinition level = threeSolverLevel();
+    List<SolverRunResult> results =
+        List.of(
+            new SolverRunResult(
+                level.solvers().get(0).goal(),
+                Duration.ofSeconds(1),
+                4,
+                SolverRunStatus.REACHED_GOAL),
+            new SolverRunResult(
+                level.solvers().get(1).goal(),
+                Duration.ofSeconds(2),
+                8,
+                SolverRunStatus.REACHED_GOAL),
+            new SolverRunResult(
+                level.solvers().get(2).goal(),
+                Duration.ofSeconds(3),
+                12,
+                SolverRunStatus.REACHED_GOAL));
+    GameRenderSnapshot snapshot = resultSnapshot(level, results);
+
+    assertEquals(
+        "Level 1 | Solver 1 + Scout + Solver 2",
+        MazeGameRenderer.levelTitle(level, false, Float.MAX_VALUE));
+    assertEquals("Solver 1 + Scout + Solver 2", MazeGameRenderer.levelTitle(level, true, 300.0F));
+    assertEquals(
+        "Solver 1 1.00s/4  Scout 2.00s/8  Solver 2 3.00s/12",
+        MazeGameRenderer.resultStats(snapshot));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> MazeGameRenderer.resultStats(resultSnapshot(level, results.subList(0, 2))));
+  }
+
+  @Test
   void rendererRejectsMissingSpriteRegions() {
     assertThrows(
         NullPointerException.class,
@@ -884,6 +918,60 @@ final class MazeGameRendererTest {
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 1)),
         SolverBehavior.RANDOM,
         1L);
+  }
+
+  private static LevelDefinition threeSolverLevel() {
+    return new LevelDefinition(
+        LEVEL.id(),
+        LEVEL.name(),
+        LEVEL.gridSize(),
+        LEVEL.buildTime(),
+        LEVEL.targetSolveTime(),
+        LEVEL.maximumSolveTime(),
+        LEVEL.solverMoveInterval(),
+        LEVEL.placeableCellSupplies(),
+        List.of(
+            new LevelSolver(
+                new GridPosition(4, 0),
+                new GridPosition(0, 0),
+                SolverBehavior.RANDOM,
+                OptionalLong.of(1L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE),
+            new LevelSolver(
+                new GridPosition(4, 2),
+                new GridPosition(0, 2),
+                SolverBehavior.LEFT_PRIORITY,
+                OptionalLong.empty(),
+                SolverAppearance.SCOUT_SQUIRREL,
+                GoalType.ACORN),
+            new LevelSolver(
+                new GridPosition(4, 4),
+                new GridPosition(0, 4),
+                SolverBehavior.RANDOM,
+                OptionalLong.of(2L),
+                SolverAppearance.CLASSIC_MOUSE,
+                GoalType.CHEESE)));
+  }
+
+  private static GameRenderSnapshot resultSnapshot(
+      LevelDefinition level, List<SolverRunResult> results) {
+    return new GameRenderSnapshot(
+        GamePhase.RESULT,
+        level,
+        MazeState.empty(level),
+        0.0F,
+        null,
+        0.0F,
+        null,
+        List.of(),
+        List.of(),
+        null,
+        null,
+        true,
+        true,
+        false,
+        results);
   }
 
   private static GameRenderSnapshot snapshotWithPreview(PaletteDragPreview preview) {
