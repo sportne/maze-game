@@ -142,7 +142,7 @@ final class ScoutSolverSimulationTest {
             Duration.ofSeconds(1),
             Duration.ofSeconds(2),
             MOVE_INTERVAL,
-            PlaceableCellSupply.releasedDefaults(),
+            PlaceableCellSupply.unlimitedWallsOnly(),
             SolverBehavior.LEFT_PRIORITY,
             1L);
     MazeState maze = MazeState.empty(level);
@@ -168,7 +168,7 @@ final class ScoutSolverSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(100),
             MOVE_INTERVAL,
-            PlaceableCellSupply.releasedDefaults(),
+            PlaceableCellSupply.unlimitedWallsOnly(),
             SolverBehavior.LEFT_PRIORITY,
             1L);
     ScoutSolverSimulation scout = new ScoutSolverSimulation(MazeState.empty(level));
@@ -224,7 +224,7 @@ final class ScoutSolverSimulationTest {
         Duration.ofSeconds(6),
         Duration.ofSeconds(8),
         MOVE_INTERVAL,
-        PlaceableCellSupply.releasedDefaults(),
+        PlaceableCellSupply.unlimitedWallsOnly(),
         SolverBehavior.LEFT_PRIORITY,
         seed);
   }

@@ -21,8 +21,8 @@ public record PlaceableCellSupply(PlaceableCellType type, CellSupply supply) {
     return new PlaceableCellSupply(type, CellSupply.infinite());
   }
 
-  /** Supplies used by each released pre-Milestone-4 level. */
-  public static List<PlaceableCellSupply> releasedDefaults() {
+  /** Supplies unlimited Walls and no Slow Floors. */
+  public static List<PlaceableCellSupply> unlimitedWallsOnly() {
     return List.of(infinite(PlaceableCellType.WALL), finite(PlaceableCellType.SLOW_FLOOR, 0));
   }
 }

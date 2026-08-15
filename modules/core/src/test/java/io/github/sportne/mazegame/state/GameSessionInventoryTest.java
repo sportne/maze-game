@@ -119,7 +119,7 @@ final class GameSessionInventoryTest {
 
   @Test
   void releasedInfiniteWallSessionRetainsItsExistingToggleBehavior() {
-    LevelDefinition level = level("released", PlaceableCellSupply.releasedDefaults());
+    LevelDefinition level = level("released", PlaceableCellSupply.unlimitedWallsOnly());
     GameSession session = startedSession(level);
 
     assertEquals(PlaceableCellType.WALL, session.selectedCellType().orElseThrow());

@@ -132,7 +132,7 @@ final class RandomSolverSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(100),
             Duration.ofMillis(250),
-            PlaceableCellSupply.releasedDefaults(),
+            PlaceableCellSupply.unlimitedWallsOnly(),
             SolverBehavior.RANDOM,
             1L);
     RandomSolverSimulation simulation = new RandomSolverSimulation(MazeState.empty(level));

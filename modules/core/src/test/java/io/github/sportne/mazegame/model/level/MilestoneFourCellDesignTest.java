@@ -305,7 +305,7 @@ final class MilestoneFourCellDesignTest {
             TARGET,
             TIMEOUT,
             MOVE_INTERVAL,
-            PlaceableCellSupply.releasedDefaults(),
+            PlaceableCellSupply.unlimitedWallsOnly(),
             behavior,
             seed);
     MazeState productionMaze = withWalls(level, PASSING_WALLS);

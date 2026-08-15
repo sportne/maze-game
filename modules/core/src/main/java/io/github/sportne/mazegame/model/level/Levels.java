@@ -25,7 +25,7 @@ public final class Levels {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
-          PlaceableCellSupply.releasedDefaults(),
+          PlaceableCellSupply.unlimitedWallsOnly(),
           List.of(
               new LevelSolver(
                   new GridPosition(4, 2),
@@ -45,7 +45,7 @@ public final class Levels {
           Duration.ofSeconds(6),
           Duration.ofSeconds(15),
           Duration.ofMillis(250),
-          PlaceableCellSupply.releasedDefaults(),
+          PlaceableCellSupply.unlimitedWallsOnly(),
           List.of(
               new LevelSolver(
                   new GridPosition(6, 3),
@@ -65,7 +65,7 @@ public final class Levels {
           Duration.ofSeconds(6),
           Duration.ofSeconds(8),
           Duration.ofMillis(250),
-          PlaceableCellSupply.releasedDefaults(),
+          PlaceableCellSupply.unlimitedWallsOnly(),
           List.of(
               new LevelSolver(
                   new GridPosition(6, 3),

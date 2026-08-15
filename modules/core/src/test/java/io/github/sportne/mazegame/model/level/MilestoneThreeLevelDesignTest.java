@@ -409,7 +409,7 @@ final class MilestoneThreeLevelDesignTest {
         Duration.ofSeconds(1),
         Duration.ofSeconds(2),
         MOVE_INTERVAL,
-        PlaceableCellSupply.releasedDefaults(),
+        PlaceableCellSupply.unlimitedWallsOnly(),
         SolverBehavior.LEFT_PRIORITY,
         1L);
   }

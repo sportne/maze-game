@@ -94,7 +94,7 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(5),
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
-                PlaceableCellSupply.releasedDefaults(),
+                PlaceableCellSupply.unlimitedWallsOnly(),
                 SolverBehavior.RANDOM,
                 1L));
   }
@@ -114,7 +114,7 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(11),
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
-                PlaceableCellSupply.releasedDefaults(),
+                PlaceableCellSupply.unlimitedWallsOnly(),
                 SolverBehavior.RANDOM,
                 1L));
   }
@@ -136,7 +136,7 @@ final class LevelDefinitionTest {
         List.of(Levels.levelOne(), Levels.levelTwo(), Levels.levelThree())) {
       assertEquals(CellSupply.infinite(), level.supplyFor(PlaceableCellType.WALL));
       assertEquals(CellSupply.finite(0), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
-      assertEquals(PlaceableCellSupply.releasedDefaults(), level.placeableCellSupplies());
+      assertEquals(PlaceableCellSupply.unlimitedWallsOnly(), level.placeableCellSupplies());
     }
   }
 
@@ -163,7 +163,7 @@ final class LevelDefinitionTest {
 
   @Test
   void authoredSuppliesAreOrderedDefensivelyCopiedAndParticipateInEquality() {
-    List<PlaceableCellSupply> mutable = new ArrayList<>(PlaceableCellSupply.releasedDefaults());
+    List<PlaceableCellSupply> mutable = new ArrayList<>(PlaceableCellSupply.unlimitedWallsOnly());
     LevelDefinition released = levelWithSupplies(mutable);
     mutable.clear();
     LevelDefinition finite =
@@ -172,7 +172,7 @@ final class LevelDefinitionTest {
                 PlaceableCellSupply.finite(PlaceableCellType.WALL, 3),
                 PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)));
 
-    assertEquals(PlaceableCellSupply.releasedDefaults(), released.placeableCellSupplies());
+    assertEquals(PlaceableCellSupply.unlimitedWallsOnly(), released.placeableCellSupplies());
     assertNotEquals(released, finite);
     assertThrows(
         UnsupportedOperationException.class,
@@ -360,7 +360,7 @@ final class LevelDefinitionTest {
         Duration.ofSeconds(5),
         Duration.ofSeconds(10),
         Duration.ofMillis(250),
-        PlaceableCellSupply.releasedDefaults(),
+        PlaceableCellSupply.unlimitedWallsOnly(),
         SolverBehavior.RANDOM,
         1L);
   }

@@ -45,7 +45,7 @@ final class GameSessionTest {
           Duration.ofSeconds(5),
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
-          PlaceableCellSupply.releasedDefaults(),
+          PlaceableCellSupply.unlimitedWallsOnly(),
           SolverBehavior.RANDOM,
           1L);
 
