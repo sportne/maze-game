@@ -134,7 +134,8 @@ final class BrowserGameScenario {
         level.gridSize(),
         false,
         Levels.catalog().levels().size(),
-        hasNextLevel);
+        hasNextLevel,
+        level.initiallyAvailableCellTypes());
   }
 
   interface Controls {

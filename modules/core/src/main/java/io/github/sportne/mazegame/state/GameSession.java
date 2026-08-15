@@ -160,11 +160,15 @@ public final class GameSession {
   /**
    * Returns immutable palette state in authored display order.
    *
-   * @return authored supply, remaining supply, availability, and selection for every type
+   * @return authored supply, remaining supply, availability, and selection for initially usable
+   *     types
    */
   public List<CellPaletteState> paletteState() {
     List<CellPaletteState> palette = new ArrayList<>();
     for (PlaceableCellSupply authored : levelDefinition.placeableCellSupplies()) {
+      if (!authored.supply().available()) {
+        continue;
+      }
       palette.add(
           new CellPaletteState(
               authored.type(),
@@ -355,7 +359,8 @@ public final class GameSession {
    */
   public void selectCellType(PlaceableCellType type) {
     Objects.requireNonNull(type, "type");
-    if (gamePhase == GamePhase.BUILDING) {
+    if (gamePhase == GamePhase.BUILDING
+        && levelDefinition.initiallyAvailableCellTypes().contains(type)) {
       selectedCellType = type;
     }
   }
@@ -598,10 +603,6 @@ public final class GameSession {
   }
 
   private static PlaceableCellType initialSelectedCellType(LevelDefinition levelDefinition) {
-    return levelDefinition.placeableCellSupplies().stream()
-        .filter(entry -> entry.supply().available())
-        .map(PlaceableCellSupply::type)
-        .findFirst()
-        .orElse(null);
+    return levelDefinition.initiallyAvailableCellTypes().stream().findFirst().orElse(null);
   }
 }

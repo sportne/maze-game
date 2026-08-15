@@ -70,20 +70,18 @@ final class MazeGamePaletteTest {
   }
 
   @Test
-  void releasedPaletteKeepsWallUsableAndSlowFloorSelectableButExhausted() {
+  void releasedPaletteShowsOnlyTheInitiallyUsableWall() {
     MazeGame game = new MazeGame();
     game.startLevel(io.github.sportne.mazegame.model.level.Levels.levelOne().id());
 
+    assertEquals(1, game.paletteState().size());
+    assertEquals(PlaceableCellType.WALL, selected(game).type());
     assertEquals(CellSupply.infinite(), selected(game).remainingSupply());
-    clickPalette(game, PlaceableCellType.SLOW_FLOOR);
+    ScreenLayout layout = game.debugScreenLayout(GamePhase.BUILDING, WIDTH, HEIGHT);
+    assertTrue(layout.element(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)).isPresent());
+    assertTrue(
+        layout.element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)).isEmpty());
 
-    assertEquals(PlaceableCellType.SLOW_FLOOR, selected(game).type());
-    assertFalse(selected(game).available());
-    clickCell(game, FIRST, Input.Buttons.LEFT);
-    assertTrue(game.mazeState().placedCells().isEmpty());
-    assertEquals(FIRST, game.rejectedPosition());
-
-    clickPalette(game, PlaceableCellType.WALL);
     clickCell(game, FIRST, Input.Buttons.LEFT);
     assertEquals(PlaceableCellType.WALL, game.mazeState().placedCellAt(FIRST));
   }

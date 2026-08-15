@@ -180,7 +180,8 @@ public final class GameInputRouter {
   public static Optional<PlaceableCellType> paletteTypeAt(
       ScreenLayout layout, float pointX, float pointY) {
     for (PlaceableCellType type : PlaceableCellType.values()) {
-      if (contains(layout, MazeGameLayout.paletteItemId(type), pointX, pointY)) {
+      String elementId = MazeGameLayout.paletteItemId(type);
+      if (layout.element(elementId).isPresent() && contains(layout, elementId, pointX, pointY)) {
         return Optional.of(type);
       }
     }

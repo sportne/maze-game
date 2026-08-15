@@ -142,6 +142,28 @@ final class GameInputRouterTest {
   }
 
   @Test
+  void ignoresPaletteTypesOmittedFromTheLayout() {
+    ScreenLayout wallOnly =
+        MazeGameLayout.forPhase(
+            GamePhase.BUILDING,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            GRID_SIZE,
+            true,
+            LEVEL_PROGRESS.size(),
+            false,
+            List.of(PlaceableCellType.WALL));
+    ScreenRectangle wall = wallOnly.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
+
+    assertEquals(
+        PlaceableCellType.WALL,
+        GameInputRouter.paletteTypeAt(
+                wallOnly, wall.x() + wall.width() / 2.0F, wall.y() + wall.height() / 2.0F)
+            .orElseThrow());
+    assertTrue(GameInputRouter.paletteTypeAt(wallOnly, 0.0F, 0.0F).isEmpty());
+  }
+
+  @Test
   void routesGridBoundaryCells() {
     ScreenLayout layout = layout(GamePhase.BUILDING);
     ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);

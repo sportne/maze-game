@@ -2,7 +2,6 @@ package io.github.sportne.mazegame.state;
 
 import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,12 +44,9 @@ final class GameSessionInventoryTest {
     assertEquals(
         List.of(
             new CellPaletteState(
-                PlaceableCellType.SLOW_FLOOR, CellSupply.finite(0), CellSupply.finite(0), false),
-            new CellPaletteState(
                 PlaceableCellType.WALL, CellSupply.finite(2), CellSupply.finite(2), true)),
         session.paletteState());
-    assertFalse(session.paletteState().get(0).available());
-    assertTrue(session.paletteState().get(1).available());
+    assertTrue(session.paletteState().get(0).available());
   }
 
   @Test
@@ -65,14 +61,13 @@ final class GameSessionInventoryTest {
     MazeState initial = session.mazeState();
 
     assertTrue(session.selectedCellType().isEmpty());
-    assertTrue(session.paletteState().stream().noneMatch(CellPaletteState::selected));
+    assertTrue(session.paletteState().isEmpty());
     assertTrue(session.placeOrReplaceCell(FIRST).isEmpty());
     assertSame(initial, session.mazeState());
 
     session.selectCellType(PlaceableCellType.SLOW_FLOOR);
-    assertEquals(PlaceableCellType.SLOW_FLOOR, session.selectedCellType().orElseThrow());
-    assertEdit(
-        session.placeOrReplaceCell(FIRST).orElseThrow(), MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY);
+    assertTrue(session.selectedCellType().isEmpty());
+    assertTrue(session.placeOrReplaceCell(FIRST).isEmpty());
     assertSame(initial, session.mazeState());
   }
 
@@ -129,8 +124,7 @@ final class GameSessionInventoryTest {
     assertEquals(CellSupply.infinite(), remaining(session, PlaceableCellType.WALL));
 
     session.selectCellType(PlaceableCellType.SLOW_FLOOR);
-    assertEdit(
-        session.placeOrReplaceCell(FIRST).orElseThrow(), MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY);
+    assertEquals(PlaceableCellType.WALL, session.selectedCellType().orElseThrow());
     assertTrue(session.mazeState().placedCells().isEmpty());
   }
 

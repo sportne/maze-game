@@ -2,6 +2,7 @@ package io.github.sportne.mazegame.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
@@ -108,6 +109,49 @@ final class MazeGameLayoutTest {
     assertEquals(
         new ScreenRectangle(646.0F, 89.5F, 56.0F, 44.0F),
         layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
+  }
+
+  @Test
+  void paletteCentersOnlyTheInitiallyUsableTypes() {
+    ScreenLayout wallOnly =
+        MazeGameLayout.forPhase(
+            GamePhase.BUILDING,
+            1280,
+            720,
+            GRID_SIZE,
+            false,
+            3,
+            false,
+            List.of(PlaceableCellType.WALL));
+    ScreenRectangle wall = wallOnly.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
+
+    assertEquals(640.0F, wall.x() + wall.width() / 2.0F);
+    assertTrue(
+        wallOnly.element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)).isEmpty());
+    assertTrue(LayoutValidator.validate(wallOnly).isEmpty());
+
+    ScreenLayout empty =
+        MazeGameLayout.forPhase(
+            GamePhase.BUILDING, 1280, 720, GRID_SIZE, false, 3, false, List.of());
+    assertTrue(empty.element(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)).isEmpty());
+    assertTrue(empty.element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)).isEmpty());
+    assertTrue(LayoutValidator.validate(empty).isEmpty());
+  }
+
+  @Test
+  void paletteLayoutRejectsDuplicateTypes() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            MazeGameLayout.forPhase(
+                GamePhase.BUILDING,
+                1280,
+                720,
+                GRID_SIZE,
+                false,
+                3,
+                false,
+                List.of(PlaceableCellType.WALL, PlaceableCellType.WALL)));
   }
 
   @Test

@@ -243,11 +243,6 @@ final class BrowserSmokeTest {
     controls.clickButton(GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_RETRY);
     controls.waitForButton(
         GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
-    controls.clickButton(
-        GamePhase.BUILDING,
-        Levels.levelThree(),
-        false,
-        MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
     page.waitForTimeout(100.0);
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-palette.png")));
@@ -258,7 +253,7 @@ final class BrowserSmokeTest {
           GamePhase.BUILDING,
           Levels.levelThree(),
           false,
-          MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+          MazeGameLayout.paletteItemId(PlaceableCellType.WALL));
       BufferedImage paletteWithTooltip = screenshot(page);
       ScreenRectangle tooltip =
           paletteTooltipBounds(
@@ -266,8 +261,12 @@ final class BrowserSmokeTest {
                       GamePhase.BUILDING,
                       VIEWPORT_WIDTH,
                       VIEWPORT_HEIGHT,
-                      Levels.levelThree().gridSize())
-                  .bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
+                      Levels.levelThree().gridSize(),
+                      false,
+                      Levels.catalog().levels().size(),
+                      false,
+                      Levels.levelThree().initiallyAvailableCellTypes())
+                  .bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
       assertFalse(
           lightPixelSignature(paletteWithoutTooltip, tooltip)
               == lightPixelSignature(paletteWithTooltip, tooltip),
@@ -518,14 +517,18 @@ final class BrowserSmokeTest {
         primaryControls.clickCell(Levels.levelOne(), EDITED_CELL);
         assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
 
-        primaryControls.clickButton(
-            GamePhase.BUILDING,
-            Levels.levelOne(),
-            false,
-            MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
-        primaryControls.clickCell(Levels.levelOne(), EDITED_CELL);
-        page.waitForTimeout(600.0);
-        assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        assertTrue(
+            MazeGameLayout.forPhase(
+                    GamePhase.BUILDING,
+                    primary.width(),
+                    primary.height(),
+                    Levels.levelOne().gridSize(),
+                    false,
+                    Levels.catalog().levels().size(),
+                    false,
+                    Levels.levelOne().initiallyAvailableCellTypes())
+                .element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR))
+                .isEmpty());
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
         page.screenshot(
             new Page.ScreenshotOptions().setPath(paletteScreenshotPath(screenshotPath)));
@@ -753,20 +756,22 @@ final class BrowserSmokeTest {
     BufferedImage image = screenshot(page);
     ScreenLayout layout =
         MazeGameLayout.forPhase(
-            GamePhase.BUILDING, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, level.gridSize());
+            GamePhase.BUILDING,
+            VIEWPORT_WIDTH,
+            VIEWPORT_HEIGHT,
+            level.gridSize(),
+            false,
+            Levels.catalog().levels().size(),
+            false,
+            level.initiallyAvailableCellTypes());
     ScreenRectangle wallBadge =
         paletteSupplyBadgeBounds(
             layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
-    ScreenRectangle slowFloorBadge =
-        paletteSupplyBadgeBounds(
-            layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)));
 
     assertTrue(lightPixelCount(image, inset(wallBadge, 3.0F)) > 0, "expected infinity badge");
-    assertTrue(lightPixelCount(image, inset(slowFloorBadge, 3.0F)) > 0, "expected numeric badge");
-    assertFalse(
-        lightPixelSignature(image, inset(wallBadge, 3.0F))
-            == lightPixelSignature(image, inset(slowFloorBadge, 3.0F)),
-        "infinity and numeric supply badges should be visually distinct");
+    assertTrue(
+        layout.element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)).isEmpty(),
+        "zero-start Slow Floor should not receive palette bounds");
   }
 
   private static ScreenRectangle paletteSupplyBadgeBounds(ScreenRectangle paletteItem) {
@@ -1199,7 +1204,14 @@ final class BrowserSmokeTest {
         GamePhase phase, LevelDefinition level, boolean hasNextLevel, String elementId) {
       ScreenRectangle bounds =
           MazeGameLayout.forPhase(
-                  phase, width, height, level.gridSize(), false, levelCount, hasNextLevel)
+                  phase,
+                  width,
+                  height,
+                  level.gridSize(),
+                  false,
+                  levelCount,
+                  hasNextLevel,
+                  level.initiallyAvailableCellTypes())
               .bounds(elementId);
       return new ScreenPoint(
           Math.round(bounds.x() + bounds.width() / 2.0F),

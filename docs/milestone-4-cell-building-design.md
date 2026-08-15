@@ -112,13 +112,13 @@ rather than reconstructing state.
 
 ## Selection and Gesture Rules
 
-At attempt start, the first palette type with a nonzero or infinite supply is selected. If every
-authored count is zero, no tool is active and the player may only start, leave, or select an exhausted
-tool that cannot place anything. Clicking or tapping any palette item selects it and leaves it active
-for repeated interaction. A finite item at zero is visibly exhausted and cannot place or replace,
-but remains selectable so tapping an existing cell of that type can remove it and return one. The
-active type remains selected when its last item is placed. Selecting a different type changes only
-the active tool.
+At attempt start, the palette contains only types authored with a nonzero or infinite supply, and
+the first visible type is selected. Types authored with zero supply are omitted because they cannot
+be used in that level. If every authored count is zero, no palette item or active tool is present and
+the player may only start or leave. Clicking or tapping any visible palette item selects it and
+leaves it active for repeated interaction. A finite item remains visible and selected when its last
+item is placed; its exhausted state prevents new placement but still allows tapping an existing cell
+of that type to remove it and return one. Selecting a different type changes only the active tool.
 
 The same pointer-down sequence distinguishes taps and drags:
 
@@ -164,6 +164,10 @@ interaction dismisses the tooltip. Selection uses border/shape as well as color,
 a strike through the icon so neither state relies on hidden text. Interactive targets remain at
 least 44 by 44 CSS pixels and grid cells remain at least 32 by 32 at the released reference
 viewports.
+
+Only types with a positive or infinite authored starting supply receive palette items and interactive
+layout bounds. Remaining supply changing to zero during the attempt does not remove or reposition an
+item.
 
 - Desktop and portrait place the palette below the grid and above the Back/Start action row.
 - Constrained and safe landscape use a single bottom strip for the palette while keeping Back/Start

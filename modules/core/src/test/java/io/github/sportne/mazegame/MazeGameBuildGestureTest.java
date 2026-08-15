@@ -39,6 +39,7 @@ final class MazeGameBuildGestureTest {
   private static final int WIDTH = 1280;
   private static final int HEIGHT = 720;
   private static final GridPosition DESTINATION = new GridPosition(2, 1);
+  private static final GridPosition EXHAUSTION_SOURCE = new GridPosition(3, 1);
 
   @Test
   void paletteTapSelectsOnlyOnReleaseAndThresholdDragPlacesOriginType() {
@@ -96,14 +97,17 @@ final class MazeGameBuildGestureTest {
         new GridPosition(4, 2),
         MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertEquivalent(
-        level(CellSupply.finite(1), CellSupply.finite(0), GridSize.square(5)),
-        ignored -> {},
+        level(CellSupply.finite(1), CellSupply.finite(1), GridSize.square(5)),
+        game -> place(game, PlaceableCellType.SLOW_FLOOR, EXHAUSTION_SOURCE),
         PlaceableCellType.SLOW_FLOOR,
         DESTINATION,
         MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY);
     assertEquivalent(
-        level(CellSupply.finite(1), CellSupply.finite(0), GridSize.square(5)),
-        game -> place(game, PlaceableCellType.WALL, DESTINATION),
+        level(CellSupply.finite(1), CellSupply.finite(1), GridSize.square(5)),
+        game -> {
+          place(game, PlaceableCellType.SLOW_FLOOR, EXHAUSTION_SOURCE);
+          place(game, PlaceableCellType.WALL, DESTINATION);
+        },
         PlaceableCellType.SLOW_FLOOR,
         DESTINATION,
         MazeEditStatus.REJECTED_EXHAUSTED_SUPPLY);
@@ -133,7 +137,8 @@ final class MazeGameBuildGestureTest {
 
   @Test
   void dragPreviewUsesTheSameDomainValidityAndMarksOutsideGrid() {
-    MazeGame game = game(level(CellSupply.infinite(), CellSupply.finite(0), GridSize.square(5)));
+    MazeGame game = game(level(CellSupply.infinite(), CellSupply.finite(1), GridSize.square(5)));
+    place(game, PlaceableCellType.SLOW_FLOOR, EXHAUSTION_SOURCE);
     ScreenPoint palette = paletteCenter(game, PlaceableCellType.SLOW_FLOOR);
     ScreenPoint destination = cellCenter(game, DESTINATION);
 
@@ -150,7 +155,7 @@ final class MazeGameBuildGestureTest {
     assertNull(outside.destination());
     assertFalse(outside.validDestination());
     assertTrue(game.handlePointerUp(0, 0, 0, WIDTH, HEIGHT).isEmpty());
-    assertTrue(game.mazeState().placedCells().isEmpty());
+    assertEquals(PlaceableCellType.SLOW_FLOOR, game.mazeState().placedCellAt(EXHAUSTION_SOURCE));
   }
 
   @Test

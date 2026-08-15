@@ -137,7 +137,19 @@ final class LevelDefinitionTest {
       assertEquals(CellSupply.infinite(), level.supplyFor(PlaceableCellType.WALL));
       assertEquals(CellSupply.finite(0), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
       assertEquals(PlaceableCellSupply.unlimitedWallsOnly(), level.placeableCellSupplies());
+      assertEquals(List.of(PlaceableCellType.WALL), level.initiallyAvailableCellTypes());
     }
+  }
+
+  @Test
+  void initiallyAvailableCellTypesPreserveAuthoredOrderAndOmitZeroSupplies() {
+    LevelDefinition level =
+        levelWithSupplies(
+            List.of(
+                PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2),
+                PlaceableCellSupply.finite(PlaceableCellType.WALL, 0)));
+
+    assertEquals(List.of(PlaceableCellType.SLOW_FLOOR), level.initiallyAvailableCellTypes());
   }
 
   @Test

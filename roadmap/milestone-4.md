@@ -20,9 +20,9 @@ released win condition or solver identities.
   occupied cell atomically replaces it.
 - Existing items can be dragged only to empty cells. Invalid and cancelled moves preserve the source
   and all inventory counts.
-- The palette is visible at the bottom of every build layout and uses compact 44-pixel minimum icon
-  targets with numeric/infinity supply badges, half-second desktop hover tooltips, and non-color
-  selection and availability cues.
+- The palette is visible at the bottom of every build layout and shows only types with a positive or
+  infinite starting supply. It uses compact 44-pixel minimum icon targets with numeric/infinity
+  supply badges, half-second desktop hover tooltips, and non-color selection and availability cues.
 - Milestone 4 adds one authored level with finite Wall and Slow Floor supplies that demonstrates both
   types while allowing a four-Wall fallback; released levels provide the infinite-Wall compatibility
   case. It does not add another solver.

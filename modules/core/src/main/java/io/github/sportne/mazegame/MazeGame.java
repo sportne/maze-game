@@ -915,7 +915,8 @@ public final class MazeGame extends ApplicationAdapter {
         session.levelDefinition().gridSize(),
         runtimeConfiguration.quitAvailable(),
         session.levelProgress().size(),
-        session.hasNextLevel());
+        session.hasNextLevel(),
+        session.levelDefinition().initiallyAvailableCellTypes());
   }
 
   private void activateAudioFromGesture() {

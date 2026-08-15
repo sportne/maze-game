@@ -68,6 +68,14 @@ public record LevelDefinition(
         .supply();
   }
 
+  /** Returns placeable types whose authored supply is usable when the level starts. */
+  public List<PlaceableCellType> initiallyAvailableCellTypes() {
+    return placeableCellSupplies.stream()
+        .filter(entry -> entry.supply().available())
+        .map(PlaceableCellSupply::type)
+        .toList();
+  }
+
   /** Returns an immutable defensive copy of the authored supplies in palette order. */
   @Override
   public List<PlaceableCellSupply> placeableCellSupplies() {

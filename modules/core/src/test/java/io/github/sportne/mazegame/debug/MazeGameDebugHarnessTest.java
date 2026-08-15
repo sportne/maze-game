@@ -74,18 +74,11 @@ final class MazeGameDebugHarnessTest {
   }
 
   @Test
-  void snapshotExposesPaletteSelectionAndExhaustedReleasedSupply() {
+  void snapshotOmitsCellTypesUnavailableAtLevelStart() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
-    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
-
-    assertTrue(
-        harness.snapshot().paletteState().stream()
-            .anyMatch(
-                state ->
-                    state.type() == PlaceableCellType.SLOW_FLOOR
-                        && state.selected()
-                        && !state.available()));
+    assertEquals(1, harness.snapshot().paletteState().size());
+    assertEquals(PlaceableCellType.WALL, harness.snapshot().paletteState().get(0).type());
   }
 
   @Test

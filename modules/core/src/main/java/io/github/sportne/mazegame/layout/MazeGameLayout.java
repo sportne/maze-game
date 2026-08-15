@@ -4,6 +4,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /** Creates declared frontend layouts for every Maze Game phase. */
@@ -208,15 +209,52 @@ public final class MazeGameLayout {
       boolean quitAvailable,
       int levelCount,
       boolean hasNextLevel) {
+    return forPhase(
+        phase,
+        screenWidth,
+        screenHeight,
+        gridSize,
+        quitAvailable,
+        levelCount,
+        hasNextLevel,
+        List.of(PlaceableCellType.values()));
+  }
+
+  /**
+   * Creates a layout with only the authored cell types usable when the level starts.
+   *
+   * @param phase game phase to describe
+   * @param screenWidth viewport width in pixels
+   * @param screenHeight viewport height in pixels
+   * @param gridSize current level grid size
+   * @param quitAvailable whether the platform offers a Quit command
+   * @param levelCount number of authored level cards to show
+   * @param hasNextLevel whether the result screen offers advancement
+   * @param paletteTypes initially usable palette types in authored display order
+   * @return declared screen layout
+   */
+  public static ScreenLayout forPhase(
+      GamePhase phase,
+      int screenWidth,
+      int screenHeight,
+      GridSize gridSize,
+      boolean quitAvailable,
+      int levelCount,
+      boolean hasNextLevel,
+      List<PlaceableCellType> paletteTypes) {
     if (levelCount < 0) {
       throw new IllegalArgumentException("level count must not be negative");
+    }
+    List<PlaceableCellType> visiblePaletteTypes = List.copyOf(paletteTypes);
+    if (new HashSet<>(visiblePaletteTypes).size() != visiblePaletteTypes.size()) {
+      throw new IllegalArgumentException("palette types must be unique");
     }
     ScreenLayout layout =
         switch (phase) {
           case MAIN_MENU -> mainMenu(screenWidth, screenHeight, quitAvailable);
           case LEVEL_SELECT -> levelSelect(screenWidth, screenHeight, levelCount);
           case SETTINGS -> settings(screenWidth, screenHeight);
-          case BUILDING -> building(screenWidth, screenHeight, gridSize);
+          case BUILDING -> building(screenWidth, screenHeight, gridSize, visiblePaletteTypes);
           case SOLVER_RUNNING, REPLAY -> running(phase, screenWidth, screenHeight, gridSize);
           case RESULT -> result(screenWidth, screenHeight, gridSize, hasNextLevel);
         };
@@ -285,7 +323,8 @@ public final class MazeGameLayout {
     return screen(GamePhase.SETTINGS, screenWidth, screenHeight, elements);
   }
 
-  private static ScreenLayout building(int screenWidth, int screenHeight, GridSize gridSize) {
+  private static ScreenLayout building(
+      int screenWidth, int screenHeight, GridSize gridSize, List<PlaceableCellType> paletteTypes) {
     List<LayoutElement> elements = gameplayBase(screenWidth, screenHeight, gridSize);
     ScreenRectangle grid = gridRectangle(screenWidth, screenHeight, gridSize);
     if (isCompactLandscape(screenWidth, screenHeight)) {
@@ -303,7 +342,7 @@ public final class MazeGameLayout {
           text(
               BUILD_INSTRUCTIONS,
               new ScreenRectangle(panelX, screenHeight - 108.0F, panelWidth, TEXT_REGION_HEIGHT)));
-      addPalette(elements, grid, screenWidth, screenHeight);
+      addPalette(elements, grid, screenWidth, screenHeight, paletteTypes);
       elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
       elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
       return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
@@ -322,7 +361,7 @@ public final class MazeGameLayout {
           text(
               BUILD_INSTRUCTIONS,
               new ScreenRectangle(grid.x(), grid.y() - 34.0F, grid.width(), TEXT_REGION_HEIGHT)));
-      addPalette(elements, grid, screenWidth, screenHeight);
+      addPalette(elements, grid, screenWidth, screenHeight, paletteTypes);
       elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
       elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
       return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
@@ -339,7 +378,7 @@ public final class MazeGameLayout {
         text(
             BUILD_INSTRUCTIONS,
             new ScreenRectangle(grid.x(), grid.top() + 32.0F, 320.0F, TEXT_REGION_HEIGHT)));
-    addPalette(elements, grid, screenWidth, screenHeight);
+    addPalette(elements, grid, screenWidth, screenHeight, paletteTypes);
     elements.add(button(BUILD_BACK, buildActionButton(grid, screenWidth, screenHeight, 0)));
     elements.add(button(BUILD_START, buildActionButton(grid, screenWidth, screenHeight, 1)));
     return screen(GamePhase.BUILDING, screenWidth, screenHeight, elements);
@@ -523,19 +562,28 @@ public final class MazeGameLayout {
   }
 
   private static void addPalette(
-      List<LayoutElement> elements, ScreenRectangle grid, int screenWidth, int screenHeight) {
-    for (PlaceableCellType type : PlaceableCellType.values()) {
-      elements.add(button(paletteItemId(type), paletteItem(grid, screenWidth, screenHeight, type)));
+      List<LayoutElement> elements,
+      ScreenRectangle grid,
+      int screenWidth,
+      int screenHeight,
+      List<PlaceableCellType> paletteTypes) {
+    for (int index = 0; index < paletteTypes.size(); index++) {
+      PlaceableCellType type = paletteTypes.get(index);
+      elements.add(
+          button(
+              paletteItemId(type),
+              paletteItem(grid, screenWidth, screenHeight, index, paletteTypes.size())));
     }
   }
 
   private static ScreenRectangle paletteItem(
-      ScreenRectangle grid, int screenWidth, int screenHeight, PlaceableCellType type) {
+      ScreenRectangle grid, int screenWidth, int screenHeight, int index, int itemCount) {
     boolean landscape = isCompactLandscape(screenWidth, screenHeight);
     float areaX = landscape ? compactPanelX(grid) : COMPACT_MARGIN;
     float areaWidth = screenWidth - areaX - COMPACT_MARGIN;
-    float itemWidth = Math.min(PALETTE_ITEM_WIDTH, (areaWidth - PALETTE_ITEM_GAP) / 2.0F);
-    float totalWidth = 2.0F * itemWidth + PALETTE_ITEM_GAP;
+    float gapsWidth = Math.max(0, itemCount - 1) * PALETTE_ITEM_GAP;
+    float itemWidth = Math.min(PALETTE_ITEM_WIDTH, (areaWidth - gapsWidth) / itemCount);
+    float totalWidth = itemCount * itemWidth + gapsWidth;
     float left = areaX + (areaWidth - totalWidth) / 2.0F;
     float height = isCompactPortrait(screenWidth, screenHeight) ? 56.0F : PALETTE_ITEM_HEIGHT;
     float y;
@@ -545,11 +593,6 @@ public final class MazeGameLayout {
       ScreenRectangle action = buildActionButton(grid, screenWidth, screenHeight, 0);
       y = action.top() + (isCompactPortrait(screenWidth, screenHeight) ? 12.0F : 4.0F);
     }
-    int index =
-        switch (type) {
-          case WALL -> 0;
-          case SLOW_FLOOR -> 1;
-        };
     return new ScreenRectangle(left + index * (itemWidth + PALETTE_ITEM_GAP), y, itemWidth, height);
   }
 
