@@ -9,9 +9,9 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
-import io.github.sportne.mazegame.model.mouse.MouseSimulation;
-import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverSimulationFactory;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -241,13 +241,15 @@ final class MilestoneFourCellDesignTest {
   }
 
   @Test
-  void referenceTracesMatchBothExistingProductionMouseImplementations() {
+  void referenceTracesMatchBothExistingProductionSolverImplementations() {
     assertMatchesProduction(
-        MouseBehavior.LEFT_PRIORITY,
+        SolverBehavior.LEFT_PRIORITY,
         53L,
         ReferenceSimulation.scout(board(PASSING_WALLS, Set.of())));
     assertMatchesProduction(
-        MouseBehavior.RANDOM, 41L, ReferenceSimulation.random(board(PASSING_WALLS, Set.of()), 41L));
+        SolverBehavior.RANDOM,
+        41L,
+        ReferenceSimulation.random(board(PASSING_WALLS, Set.of()), 41L));
   }
 
   @Test
@@ -288,7 +290,7 @@ final class MilestoneFourCellDesignTest {
   }
 
   private static void assertMatchesProduction(
-      MouseBehavior behavior, long seed, ReferenceSimulation referenceSimulation) {
+      SolverBehavior behavior, long seed, ReferenceSimulation referenceSimulation) {
     LevelDefinition level =
         new LevelDefinition(
             "milestone-4-reference-" + behavior.name().toLowerCase(java.util.Locale.ROOT),
@@ -304,10 +306,10 @@ final class MilestoneFourCellDesignTest {
             behavior,
             seed);
     MazeState productionMaze = new MazeState(level, PASSING_WALLS);
-    MouseSimulation production = MouseSimulationFactory.create(productionMaze);
+    SolverSimulation production = SolverSimulationFactory.create(productionMaze);
     List<GridPosition> productionTrace = new ArrayList<>();
     productionTrace.add(START);
-    while (production.result().status() == MouseRunStatus.RUNNING) {
+    while (production.result().status() == SolverRunStatus.RUNNING) {
       productionTrace.add(production.update(MOVE_INTERVAL).position());
     }
     ReferenceRun reference = referenceSimulation.update(TIMEOUT);

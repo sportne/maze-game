@@ -102,7 +102,7 @@ final class ArchitectureRulesTest {
           .resideInAPackage("..model.grid..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..model.level..", "..model.maze..", "..model.mouse..");
+          .resideInAnyPackage("..model.level..", "..model.maze..", "..model.solver..");
 
   @ArchTest
   static final ArchRule levelDefinitionsDoNotDependOnRuntimeDomainPackages =
@@ -111,16 +111,16 @@ final class ArchitectureRulesTest {
           .resideInAPackage("..model.level..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..model.maze..", "..model.mouse..");
+          .resideInAnyPackage("..model.maze..", "..model.solver..");
 
   @ArchTest
-  static final ArchRule mazeStateDoesNotDependOnMouseSimulation =
+  static final ArchRule mazeStateDoesNotDependOnSolverSimulation =
       noClasses()
           .that()
           .resideInAPackage("..model.maze..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage("..model.mouse..");
+          .resideInAPackage("..model.solver..");
 
   @ArchTest
   static final ArchRule sessionStateDoesNotDependOnAdapters =

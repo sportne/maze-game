@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,7 +9,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.EnumSet;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-final class ScoutMouseSimulationTest {
+final class ScoutSolverSimulationTest {
   private static final Duration MOVE_INTERVAL = Duration.ofMillis(250);
 
   @Test
@@ -61,11 +61,11 @@ final class ScoutMouseSimulationTest {
         CardinalDirection expected =
             priority.stream().filter(open::contains).findFirst().orElse(null);
 
-        assertEquals(expected, ScoutMouseSimulation.chooseDirection(heading, open));
+        assertEquals(expected, ScoutSolverSimulation.chooseDirection(heading, open));
       }
     }
     assertNull(
-        ScoutMouseSimulation.chooseDirection(
+        ScoutSolverSimulation.chooseDirection(
             CardinalDirection.NORTH, EnumSet.noneOf(CardinalDirection.class)));
   }
 
@@ -81,13 +81,13 @@ final class ScoutMouseSimulationTest {
   @Test
   void reverseMovementChangesTheHeadingForTheNextDecision() {
     LevelDefinition level = level(GridSize.square(3), position(1, 1), position(2, 2), 1L);
-    ScoutMouseSimulation scout =
-        new ScoutMouseSimulation(
+    ScoutSolverSimulation scout =
+        new ScoutSolverSimulation(
             new MazeState(level, Set.of(position(1, 0), position(0, 1), position(1, 2))));
 
     assertEquals(position(2, 1), scout.update(MOVE_INTERVAL).position());
     assertEquals(position(2, 2), scout.update(MOVE_INTERVAL).position());
-    assertEquals(MouseRunStatus.REACHED_CHEESE, scout.result().status());
+    assertEquals(SolverRunStatus.REACHED_CHEESE, scout.result().status());
   }
 
   @Test
@@ -98,8 +98,8 @@ final class ScoutMouseSimulationTest {
         Set.of(position(2, 2), position(3, 1), position(4, 0), position(5, 1));
 
     assertEquals(
-        new ScoutMouseSimulation(new MazeState(first, walls)).update(Duration.ofSeconds(8)),
-        new ScoutMouseSimulation(new MazeState(second, walls)).update(Duration.ofSeconds(8)));
+        new ScoutSolverSimulation(new MazeState(first, walls)).update(Duration.ofSeconds(8)),
+        new ScoutSolverSimulation(new MazeState(second, walls)).update(Duration.ofSeconds(8)));
   }
 
   @Test
@@ -109,17 +109,17 @@ final class ScoutMouseSimulationTest {
         new MazeState(
             level,
             Set.of(position(2, 1), position(3, 0), position(3, 2), position(3, 4), position(4, 3)));
-    ScoutMouseSimulation whole = new ScoutMouseSimulation(maze);
-    ScoutMouseSimulation chunked = new ScoutMouseSimulation(maze);
+    ScoutSolverSimulation whole = new ScoutSolverSimulation(maze);
+    ScoutSolverSimulation chunked = new ScoutSolverSimulation(maze);
 
-    MouseRunResult expected = whole.update(Duration.ofSeconds(8));
+    SolverRunResult expected = whole.update(Duration.ofSeconds(8));
     for (int index = 0; index < 80; index++) {
       chunked.update(Duration.ofMillis(100));
     }
 
     assertEquals(
-        new MouseRunResult(
-            level.cheese(), Duration.ofMillis(7500), 30, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            level.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE),
         expected);
     assertEquals(expected, chunked.result());
   }
@@ -138,14 +138,15 @@ final class ScoutMouseSimulationTest {
             Duration.ofSeconds(2),
             MOVE_INTERVAL,
             PlaceableCellSupply.releasedDefaults(),
-            MouseBehavior.LEFT_PRIORITY,
+            SolverBehavior.LEFT_PRIORITY,
             1L);
     MazeState maze = MazeState.empty(level);
 
-    MouseRunResult result = new ScoutMouseSimulation(maze).update(Duration.ofSeconds(10));
+    SolverRunResult result = new ScoutSolverSimulation(maze).update(Duration.ofSeconds(10));
 
     assertEquals(
-        new MouseRunResult(level.mouseStart(), Duration.ofSeconds(2), 8, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(
+            level.solverStart(), Duration.ofSeconds(2), 8, SolverRunStatus.TIMED_OUT),
         result);
   }
 
@@ -163,32 +164,33 @@ final class ScoutMouseSimulationTest {
             Duration.ofMillis(100),
             MOVE_INTERVAL,
             PlaceableCellSupply.releasedDefaults(),
-            MouseBehavior.LEFT_PRIORITY,
+            SolverBehavior.LEFT_PRIORITY,
             1L);
-    ScoutMouseSimulation scout = new ScoutMouseSimulation(MazeState.empty(level));
+    ScoutSolverSimulation scout = new ScoutSolverSimulation(MazeState.empty(level));
 
     assertThrows(IllegalArgumentException.class, () -> scout.update(Duration.ofMillis(-1)));
     assertEquals(scout.result(), scout.update(Duration.ZERO));
-    MouseRunResult terminal = scout.update(Duration.ofSeconds(1));
+    SolverRunResult terminal = scout.update(Duration.ofSeconds(1));
     assertEquals(
-        new MouseRunResult(level.mouseStart(), Duration.ofMillis(100), 0, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(
+            level.solverStart(), Duration.ofMillis(100), 0, SolverRunStatus.TIMED_OUT),
         terminal);
     assertEquals(terminal, scout.update(Duration.ofSeconds(1)));
   }
 
   @Test
-  void mouseBehaviorsRemainAClosedTwoValueSet() {
+  void solverBehaviorsRemainAClosedTwoValueSet() {
     assertArrayEquals(
-        new MouseBehavior[] {MouseBehavior.RANDOM, MouseBehavior.LEFT_PRIORITY},
-        MouseBehavior.values());
+        new SolverBehavior[] {SolverBehavior.RANDOM, SolverBehavior.LEFT_PRIORITY},
+        SolverBehavior.values());
   }
 
   private static void assertFirstMove(
       GridPosition cheese, GridPosition expected, Set<GridPosition> walls) {
     LevelDefinition level = level(GridSize.square(3), position(1, 1), cheese, 1L);
 
-    MouseRunResult result =
-        new ScoutMouseSimulation(new MazeState(level, walls)).update(MOVE_INTERVAL);
+    SolverRunResult result =
+        new ScoutSolverSimulation(new MazeState(level, walls)).update(MOVE_INTERVAL);
 
     assertEquals(expected, result.position());
     assertEquals(1, result.moveCount());
@@ -218,7 +220,7 @@ final class ScoutMouseSimulationTest {
         Duration.ofSeconds(8),
         MOVE_INTERVAL,
         PlaceableCellSupply.releasedDefaults(),
-        MouseBehavior.LEFT_PRIORITY,
+        SolverBehavior.LEFT_PRIORITY,
         seed);
   }
 

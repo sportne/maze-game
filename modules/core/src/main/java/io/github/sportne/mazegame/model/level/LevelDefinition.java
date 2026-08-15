@@ -13,66 +13,66 @@ import java.util.Objects;
 /**
  * Immutable authoring data for one playable level.
  *
- * <p>A level definition contains the static data shared by maze editing, mouse simulation, and
+ * <p>A level definition contains the static data shared by maze editing, solver simulation, and
  * result evaluation. It does not contain player-placed walls; those live in {@link
  * io.github.sportne.mazegame.model.maze.MazeState}.
  *
  * @param id stable machine-readable level identifier
  * @param name display name for the level
  * @param gridSize dimensions of the level grid
- * @param mouseStart fixed starting position for the mouse
+ * @param solverStart fixed starting position for the solver
  * @param cheese fixed endpoint position for the cheese
  * @param buildTime amount of time the player gets to place walls before auto-start
- * @param targetSolveTime solve time the mouse must exceed for the player to pass
+ * @param targetSolveTime solve time the solver must exceed for the player to pass
  * @param maximumSolveTime timeout that ends the run if the cheese is not reached
- * @param mouseMoveInterval time between mouse movement decisions
+ * @param solverMoveInterval time between solver movement decisions
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
- * @param mouseBehavior movement rule used by this level
- * @param randomSeed seed used by deterministic mouse AI
- * @param mice authored mice in stable presentation order
+ * @param solverBehavior movement rule used by this level
+ * @param randomSeed seed used by deterministic solver AI
+ * @param solvers authored solvers in stable presentation order
  */
 public record LevelDefinition(
     String id,
     String name,
     GridSize gridSize,
-    GridPosition mouseStart,
+    GridPosition solverStart,
     GridPosition cheese,
     Duration buildTime,
     Duration targetSolveTime,
     Duration maximumSolveTime,
-    Duration mouseMoveInterval,
+    Duration solverMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
-    MouseBehavior mouseBehavior,
+    SolverBehavior solverBehavior,
     long randomSeed,
-    List<LevelMouse> mice) {
-  /** Compatibility constructor for the released single-mouse level format. */
+    List<LevelSolver> solvers) {
+  /** Compatibility constructor for the released single-solver level format. */
   public LevelDefinition(
       String id,
       String name,
       GridSize gridSize,
-      GridPosition mouseStart,
+      GridPosition solverStart,
       GridPosition cheese,
       Duration buildTime,
       Duration targetSolveTime,
       Duration maximumSolveTime,
-      Duration mouseMoveInterval,
+      Duration solverMoveInterval,
       List<PlaceableCellSupply> placeableCellSupplies,
-      MouseBehavior mouseBehavior,
+      SolverBehavior solverBehavior,
       long randomSeed) {
     this(
         id,
         name,
         gridSize,
-        mouseStart,
+        solverStart,
         cheese,
         buildTime,
         targetSolveTime,
         maximumSolveTime,
-        mouseMoveInterval,
+        solverMoveInterval,
         placeableCellSupplies,
-        mouseBehavior,
+        solverBehavior,
         randomSeed,
-        List.of(new LevelMouse(mouseStart, cheese, mouseBehavior, randomSeed)));
+        List.of(new LevelSolver(solverStart, cheese, solverBehavior, randomSeed)));
   }
 
   /**
@@ -85,26 +85,26 @@ public record LevelDefinition(
     id = requireNonBlank(id, "id");
     name = requireNonBlank(name, "name");
     Objects.requireNonNull(gridSize, "gridSize");
-    Objects.requireNonNull(mouseStart, "mouseStart");
+    Objects.requireNonNull(solverStart, "solverStart");
     Objects.requireNonNull(cheese, "cheese");
     requirePositive(buildTime, "buildTime");
     requirePositive(targetSolveTime, "targetSolveTime");
     requirePositive(maximumSolveTime, "maximumSolveTime");
-    requirePositive(mouseMoveInterval, "mouseMoveInterval");
+    requirePositive(solverMoveInterval, "solverMoveInterval");
     placeableCellSupplies = validateSupplies(placeableCellSupplies);
-    Objects.requireNonNull(mouseBehavior, "mouseBehavior");
-    mice = validateMice(mice, gridSize);
-    requireWithinGrid(mouseStart, gridSize, "mouseStart");
+    Objects.requireNonNull(solverBehavior, "solverBehavior");
+    solvers = validateSolvers(solvers, gridSize);
+    requireWithinGrid(solverStart, gridSize, "solverStart");
     requireWithinGrid(cheese, gridSize, "cheese");
-    if (mouseStart.equals(cheese)) {
-      throw new IllegalArgumentException("mouseStart and cheese must be different");
+    if (solverStart.equals(cheese)) {
+      throw new IllegalArgumentException("solverStart and cheese must be different");
     }
-    LevelMouse primaryMouse = mice.get(0);
-    if (!primaryMouse.start().equals(mouseStart)
-        || !primaryMouse.goal().equals(cheese)
-        || primaryMouse.behavior() != mouseBehavior
-        || primaryMouse.randomSeed() != randomSeed) {
-      throw new IllegalArgumentException("primary mouse fields must match the first mouse");
+    LevelSolver primarySolver = solvers.get(0);
+    if (!primarySolver.start().equals(solverStart)
+        || !primarySolver.goal().equals(cheese)
+        || primarySolver.behavior() != solverBehavior
+        || primarySolver.randomSeed() != randomSeed) {
+      throw new IllegalArgumentException("primary solver fields must match the first solver");
     }
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
@@ -127,31 +127,31 @@ public record LevelDefinition(
     return List.copyOf(placeableCellSupplies);
   }
 
-  /** Returns an immutable defensive copy of the authored mice in presentation order. */
+  /** Returns an immutable defensive copy of the authored solvers in presentation order. */
   @Override
-  public List<LevelMouse> mice() {
-    return List.copyOf(mice);
+  public List<LevelSolver> solvers() {
+    return List.copyOf(solvers);
   }
 
-  /** Returns a single-mouse view used by one independent simulation. */
-  public LevelDefinition forMouse(LevelMouse mouse) {
-    Objects.requireNonNull(mouse, "mouse");
-    if (!mice.contains(mouse)) {
-      throw new IllegalArgumentException("mouse is not authored by this level");
+  /** Returns a single-solver view used by one independent simulation. */
+  public LevelDefinition forSolver(LevelSolver solver) {
+    Objects.requireNonNull(solver, "solver");
+    if (!solvers.contains(solver)) {
+      throw new IllegalArgumentException("solver is not authored by this level");
     }
     return new LevelDefinition(
         id,
         name,
         gridSize,
-        mouse.start(),
-        mouse.goal(),
+        solver.start(),
+        solver.goal(),
         buildTime,
         targetSolveTime,
         maximumSolveTime,
-        mouseMoveInterval,
+        solverMoveInterval,
         placeableCellSupplies,
-        mouse.behavior(),
-        mouse.randomSeed());
+        solver.behavior(),
+        solver.randomSeed());
   }
 
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {
@@ -170,22 +170,23 @@ public record LevelDefinition(
     return copied;
   }
 
-  private static List<LevelMouse> validateMice(List<LevelMouse> authoredMice, GridSize gridSize) {
-    Objects.requireNonNull(authoredMice, "mice");
-    List<LevelMouse> copied = List.copyOf(authoredMice);
+  private static List<LevelSolver> validateSolvers(
+      List<LevelSolver> authoredSolvers, GridSize gridSize) {
+    Objects.requireNonNull(authoredSolvers, "solvers");
+    List<LevelSolver> copied = List.copyOf(authoredSolvers);
     if (copied.isEmpty()) {
-      throw new IllegalArgumentException("level must contain at least one mouse");
+      throw new IllegalArgumentException("level must contain at least one solver");
     }
     java.util.HashSet<GridPosition> protectedPositions = new java.util.HashSet<>();
-    for (LevelMouse mouse : copied) {
-      Objects.requireNonNull(mouse, "mice entry");
-      requireWithinGrid(mouse.start(), gridSize, "mouse start");
-      requireWithinGrid(mouse.goal(), gridSize, "mouse goal");
-      if (!protectedPositions.add(mouse.start())) {
-        throw new IllegalArgumentException("mouse starts must be unique");
+    for (LevelSolver solver : copied) {
+      Objects.requireNonNull(solver, "solvers entry");
+      requireWithinGrid(solver.start(), gridSize, "solver start");
+      requireWithinGrid(solver.goal(), gridSize, "solver goal");
+      if (!protectedPositions.add(solver.start())) {
+        throw new IllegalArgumentException("solver starts must be unique");
       }
-      if (!protectedPositions.add(mouse.goal())) {
-        throw new IllegalArgumentException("mouse starts and goals must not overlap");
+      if (!protectedPositions.add(solver.goal())) {
+        throw new IllegalArgumentException("solver starts and goals must not overlap");
       }
     }
     return copied;

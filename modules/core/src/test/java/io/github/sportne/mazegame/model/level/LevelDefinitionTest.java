@@ -22,13 +22,13 @@ final class LevelDefinitionTest {
     assertEquals("milestone-1", level.id());
     assertEquals("Level 1", level.name());
     assertEquals(GridSize.square(5), level.gridSize());
-    assertEquals(new GridPosition(4, 2), level.mouseStart());
+    assertEquals(new GridPosition(4, 2), level.solverStart());
     assertEquals(new GridPosition(0, 2), level.cheese());
     assertEquals(Duration.ofSeconds(30), level.buildTime());
     assertEquals(Duration.ofSeconds(5), level.targetSolveTime());
     assertEquals(Duration.ofSeconds(10), level.maximumSolveTime());
-    assertEquals(Duration.ofMillis(250), level.mouseMoveInterval());
-    assertEquals(MouseBehavior.RANDOM, level.mouseBehavior());
+    assertEquals(Duration.ofMillis(250), level.solverMoveInterval());
+    assertEquals(SolverBehavior.RANDOM, level.solverBehavior());
     assertEquals(1L, level.randomSeed());
   }
 
@@ -57,7 +57,7 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void mouseStartMustBeInsideGrid() {
+  void solverStartMustBeInsideGrid() {
     assertThrows(
         IllegalArgumentException.class,
         () -> level("level", "Level", new GridPosition(5, 2), new GridPosition(0, 2)));
@@ -71,7 +71,7 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void mouseStartAndCheeseMustBeDifferent() {
+  void solverStartAndCheeseMustBeDifferent() {
     GridPosition position = new GridPosition(2, 2);
 
     assertThrows(IllegalArgumentException.class, () -> level("level", "Level", position, position));
@@ -93,7 +93,7 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
                 PlaceableCellSupply.releasedDefaults(),
-                MouseBehavior.RANDOM,
+                SolverBehavior.RANDOM,
                 1L));
   }
 
@@ -113,17 +113,17 @@ final class LevelDefinitionTest {
                 Duration.ofSeconds(10),
                 Duration.ofMillis(250),
                 PlaceableCellSupply.releasedDefaults(),
-                MouseBehavior.RANDOM,
+                SolverBehavior.RANDOM,
                 1L));
   }
 
   @Test
-  void mouseBehaviorIsRequiredAndParticipatesInEquality() {
-    LevelDefinition random = levelWithBehavior(MouseBehavior.RANDOM);
-    LevelDefinition scout = levelWithBehavior(MouseBehavior.LEFT_PRIORITY);
+  void solverBehaviorIsRequiredAndParticipatesInEquality() {
+    LevelDefinition random = levelWithBehavior(SolverBehavior.RANDOM);
+    LevelDefinition scout = levelWithBehavior(SolverBehavior.LEFT_PRIORITY);
 
-    assertEquals(MouseBehavior.RANDOM, random.mouseBehavior());
-    assertEquals(MouseBehavior.LEFT_PRIORITY, scout.mouseBehavior());
+    assertEquals(SolverBehavior.RANDOM, random.solverBehavior());
+    assertEquals(SolverBehavior.LEFT_PRIORITY, scout.solverBehavior());
     assertNotEquals(random, scout);
     assertThrows(NullPointerException.class, () -> levelWithBehavior(null));
   }
@@ -181,119 +181,122 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void levelMouseRequiresDistinctPositionsAndBehavior() {
+  void levelSolverRequiresDistinctPositionsAndBehavior() {
     GridPosition start = new GridPosition(4, 2);
     GridPosition goal = new GridPosition(0, 2);
 
     assertThrows(
-        NullPointerException.class, () -> new LevelMouse(null, goal, MouseBehavior.RANDOM, 1L));
+        NullPointerException.class, () -> new LevelSolver(null, goal, SolverBehavior.RANDOM, 1L));
     assertThrows(
-        NullPointerException.class, () -> new LevelMouse(start, null, MouseBehavior.RANDOM, 1L));
-    assertThrows(NullPointerException.class, () -> new LevelMouse(start, goal, null, 1L));
+        NullPointerException.class, () -> new LevelSolver(start, null, SolverBehavior.RANDOM, 1L));
+    assertThrows(NullPointerException.class, () -> new LevelSolver(start, goal, null, 1L));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new LevelMouse(start, start, MouseBehavior.RANDOM, 1L));
+        () -> new LevelSolver(start, start, SolverBehavior.RANDOM, 1L));
   }
 
   @Test
-  void multiMouseDefinitionsValidateAndDefensivelyCopyEveryProtectedPosition() {
-    LevelMouse primary =
-        new LevelMouse(new GridPosition(4, 2), new GridPosition(0, 2), MouseBehavior.RANDOM, 1L);
-    LevelMouse secondary =
-        new LevelMouse(
-            new GridPosition(3, 3), new GridPosition(1, 1), MouseBehavior.LEFT_PRIORITY, 2L);
-    List<LevelMouse> mutable = new ArrayList<>(List.of(primary, secondary));
-    LevelDefinition level = multiMouseLevel(mutable);
+  void multiSolverDefinitionsValidateAndDefensivelyCopyEveryProtectedPosition() {
+    LevelSolver primary =
+        new LevelSolver(new GridPosition(4, 2), new GridPosition(0, 2), SolverBehavior.RANDOM, 1L);
+    LevelSolver secondary =
+        new LevelSolver(
+            new GridPosition(3, 3), new GridPosition(1, 1), SolverBehavior.LEFT_PRIORITY, 2L);
+    List<LevelSolver> mutable = new ArrayList<>(List.of(primary, secondary));
+    LevelDefinition level = multiSolverLevel(mutable);
     mutable.clear();
 
-    assertEquals(List.of(primary, secondary), level.mice());
-    assertEquals(secondary.start(), level.forMouse(secondary).mouseStart());
-    assertThrows(NullPointerException.class, () -> assertEquals(level, level.forMouse(null)));
+    assertEquals(List.of(primary, secondary), level.solvers());
+    assertEquals(secondary.start(), level.forSolver(secondary).solverStart());
+    assertThrows(NullPointerException.class, () -> assertEquals(level, level.forSolver(null)));
     assertThrows(
         IllegalArgumentException.class,
         () ->
             assertEquals(
                 level,
-                level.forMouse(
-                    new LevelMouse(
+                level.forSolver(
+                    new LevelSolver(
                         new GridPosition(2, 1),
                         new GridPosition(2, 2),
-                        MouseBehavior.RANDOM,
+                        SolverBehavior.RANDOM,
                         3L))));
-    assertThrows(NullPointerException.class, () -> multiMouseLevel(null));
-    assertThrows(IllegalArgumentException.class, () -> multiMouseLevel(List.of()));
+    assertThrows(NullPointerException.class, () -> multiSolverLevel(null));
+    assertThrows(IllegalArgumentException.class, () -> multiSolverLevel(List.of()));
     assertThrows(
-        NullPointerException.class, () -> multiMouseLevel(java.util.Arrays.asList(primary, null)));
+        NullPointerException.class, () -> multiSolverLevel(java.util.Arrays.asList(primary, null)));
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            multiMouseLevel(
+            multiSolverLevel(
                 List.of(
                     primary,
-                    new LevelMouse(
+                    new LevelSolver(
                         primary.start(),
                         new GridPosition(1, 1),
-                        MouseBehavior.LEFT_PRIORITY,
+                        SolverBehavior.LEFT_PRIORITY,
                         2L))));
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            multiMouseLevel(
+            multiSolverLevel(
                 List.of(
                     primary,
-                    new LevelMouse(
-                        new GridPosition(3, 3), primary.goal(), MouseBehavior.LEFT_PRIORITY, 2L))));
+                    new LevelSolver(
+                        new GridPosition(3, 3),
+                        primary.goal(),
+                        SolverBehavior.LEFT_PRIORITY,
+                        2L))));
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            multiMouseLevel(
+            multiSolverLevel(
                 List.of(
                     primary,
-                    new LevelMouse(
+                    new LevelSolver(
                         new GridPosition(5, 0),
                         new GridPosition(1, 1),
-                        MouseBehavior.LEFT_PRIORITY,
+                        SolverBehavior.LEFT_PRIORITY,
                         2L))));
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            multiMouseLevel(
+            multiSolverLevel(
                 List.of(
-                    new LevelMouse(
-                        primary.start(), primary.goal(), MouseBehavior.LEFT_PRIORITY, 2L))));
+                    new LevelSolver(
+                        primary.start(), primary.goal(), SolverBehavior.LEFT_PRIORITY, 2L))));
   }
 
   private static LevelDefinition level(
-      String id, String name, GridPosition mouseStart, GridPosition cheese) {
+      String id, String name, GridPosition solverStart, GridPosition cheese) {
     return new LevelDefinition(
         id,
         name,
         GridSize.square(5),
-        mouseStart,
+        solverStart,
         cheese,
         Duration.ofSeconds(30),
         Duration.ofSeconds(5),
         Duration.ofSeconds(10),
         Duration.ofMillis(250),
         PlaceableCellSupply.releasedDefaults(),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 
-  private static LevelDefinition levelWithBehavior(MouseBehavior mouseBehavior) {
+  private static LevelDefinition levelWithBehavior(SolverBehavior solverBehavior) {
     LevelDefinition source = Levels.milestoneOne();
     return new LevelDefinition(
         source.id(),
         source.name(),
         source.gridSize(),
-        source.mouseStart(),
+        source.solverStart(),
         source.cheese(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
-        source.mouseMoveInterval(),
+        source.solverMoveInterval(),
         source.placeableCellSupplies(),
-        mouseBehavior,
+        solverBehavior,
         source.randomSeed());
   }
 
@@ -303,32 +306,32 @@ final class LevelDefinitionTest {
         "supply-test",
         "Supply Test",
         source.gridSize(),
-        source.mouseStart(),
+        source.solverStart(),
         source.cheese(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
-        source.mouseMoveInterval(),
+        source.solverMoveInterval(),
         supplies,
-        source.mouseBehavior(),
+        source.solverBehavior(),
         source.randomSeed());
   }
 
-  private static LevelDefinition multiMouseLevel(List<LevelMouse> mice) {
+  private static LevelDefinition multiSolverLevel(List<LevelSolver> solvers) {
     LevelDefinition source = Levels.milestoneOne();
     return new LevelDefinition(
-        "multi-mouse-test",
-        "Multi Mouse Test",
+        "multi-solver-test",
+        "Multi Solver Test",
         source.gridSize(),
-        source.mouseStart(),
+        source.solverStart(),
         source.cheese(),
         source.buildTime(),
         source.targetSolveTime(),
         source.maximumSolveTime(),
-        source.mouseMoveInterval(),
+        source.solverMoveInterval(),
         source.placeableCellSupplies(),
-        source.mouseBehavior(),
+        source.solverBehavior(),
         source.randomSeed(),
-        mice);
+        solvers);
   }
 }

@@ -10,10 +10,10 @@ import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeEditStatus;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
-import io.github.sportne.mazegame.model.mouse.MouseSimulation;
-import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverSimulationFactory;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -35,15 +35,15 @@ final class MilestoneFourLevelTest {
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
     assertEquals("Level 4", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
-    assertEquals(position(6, 3), LEVEL.mouseStart());
+    assertEquals(position(6, 3), LEVEL.solverStart());
     assertEquals(position(0, 3), LEVEL.cheese());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofMillis(5500), LEVEL.targetSolveTime());
     assertEquals(Duration.ofMillis(6500), LEVEL.maximumSolveTime());
-    assertEquals(Duration.ofMillis(250), LEVEL.mouseMoveInterval());
+    assertEquals(Duration.ofMillis(250), LEVEL.solverMoveInterval());
     assertEquals(CellSupply.finite(4), LEVEL.supplyFor(PlaceableCellType.WALL));
     assertEquals(CellSupply.finite(3), LEVEL.supplyFor(PlaceableCellType.SLOW_FLOOR));
-    assertEquals(MouseBehavior.LEFT_PRIORITY, LEVEL.mouseBehavior());
+    assertEquals(SolverBehavior.LEFT_PRIORITY, LEVEL.solverBehavior());
     assertEquals(53L, LEVEL.randomSeed());
   }
 
@@ -51,26 +51,26 @@ final class MilestoneFourLevelTest {
   void emptyThreeWallAndSlowOnlyProductionFixturesFailWhileFourWallAndCombinedPass() {
     assertRun(
         MazeState.empty(LEVEL),
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(3), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
         false);
     assertRun(
         maze(PASSING_WALLS, Set.of()),
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(5), 20, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE),
         false);
     assertRun(
         maze(Set.of(), PASSING_SLOW_FLOORS),
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofMillis(3750), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_CHEESE),
         false);
 
     MazeState wallOnlyFallback = maze(WALL_ONLY_FALLBACK, Set.of());
     assertEquals(CellSupply.finite(0), wallOnlyFallback.remainingSupply(PlaceableCellType.WALL));
     assertRun(
         wallOnlyFallback,
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(6), 24, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(6), 24, SolverRunStatus.REACHED_CHEESE),
         true);
 
     MazeState passing = maze(PASSING_WALLS, PASSING_SLOW_FLOORS);
@@ -78,8 +78,8 @@ final class MilestoneFourLevelTest {
     assertEquals(CellSupply.finite(0), passing.remainingSupply(PlaceableCellType.SLOW_FLOOR));
     assertRun(
         passing,
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofMillis(5750), 20, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
         true);
   }
 
@@ -104,8 +104,8 @@ final class MilestoneFourLevelTest {
     assertEquals(replacement, movement);
     assertRun(
         movement,
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofMillis(5750), 20, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
         true);
   }
 
@@ -113,18 +113,18 @@ final class MilestoneFourLevelTest {
   void timeoutFixtureStopsDuringTheFinalSlowFloorWait() {
     assertRun(
         maze(TIMEOUT_WALLS, TIMEOUT_SLOW_FLOORS),
-        new MouseRunResult(position(1, 3), Duration.ofMillis(6500), 19, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(position(1, 3), Duration.ofMillis(6500), 19, SolverRunStatus.TIMED_OUT),
         true);
   }
 
-  private static void assertRun(MazeState maze, MouseRunResult expected, boolean expectedPass) {
-    MouseSimulation simulation = MouseSimulationFactory.create(maze);
-    MouseRunResult result = simulation.update(LEVEL.maximumSolveTime());
+  private static void assertRun(MazeState maze, SolverRunResult expected, boolean expectedPass) {
+    SolverSimulation simulation = SolverSimulationFactory.create(maze);
+    SolverRunResult result = simulation.update(LEVEL.maximumSolveTime());
 
     assertEquals(expected, result);
     assertEquals(
         expectedPass,
-        result.status() == MouseRunStatus.TIMED_OUT
+        result.status() == SolverRunStatus.TIMED_OUT
             || result.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0);
   }
 

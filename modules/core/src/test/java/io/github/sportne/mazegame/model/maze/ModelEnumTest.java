@@ -3,7 +3,7 @@ package io.github.sportne.mazegame.model.maze;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import org.junit.jupiter.api.Test;
 
 final class ModelEnumTest {
@@ -48,11 +48,11 @@ final class ModelEnumTest {
   }
 
   @Test
-  void mouseRunStatusesCoverRunningAndTerminalOutcomes() {
+  void solverRunStatusesCoverRunningAndTerminalOutcomes() {
     assertArrayEquals(
-        new MouseRunStatus[] {
-          MouseRunStatus.RUNNING, MouseRunStatus.REACHED_CHEESE, MouseRunStatus.TIMED_OUT
+        new SolverRunStatus[] {
+          SolverRunStatus.RUNNING, SolverRunStatus.REACHED_CHEESE, SolverRunStatus.TIMED_OUT
         },
-        MouseRunStatus.values());
+        SolverRunStatus.values());
   }
 }

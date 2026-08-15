@@ -18,7 +18,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeEditStatus;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -196,7 +196,7 @@ final class MazeGameBuildGestureTest {
 
     beginDrag(game, palette, destination, 3);
     game.startRun();
-    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
     assertLateReleaseDoesNotEdit(game, destination, 3, initial);
   }
 
@@ -210,7 +210,7 @@ final class MazeGameBuildGestureTest {
 
     game.updateGame(game.buildTimeRemainingSeconds());
 
-    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
     assertTrue(game.buildGestureState().isEmpty());
     assertLateReleaseDoesNotEdit(game, destination, 0, initial);
   }
@@ -329,7 +329,7 @@ final class MazeGameBuildGestureTest {
 
     beginCellDrag(game, source, destination, 6);
     game.updateGame(game.buildTimeRemainingSeconds());
-    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
+    assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
     assertLateReleaseDoesNotEdit(game, cellCenter(game, destination), 6, original);
     assertEquals(PlaceableCellType.SLOW_FLOOR, game.mazeState().placedCellAt(source));
   }
@@ -496,7 +496,7 @@ final class MazeGameBuildGestureTest {
         List.of(
             new PlaceableCellSupply(PlaceableCellType.WALL, wallSupply),
             new PlaceableCellSupply(PlaceableCellType.SLOW_FLOOR, slowSupply)),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 

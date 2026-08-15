@@ -29,8 +29,8 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.persistence.LibGdxBestResultStore;
 import io.github.sportne.mazegame.render.GameRenderSnapshot;
 import io.github.sportne.mazegame.render.MazeGameRenderer;
@@ -48,7 +48,7 @@ import java.util.Optional;
  * Main libGDX application for Maze Game.
  *
  * <p>This class is the bridge between the immutable core model and the desktop runtime. It owns the
- * current level, maze state, build timer, mouse simulation, simple primitive rendering, sprite
+ * current level, maze state, build timer, solver simulation, simple primitive rendering, sprite
  * rendering, and platform callbacks. The domain rules remain in {@code
  * io.github.sportne.mazegame.model}; this class turns those rules into input handling and drawing.
  */
@@ -104,8 +104,8 @@ public final class MazeGame extends ApplicationAdapter {
   /** Cropped acorn sprite drawn as Scout's endpoint goal. */
   private TextureRegion acornSprite;
 
-  /** Cropped mouse sprite drawn at the current mouse position. */
-  private TextureRegion mouseSprite;
+  /** Cropped solver sprite drawn at the current solver position. */
+  private TextureRegion solverSprite;
 
   /** Scout sprite drawn when the active level selects Scout's behavior. */
   private TextureRegion scoutSprite;
@@ -301,11 +301,11 @@ public final class MazeGame extends ApplicationAdapter {
     goalSpriteSheet = loadNearestTexture(goalSpriteSheetFile());
     cheeseSprite = GameSpriteSheets.cheese(goalSpriteSheet);
     acornSprite = GameSpriteSheets.acorn(goalSpriteSheet);
-    mouseSprite = GameSpriteSheets.randomMouse(classicMouseSpriteSheet);
+    solverSprite = GameSpriteSheets.randomSolver(classicMouseSpriteSheet);
     scoutSprite = GameSpriteSheets.scoutSquirrel(basicCharacterSpriteSheet);
     renderer =
         new MazeGameRenderer(
-            spriteBatch, shapeRenderer, font, cheeseSprite, acornSprite, mouseSprite, scoutSprite);
+            spriteBatch, shapeRenderer, font, cheeseSprite, acornSprite, solverSprite, scoutSprite);
     if (!runtimeConfiguration.audioRequiresUserGesture()) {
       startBackgroundMusic();
     }
@@ -378,7 +378,7 @@ public final class MazeGame extends ApplicationAdapter {
     goalSpriteSheet = disposeTexture(goalSpriteSheet);
     cheeseSprite = null;
     acornSprite = null;
-    mouseSprite = null;
+    solverSprite = null;
     scoutSprite = null;
     renderer = null;
     if (shapeRenderer != null) {
@@ -392,7 +392,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Returns whether the mouse run has been started for the current attempt.
+   * Returns whether the solver run has been started for the current attempt.
    *
    * @return true after manual or automatic run start
    */
@@ -433,17 +433,17 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Returns the current mouse run snapshot.
+   * Returns the current solver run snapshot.
    *
-   * @return latest run result, or null before the mouse starts
+   * @return latest run result, or null before the solver starts
    */
-  public MouseRunResult mouseRunResult() {
-    return session.mouseRunResult();
+  public SolverRunResult solverRunResult() {
+    return session.solverRunResult();
   }
 
-  /** Returns the latest results for every mouse in authored order. */
-  public List<MouseRunResult> mouseRunResults() {
-    return session.mouseRunResults();
+  /** Returns the latest results for every solver in authored order. */
+  public List<SolverRunResult> solverRunResults() {
+    return session.solverRunResults();
   }
 
   /**
@@ -520,7 +520,7 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Advances the build timer and starts the mouse when it reaches zero.
+   * Advances the build timer and starts the solver when it reaches zero.
    *
    * @param deltaSeconds elapsed frame time in seconds
    */
@@ -533,7 +533,7 @@ public final class MazeGame extends ApplicationAdapter {
     session.updateBuildTimer(deltaSeconds);
   }
 
-  /** Starts the mouse run from the current maze if the player is still building. */
+  /** Starts the solver run from the current maze if the player is still building. */
   void startRun() {
     cancelBuildGesture();
     session.startRun();
@@ -888,7 +888,7 @@ public final class MazeGame extends ApplicationAdapter {
         session.buildTimeRemainingSeconds(),
         session.rejectedPosition(),
         session.rejectedFlashRemainingSeconds(),
-        session.mouseRunResult(),
+        session.solverRunResult(),
         session.bestResult(),
         session.levelProgress(),
         session.paletteState(),
@@ -897,7 +897,7 @@ public final class MazeGame extends ApplicationAdapter {
         audioEnabled(),
         resultPassed(),
         hasNextLevel(),
-        session.mouseRunResults());
+        session.solverRunResults());
   }
 
   /**
@@ -927,12 +927,12 @@ public final class MazeGame extends ApplicationAdapter {
   }
 
   /**
-   * Advances the active mouse simulation.
+   * Advances the active solver simulation.
    *
    * @param deltaSeconds elapsed frame time in seconds
    */
-  void updateMouseRun(float deltaSeconds) {
-    session.updateMouseRun(deltaSeconds);
+  void updateSolverRun(float deltaSeconds) {
+    session.updateSolverRun(deltaSeconds);
   }
 
   /**

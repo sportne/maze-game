@@ -1,17 +1,17 @@
 package io.github.sportne.mazegame.model.result;
 
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import java.time.Duration;
 import java.util.Objects;
 
 /**
  * Best saved player result for one level.
  *
- * <p>Maze Game rewards making the mouse take longer, so a larger elapsed time is better. Move count
- * breaks ties in the same direction.
+ * <p>Maze Game rewards making the solver take longer, so a larger elapsed time is better. Move
+ * count breaks ties in the same direction.
  *
- * @param elapsedTime completed mouse run time
- * @param moveCount completed mouse move count
+ * @param elapsedTime completed solver run time
+ * @param moveCount completed solver move count
  */
 public record BestResult(Duration elapsedTime, int moveCount) {
   /**
@@ -30,14 +30,14 @@ public record BestResult(Duration elapsedTime, int moveCount) {
   }
 
   /**
-   * Creates a best result candidate from a completed mouse run.
+   * Creates a best result candidate from a completed solver run.
    *
-   * @param mouseRunResult completed run result
+   * @param solverRunResult completed run result
    * @return best result candidate with the same time and move count
    */
-  public static BestResult from(MouseRunResult mouseRunResult) {
-    Objects.requireNonNull(mouseRunResult, "mouseRunResult");
-    return new BestResult(mouseRunResult.elapsedTime(), mouseRunResult.moveCount());
+  public static BestResult from(SolverRunResult solverRunResult) {
+    Objects.requireNonNull(solverRunResult, "solverRunResult");
+    return new BestResult(solverRunResult.elapsedTime(), solverRunResult.moveCount());
   }
 
   /**

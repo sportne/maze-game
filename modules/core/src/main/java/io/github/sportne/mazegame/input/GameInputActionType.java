@@ -26,7 +26,7 @@ public enum GameInputActionType {
   /** Toggle session audio. */
   TOGGLE_AUDIO,
 
-  /** Start the mouse run early from the build phase. */
+  /** Start the solver run early from the build phase. */
   START_RUN,
 
   /** Leave an unstarted level attempt and return to level selection. */
@@ -47,7 +47,7 @@ public enum GameInputActionType {
   /** Retry the current level from the result screen. */
   RETRY,
 
-  /** Replay the completed mouse run. */
+  /** Replay the completed solver run. */
   REPLAY,
 
   /** Start the next unlocked authored level after a passing result. */

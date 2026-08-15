@@ -1,21 +1,21 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import java.time.Duration;
 
-/** Timed mouse movement used by a game session. */
-public interface MouseSimulation {
+/** Timed solver movement used by a game session. */
+public interface SolverSimulation {
   /**
    * Advances the simulation by the given time.
    *
    * @param deltaTime amount of time to add to the run
    * @return the updated run snapshot
    */
-  MouseRunResult update(Duration deltaTime);
+  SolverRunResult update(Duration deltaTime);
 
   /**
    * Returns the current simulation result.
    *
    * @return immutable snapshot of position, time, move count, and status
    */
-  MouseRunResult result();
+  SolverRunResult result();
 }

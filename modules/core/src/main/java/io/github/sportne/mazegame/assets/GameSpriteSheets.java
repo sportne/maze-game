@@ -43,7 +43,7 @@ public final class GameSpriteSheets {
    * @param classicMouse loaded processed classic-mouse texture
    * @return classic mouse sprite region
    */
-  public static TextureRegion randomMouse(Texture classicMouse) {
+  public static TextureRegion randomSolver(Texture classicMouse) {
     return frame(classicMouse, RIGHT_FACING_COLUMN, 0);
   }
 

@@ -1,7 +1,7 @@
 package io.github.sportne.mazegame.model.level;
 
-/** Closed set of mouse movement rules supported by authored levels. */
-public enum MouseBehavior {
+/** Closed set of solver movement rules supported by authored levels. */
+public enum SolverBehavior {
   /** Seeded choice among every open orthogonal neighbor. */
   RANDOM,
 

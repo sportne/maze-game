@@ -64,7 +64,7 @@ public final class GameInputRouter {
       case SETTINGS -> routeSettings(layout, screenX, screenYFromBottom);
       case BUILDING -> routeBuildControls(layout, screenX, screenYFromBottom);
       case RESULT -> routeResult(layout, screenX, screenYFromBottom);
-      case MOUSE_RUNNING, REPLAY -> GameInputAction.NONE;
+      case SOLVER_RUNNING, REPLAY -> GameInputAction.NONE;
     };
   }
 

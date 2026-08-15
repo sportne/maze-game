@@ -4,8 +4,8 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * @param buildTimeRemainingSeconds build timer value
  * @param rejectedPosition cell flashing as rejected, or null
  * @param rejectedFlashRemainingSeconds rejected flash time remaining
- * @param mouseRunResult latest mouse result, or null before a run starts
+ * @param solverRunResult latest solver result, or null before a run starts
  * @param bestResult best saved result for the current level, or null when none exists
  * @param levelProgress authored level presentation state in catalog order
  * @param paletteState authored and remaining build-palette state in display order
@@ -30,7 +30,7 @@ import java.util.Objects;
  * @param audioEnabled whether session audio is enabled
  * @param resultPassed whether the latest result passed
  * @param hasNextLevel whether a next level option exists
- * @param mouseRunResults latest results in authored mouse order
+ * @param solverRunResults latest results in authored solver order
  */
 public record GameRenderSnapshot(
     GamePhase phase,
@@ -39,7 +39,7 @@ public record GameRenderSnapshot(
     float buildTimeRemainingSeconds,
     GridPosition rejectedPosition,
     float rejectedFlashRemainingSeconds,
-    MouseRunResult mouseRunResult,
+    SolverRunResult solverRunResult,
     BestResult bestResult,
     List<LevelProgress> levelProgress,
     List<CellPaletteState> paletteState,
@@ -48,7 +48,7 @@ public record GameRenderSnapshot(
     boolean audioEnabled,
     boolean resultPassed,
     boolean hasNextLevel,
-    List<MouseRunResult> mouseRunResults) {
+    List<SolverRunResult> solverRunResults) {
   /** Creates a render snapshot with required frame state validated. */
   public GameRenderSnapshot {
     Objects.requireNonNull(phase, "phase");
@@ -56,7 +56,7 @@ public record GameRenderSnapshot(
     Objects.requireNonNull(mazeState, "mazeState");
     levelProgress = List.copyOf(levelProgress);
     paletteState = List.copyOf(paletteState);
-    mouseRunResults = List.copyOf(mouseRunResults);
+    solverRunResults = List.copyOf(solverRunResults);
   }
 
   /** Creates a snapshot using the released single-result representation. */
@@ -67,7 +67,7 @@ public record GameRenderSnapshot(
       float buildTimeRemainingSeconds,
       GridPosition rejectedPosition,
       float rejectedFlashRemainingSeconds,
-      MouseRunResult mouseRunResult,
+      SolverRunResult solverRunResult,
       BestResult bestResult,
       List<LevelProgress> levelProgress,
       List<CellPaletteState> paletteState,
@@ -83,7 +83,7 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        mouseRunResult,
+        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -92,7 +92,7 @@ public record GameRenderSnapshot(
         audioEnabled,
         resultPassed,
         hasNextLevel,
-        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
+        solverRunResult == null ? List.of() : List.of(solverRunResult));
   }
 
   /** Creates a snapshot with an active drag but no delayed hover tooltip. */
@@ -103,7 +103,7 @@ public record GameRenderSnapshot(
       float buildTimeRemainingSeconds,
       GridPosition rejectedPosition,
       float rejectedFlashRemainingSeconds,
-      MouseRunResult mouseRunResult,
+      SolverRunResult solverRunResult,
       BestResult bestResult,
       List<LevelProgress> levelProgress,
       List<CellPaletteState> paletteState,
@@ -118,7 +118,7 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        mouseRunResult,
+        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -127,7 +127,7 @@ public record GameRenderSnapshot(
         audioEnabled,
         resultPassed,
         hasNextLevel,
-        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
+        solverRunResult == null ? List.of() : List.of(solverRunResult));
   }
 
   /** Creates a snapshot with palette data and no active drag for compatibility fixtures. */
@@ -138,7 +138,7 @@ public record GameRenderSnapshot(
       float buildTimeRemainingSeconds,
       GridPosition rejectedPosition,
       float rejectedFlashRemainingSeconds,
-      MouseRunResult mouseRunResult,
+      SolverRunResult solverRunResult,
       BestResult bestResult,
       List<LevelProgress> levelProgress,
       List<CellPaletteState> paletteState,
@@ -152,7 +152,7 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        mouseRunResult,
+        solverRunResult,
         bestResult,
         levelProgress,
         paletteState,
@@ -161,7 +161,7 @@ public record GameRenderSnapshot(
         audioEnabled,
         resultPassed,
         hasNextLevel,
-        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
+        solverRunResult == null ? List.of() : List.of(solverRunResult));
   }
 
   /** Creates a snapshot without palette data for non-building and compatibility fixtures. */
@@ -172,7 +172,7 @@ public record GameRenderSnapshot(
       float buildTimeRemainingSeconds,
       GridPosition rejectedPosition,
       float rejectedFlashRemainingSeconds,
-      MouseRunResult mouseRunResult,
+      SolverRunResult solverRunResult,
       BestResult bestResult,
       List<LevelProgress> levelProgress,
       boolean audioEnabled,
@@ -185,7 +185,7 @@ public record GameRenderSnapshot(
         buildTimeRemainingSeconds,
         rejectedPosition,
         rejectedFlashRemainingSeconds,
-        mouseRunResult,
+        solverRunResult,
         bestResult,
         levelProgress,
         List.of(),
@@ -194,6 +194,6 @@ public record GameRenderSnapshot(
         audioEnabled,
         resultPassed,
         hasNextLevel,
-        mouseRunResult == null ? List.of() : List.of(mouseRunResult));
+        solverRunResult == null ? List.of() : List.of(solverRunResult));
   }
 }

@@ -3,16 +3,16 @@ package io.github.sportne.mazegame.render;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import org.junit.jupiter.api.Test;
 
-final class MousePresentationTest {
+final class SolverPresentationTest {
   @Test
   void selectsThePlayerFacingIdentityFromTheClosedBehaviorValue() {
-    MousePresentation random = MousePresentation.forBehavior(MouseBehavior.RANDOM);
-    MousePresentation scout = MousePresentation.forBehavior(MouseBehavior.LEFT_PRIORITY);
+    SolverPresentation random = SolverPresentation.forBehavior(SolverBehavior.RANDOM);
+    SolverPresentation scout = SolverPresentation.forBehavior(SolverBehavior.LEFT_PRIORITY);
 
-    assertEquals("Mouse", random.name());
+    assertEquals("Solver", random.name());
     assertEquals("cheese", random.goalName());
     assertEquals("Level 1", random.levelTitle("Level 1"));
     assertEquals("Scout", scout.name());
@@ -24,9 +24,9 @@ final class MousePresentationTest {
 
   @Test
   void rejectsMissingBehaviorAndLevelName() {
-    assertThrows(NullPointerException.class, () -> MousePresentation.forBehavior(null));
+    assertThrows(NullPointerException.class, () -> SolverPresentation.forBehavior(null));
     assertThrows(
         NullPointerException.class,
-        () -> MousePresentation.forBehavior(MouseBehavior.RANDOM).levelTitle(null));
+        () -> SolverPresentation.forBehavior(SolverBehavior.RANDOM).levelTitle(null));
   }
 }

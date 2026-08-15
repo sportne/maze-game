@@ -12,11 +12,11 @@ import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.LevelMouse;
+import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.maze.CellContent;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
@@ -45,7 +45,7 @@ public final class MazeGameRenderer {
   /** Temporary fill color for rejected wall placements. */
   private static final Color CELL_REJECTED = new Color(0.95F, 0.42F, 0.42F, 1.0F);
 
-  /** Fill color for the mouse start cell before the mouse sprite is active. */
+  /** Fill color for the solver start cell before the solver sprite is active. */
   private static final Color CELL_START = new Color(0.24F, 0.62F, 0.95F, 1.0F);
 
   /** Fill color for player-placed wall cells. */
@@ -99,8 +99,8 @@ public final class MazeGameRenderer {
   /** Cropped acorn sprite drawn as Scout's endpoint goal. */
   private final TextureRegion acornSprite;
 
-  /** Cropped mouse sprite drawn at the current mouse position. */
-  private final TextureRegion mouseSprite;
+  /** Cropped solver sprite drawn at the current solver position. */
+  private final TextureRegion solverSprite;
 
   /** Distinct Scout sprite drawn for left-priority levels. */
   private final TextureRegion scoutSprite;
@@ -113,7 +113,7 @@ public final class MazeGameRenderer {
    * @param font bitmap font
    * @param cheeseSprite cheese sprite region
    * @param acornSprite acorn sprite region
-   * @param mouseSprite mouse sprite region
+   * @param solverSprite solver sprite region
    * @param scoutSprite Scout sprite region
    */
   public MazeGameRenderer(
@@ -122,14 +122,14 @@ public final class MazeGameRenderer {
       BitmapFont font,
       TextureRegion cheeseSprite,
       TextureRegion acornSprite,
-      TextureRegion mouseSprite,
+      TextureRegion solverSprite,
       TextureRegion scoutSprite) {
     this.spriteBatch = Objects.requireNonNull(spriteBatch, "spriteBatch");
     this.shapeRenderer = Objects.requireNonNull(shapeRenderer, "shapeRenderer");
     this.font = Objects.requireNonNull(font, "font");
     this.cheeseSprite = new TextureRegion(Objects.requireNonNull(cheeseSprite, "cheeseSprite"));
     this.acornSprite = new TextureRegion(Objects.requireNonNull(acornSprite, "acornSprite"));
-    this.mouseSprite = new TextureRegion(Objects.requireNonNull(mouseSprite, "mouseSprite"));
+    this.solverSprite = new TextureRegion(Objects.requireNonNull(solverSprite, "solverSprite"));
     this.scoutSprite = new TextureRegion(Objects.requireNonNull(scoutSprite, "scoutSprite"));
   }
 
@@ -156,7 +156,7 @@ public final class MazeGameRenderer {
           case EMPTY -> CELL_OPEN;
           case NORMAL_WALL -> CELL_WALL;
           case SLOW_FLOOR -> CELL_SLOW_FLOOR;
-          case MOUSE_START -> CELL_START;
+          case SOLVER_START -> CELL_START;
           case CHEESE -> CELL_OPEN;
         };
     return new Color(color);
@@ -186,7 +186,7 @@ public final class MazeGameRenderer {
     drawSlowFloorMarks(grid, snapshot);
     drawCellSprites(grid, snapshot);
     drawRejectedMark(grid, snapshot);
-    drawMouse(grid, snapshot);
+    drawSolver(grid, snapshot);
     drawPaletteDragPreview(layout, grid, snapshot);
     drawControls(layout, snapshot);
     drawGameplayText(layout, snapshot);
@@ -283,21 +283,21 @@ public final class MazeGameRenderer {
     shapeRenderer.end();
   }
 
-  private void drawMouse(ScreenRectangle grid, GameRenderSnapshot snapshot) {
-    if (snapshot.mouseRunResults().isEmpty()) {
-      if (snapshot.levelDefinition().mice().size() > 1) {
-        for (LevelMouse mouse : snapshot.levelDefinition().mice()) {
-          drawSpriteInCell(grid, snapshot.levelDefinition(), mouse.start(), mouseSprite(mouse));
+  private void drawSolver(ScreenRectangle grid, GameRenderSnapshot snapshot) {
+    if (snapshot.solverRunResults().isEmpty()) {
+      if (snapshot.levelDefinition().solvers().size() > 1) {
+        for (LevelSolver solver : snapshot.levelDefinition().solvers()) {
+          drawSpriteInCell(grid, snapshot.levelDefinition(), solver.start(), solverSprite(solver));
         }
       }
       return;
     }
-    for (int index = 0; index < snapshot.mouseRunResults().size(); index++) {
+    for (int index = 0; index < snapshot.solverRunResults().size(); index++) {
       drawSpriteInCell(
           grid,
           snapshot.levelDefinition(),
-          snapshot.mouseRunResults().get(index).position(),
-          mouseSprite(snapshot.levelDefinition().mice().get(index)));
+          snapshot.solverRunResults().get(index).position(),
+          solverSprite(snapshot.levelDefinition().solvers().get(index)));
     }
   }
 
@@ -448,22 +448,22 @@ public final class MazeGameRenderer {
     return Math.max(minimum, Math.min(value, maximum));
   }
 
-  private TextureRegion mouseSprite(LevelMouse mouse) {
-    return switch (mouse.behavior()) {
-      case RANDOM -> mouseSprite;
+  private TextureRegion solverSprite(LevelSolver solver) {
+    return switch (solver.behavior()) {
+      case RANDOM -> solverSprite;
       case LEFT_PRIORITY -> scoutSprite;
     };
   }
 
   private void drawCellSprites(ScreenRectangle grid, GameRenderSnapshot snapshot) {
     LevelDefinition levelDefinition = snapshot.levelDefinition();
-    for (LevelMouse mouse : levelDefinition.mice()) {
+    for (LevelSolver solver : levelDefinition.solvers()) {
       TextureRegion goalSprite =
-          switch (mouse.behavior()) {
+          switch (solver.behavior()) {
             case RANDOM -> cheeseSprite;
             case LEFT_PRIORITY -> acornSprite;
           };
-      drawSpriteInCell(grid, levelDefinition, mouse.goal(), goalSprite);
+      drawSpriteInCell(grid, levelDefinition, solver.goal(), goalSprite);
     }
   }
 
@@ -625,7 +625,7 @@ public final class MazeGameRenderer {
     spriteBatch.begin();
     if (snapshot.phase() == GamePhase.BUILDING) {
       drawBuildText(layout, snapshot);
-    } else if (snapshot.phase() == GamePhase.MOUSE_RUNNING
+    } else if (snapshot.phase() == GamePhase.SOLVER_RUNNING
         || snapshot.phase() == GamePhase.REPLAY) {
       drawRunningText(layout, snapshot);
     } else if (snapshot.phase() == GamePhase.RESULT) {
@@ -636,8 +636,8 @@ public final class MazeGameRenderer {
   }
 
   private void drawBuildText(ScreenLayout layout, GameRenderSnapshot snapshot) {
-    MousePresentation presentation =
-        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior());
+    SolverPresentation presentation =
+        SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior());
     font.setColor(TEXT);
     drawTextInRegion(
         levelTitle(snapshot.levelDefinition(), presentation, false, Float.MAX_VALUE),
@@ -657,7 +657,7 @@ public final class MazeGameRenderer {
     font.setColor(TEXT);
     drawCenteredText("Back", layout.bounds(MazeGameLayout.BUILD_BACK));
     drawCenteredText(
-        snapshot.levelDefinition().mice().size() > 1 ? "Start Mice" : "Start Mouse",
+        snapshot.levelDefinition().solvers().size() > 1 ? "Start Solvers" : "Start Solver",
         layout.bounds(MazeGameLayout.BUILD_START));
   }
 
@@ -703,14 +703,14 @@ public final class MazeGameRenderer {
     String target =
         formatSeconds(snapshot.levelDefinition().targetSolveTime().toMillis() / 1000.0F);
     if (snapshot.levelDefinition().supplyFor(PlaceableCellType.SLOW_FLOOR).available()) {
-      if (snapshot.levelDefinition().mice().size() == 1) {
+      if (snapshot.levelDefinition().solvers().size() == 1) {
         return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
       }
       return String.format(
           Locale.ROOT, "Tap or drag tools; delay both past %s; keep paths", target);
     }
     String goalName =
-        MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()).goalName();
+        SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()).goalName();
     return String.format(Locale.ROOT, "Delay past %s; keep a path to the %s", target, goalName);
   }
 
@@ -719,7 +719,7 @@ public final class MazeGameRenderer {
     String levelTitle =
         levelTitle(
             snapshot.levelDefinition(),
-            MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()),
+            SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()),
             true,
             status.width());
     font.setColor(TEXT);
@@ -739,7 +739,7 @@ public final class MazeGameRenderer {
     String levelTitle =
         levelTitle(
             snapshot.levelDefinition(),
-            MousePresentation.forBehavior(snapshot.levelDefinition().mouseBehavior()),
+            SolverPresentation.forBehavior(snapshot.levelDefinition().solverBehavior()),
             true,
             status.width());
     String outcome = snapshot.resultPassed() ? " | Success | >" : " | Failed | >";
@@ -888,8 +888,8 @@ public final class MazeGameRenderer {
 
   private static float runTimeRemaining(GameRenderSnapshot snapshot) {
     Duration elapsed =
-        snapshot.mouseRunResults().stream()
-            .map(MouseRunResult::elapsedTime)
+        snapshot.solverRunResults().stream()
+            .map(SolverRunResult::elapsedTime)
             .max(Duration::compareTo)
             .orElse(Duration.ZERO);
     long remainingMillis =
@@ -899,13 +899,13 @@ public final class MazeGameRenderer {
 
   private static String levelTitle(
       LevelDefinition level,
-      MousePresentation presentation,
+      SolverPresentation presentation,
       boolean compact,
       float availableWidth) {
-    if (level.mice().size() > 1) {
+    if (level.solvers().size() > 1) {
       return compact && availableWidth < 360.0F
-          ? "Mouse + Scout"
-          : String.format(Locale.ROOT, "%s | Mouse + Scout", level.name());
+          ? "Solver + Scout"
+          : String.format(Locale.ROOT, "%s | Solver + Scout", level.name());
     }
     return compact
         ? presentation.statusTitle(level.name(), availableWidth)
@@ -913,18 +913,18 @@ public final class MazeGameRenderer {
   }
 
   private static String resultStats(GameRenderSnapshot snapshot) {
-    if (snapshot.mouseRunResults().size() <= 1) {
+    if (snapshot.solverRunResults().size() <= 1) {
       return String.format(
           Locale.ROOT,
           "Time: %.2fs  Moves: %d",
-          snapshot.mouseRunResult().elapsedTime().toMillis() / 1000.0F,
-          snapshot.mouseRunResult().moveCount());
+          snapshot.solverRunResult().elapsedTime().toMillis() / 1000.0F,
+          snapshot.solverRunResult().moveCount());
     }
-    MouseRunResult random = snapshot.mouseRunResults().get(0);
-    MouseRunResult scout = snapshot.mouseRunResults().get(1);
+    SolverRunResult random = snapshot.solverRunResults().get(0);
+    SolverRunResult scout = snapshot.solverRunResults().get(1);
     return String.format(
         Locale.ROOT,
-        "Mouse %.2fs/%d  Scout %.2fs/%d",
+        "Solver %.2fs/%d  Scout %.2fs/%d",
         random.elapsedTime().toMillis() / 1000.0F,
         random.moveCount(),
         scout.elapsedTime().toMillis() / 1000.0F,

@@ -289,7 +289,7 @@ final class MazeGameLayoutTest {
                 MazeGameLayout.BUILD_BACK,
                 MazeGameLayout.BUILD_START)),
         Arguments.of(
-            GamePhase.MOUSE_RUNNING, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)),
+            GamePhase.SOLVER_RUNNING, List.of(MazeGameLayout.GAME_GRID, MazeGameLayout.RUN_STATUS)),
         Arguments.of(
             GamePhase.RESULT,
             List.of(

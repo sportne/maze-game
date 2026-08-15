@@ -10,15 +10,15 @@ public enum CellContent {
   /** A walkable cell with no special marker. */
   EMPTY,
 
-  /** A player-placed normal wall that blocks mouse movement. */
+  /** A player-placed normal wall that blocks solver movement. */
   NORMAL_WALL,
 
-  /** A player-placed walkable floor that delays the next mouse decision. */
+  /** A player-placed walkable floor that delays the next solver decision. */
   SLOW_FLOOR,
 
-  /** The fixed cell where the mouse begins a run. */
-  MOUSE_START,
+  /** The fixed cell where the solver begins a run. */
+  SOLVER_START,
 
-  /** The fixed endpoint cell that the mouse tries to reach. */
+  /** The fixed endpoint cell that the solver tries to reach. */
   CHEESE
 }

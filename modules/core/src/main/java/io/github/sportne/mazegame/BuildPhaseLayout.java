@@ -17,7 +17,7 @@ import java.util.Optional;
  * ButtonBounds} remain in libGDX's bottom-left coordinate space.
  *
  * @param gridBounds bounds of the playable grid in bottom-left screen coordinates
- * @param startButtonBounds bounds of the Start Mouse button in bottom-left screen coordinates
+ * @param startButtonBounds bounds of the Start Solver button in bottom-left screen coordinates
  */
 record BuildPhaseLayout(GridBounds gridBounds, ButtonBounds startButtonBounds) {
   /**
@@ -52,7 +52,7 @@ record BuildPhaseLayout(GridBounds gridBounds, ButtonBounds startButtonBounds) {
   }
 
   /**
-   * Returns whether a desktop mouse coordinate is inside the Start Mouse button.
+   * Returns whether a desktop mouse coordinate is inside the Start Solver button.
    *
    * @param screenX x coordinate from the left edge of the window
    * @param inputYFromTop y coordinate from the top edge of the window

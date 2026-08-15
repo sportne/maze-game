@@ -13,7 +13,7 @@ final class GamePhaseTest {
           GamePhase.LEVEL_SELECT,
           GamePhase.SETTINGS,
           GamePhase.BUILDING,
-          GamePhase.MOUSE_RUNNING,
+          GamePhase.SOLVER_RUNNING,
           GamePhase.RESULT,
           GamePhase.REPLAY
         },

@@ -8,11 +8,11 @@ import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
-import io.github.sportne.mazegame.model.mouse.MouseSimulation;
-import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverSimulationFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +50,7 @@ public final class GameSession {
   /** Active placeable type, or null when every authored supply starts exhausted. */
   private PlaceableCellType selectedCellType;
 
-  /** Seconds remaining before the mouse starts automatically. */
+  /** Seconds remaining before the solver starts automatically. */
   private float buildTimeRemainingSeconds;
 
   /** Cell currently flashing as a rejected placement, or null when no flash is active. */
@@ -62,14 +62,14 @@ public final class GameSession {
   /** Whether a run has been requested or auto-started for the current level attempt. */
   private boolean runRequested;
 
-  /** Latest mouse simulation snapshot, or null before a run starts. */
-  private MouseRunResult mouseRunResult;
+  /** Latest solver simulation snapshot, or null before a run starts. */
+  private SolverRunResult solverRunResult;
 
-  /** Active simulations in the level's authored mouse order. */
-  private List<MouseSimulation> mouseSimulations = List.of();
+  /** Active simulations in the level's authored solver order. */
+  private List<SolverSimulation> solverSimulations = List.of();
 
-  /** Latest results in the level's authored mouse order. */
-  private List<MouseRunResult> mouseRunResults = List.of();
+  /** Latest results in the level's authored solver order. */
+  private List<SolverRunResult> solverRunResults = List.of();
 
   /** Current high-level game phase. */
   private GamePhase gamePhase;
@@ -224,7 +224,7 @@ public final class GameSession {
   }
 
   /**
-   * Returns whether the mouse run has been started for the current attempt.
+   * Returns whether the solver run has been started for the current attempt.
    *
    * @return true after manual or automatic run start
    */
@@ -233,17 +233,17 @@ public final class GameSession {
   }
 
   /**
-   * Returns the current mouse run snapshot.
+   * Returns the current solver run snapshot.
    *
-   * @return latest run result, or null before the mouse starts
+   * @return latest run result, or null before the solver starts
    */
-  public MouseRunResult mouseRunResult() {
-    return mouseRunResult;
+  public SolverRunResult solverRunResult() {
+    return solverRunResult;
   }
 
-  /** Returns current results in authored mouse order, or an empty list before a run starts. */
-  public List<MouseRunResult> mouseRunResults() {
-    return List.copyOf(mouseRunResults);
+  /** Returns current results in authored solver order, or an empty list before a run starts. */
+  public List<SolverRunResult> solverRunResults() {
+    return List.copyOf(solverRunResults);
   }
 
   /**
@@ -313,13 +313,13 @@ public final class GameSession {
   public void updateGame(float deltaSeconds) {
     if (gamePhase == GamePhase.BUILDING) {
       updateBuildTimer(deltaSeconds);
-    } else if (gamePhase == GamePhase.MOUSE_RUNNING || gamePhase == GamePhase.REPLAY) {
-      updateMouseRun(deltaSeconds);
+    } else if (gamePhase == GamePhase.SOLVER_RUNNING || gamePhase == GamePhase.REPLAY) {
+      updateSolverRun(deltaSeconds);
     }
   }
 
   /**
-   * Advances the build timer and starts the mouse when it reaches zero.
+   * Advances the build timer and starts the solver when it reaches zero.
    *
    * @param deltaSeconds elapsed frame time in seconds
    */
@@ -339,16 +339,16 @@ public final class GameSession {
     }
   }
 
-  /** Starts the mouse run from the current maze if the player is still building. */
+  /** Starts the solver run from the current maze if the player is still building. */
   public void startRun() {
     if (gamePhase != GamePhase.BUILDING) {
       return;
     }
     runRequested = true;
-    gamePhase = GamePhase.MOUSE_RUNNING;
+    gamePhase = GamePhase.SOLVER_RUNNING;
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
-    initializeMouseSimulations();
+    initializeSolverSimulations();
   }
 
   /**
@@ -465,7 +465,7 @@ public final class GameSession {
     }
     gamePhase = GamePhase.REPLAY;
     runRequested = true;
-    initializeMouseSimulations();
+    initializeSolverSimulations();
   }
 
   /**
@@ -474,7 +474,7 @@ public final class GameSession {
    * @return true when result phase is active and elapsed solve time exceeded the target
    */
   public boolean resultPassed() {
-    return GameResultEvaluator.passedAll(gamePhase, mouseRunResults, levelDefinition);
+    return GameResultEvaluator.passedAll(gamePhase, solverRunResults, levelDefinition);
   }
 
   /**
@@ -508,30 +508,30 @@ public final class GameSession {
   }
 
   /**
-   * Advances the active mouse simulation.
+   * Advances the active solver simulation.
    *
    * @param deltaSeconds elapsed frame time in seconds
    */
-  public void updateMouseRun(float deltaSeconds) {
-    if ((gamePhase != GamePhase.MOUSE_RUNNING && gamePhase != GamePhase.REPLAY)
-        || mouseSimulations.isEmpty()
-        || mouseRunResults.stream()
-            .noneMatch(result -> result.status() == MouseRunStatus.RUNNING)) {
+  public void updateSolverRun(float deltaSeconds) {
+    if ((gamePhase != GamePhase.SOLVER_RUNNING && gamePhase != GamePhase.REPLAY)
+        || solverSimulations.isEmpty()
+        || solverRunResults.stream()
+            .noneMatch(result -> result.status() == SolverRunStatus.RUNNING)) {
       return;
     }
-    boolean shouldRecordBestResult = gamePhase == GamePhase.MOUSE_RUNNING;
+    boolean shouldRecordBestResult = gamePhase == GamePhase.SOLVER_RUNNING;
     long deltaMillis = Math.max(0L, Math.round(deltaSeconds * 1000.0F));
-    List<MouseRunResult> updatedResults = new ArrayList<>();
-    for (int index = 0; index < mouseSimulations.size(); index++) {
-      MouseRunResult current = mouseRunResults.get(index);
+    List<SolverRunResult> updatedResults = new ArrayList<>();
+    for (int index = 0; index < solverSimulations.size(); index++) {
+      SolverRunResult current = solverRunResults.get(index);
       updatedResults.add(
-          current.status() == MouseRunStatus.RUNNING
-              ? mouseSimulations.get(index).update(Duration.ofMillis(deltaMillis))
+          current.status() == SolverRunStatus.RUNNING
+              ? solverSimulations.get(index).update(Duration.ofMillis(deltaMillis))
               : current);
     }
-    mouseRunResults = List.copyOf(updatedResults);
-    mouseRunResult = mouseRunResults.get(0);
-    if (mouseRunResults.stream().noneMatch(result -> result.status() == MouseRunStatus.RUNNING)) {
+    solverRunResults = List.copyOf(updatedResults);
+    solverRunResult = solverRunResults.get(0);
+    if (solverRunResults.stream().noneMatch(result -> result.status() == SolverRunStatus.RUNNING)) {
       gamePhase = GamePhase.RESULT;
       if (shouldRecordBestResult && resultPassed()) {
         recordBestResult(bestResultFromCompletedRuns());
@@ -541,11 +541,11 @@ public final class GameSession {
 
   private BestResult bestResultFromCompletedRuns() {
     Duration shortestElapsed =
-        mouseRunResults.stream()
-            .map(MouseRunResult::elapsedTime)
+        solverRunResults.stream()
+            .map(SolverRunResult::elapsedTime)
             .min(Duration::compareTo)
             .orElseThrow();
-    int totalMoves = mouseRunResults.stream().mapToInt(MouseRunResult::moveCount).sum();
+    int totalMoves = solverRunResults.stream().mapToInt(SolverRunResult::moveCount).sum();
     return new BestResult(shortestElapsed, totalMoves);
   }
 
@@ -607,19 +607,19 @@ public final class GameSession {
     rejectedPosition = null;
     rejectedFlashRemainingSeconds = 0.0F;
     runRequested = false;
-    mouseRunResult = null;
-    mouseSimulations = List.of();
-    mouseRunResults = List.of();
+    solverRunResult = null;
+    solverSimulations = List.of();
+    solverRunResults = List.of();
     gamePhase = initialPhase;
   }
 
-  private void initializeMouseSimulations() {
-    mouseSimulations =
-        levelDefinition.mice().stream()
-            .map(mouse -> MouseSimulationFactory.create(mazeState, mouse))
+  private void initializeSolverSimulations() {
+    solverSimulations =
+        levelDefinition.solvers().stream()
+            .map(solver -> SolverSimulationFactory.create(mazeState, solver))
             .toList();
-    mouseRunResults = mouseSimulations.stream().map(MouseSimulation::result).toList();
-    mouseRunResult = mouseRunResults.get(0);
+    solverRunResults = solverSimulations.stream().map(SolverSimulation::result).toList();
+    solverRunResult = solverRunResults.get(0);
   }
 
   private static PlaceableCellType initialSelectedCellType(LevelDefinition levelDefinition) {

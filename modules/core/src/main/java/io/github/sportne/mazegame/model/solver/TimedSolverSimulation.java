@@ -1,38 +1,38 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Objects;
 
-/** Shared fixed-step timing and terminal-state handling for mouse simulations. */
-abstract class TimedMouseSimulation implements MouseSimulation {
+/** Shared fixed-step timing and terminal-state handling for solver simulations. */
+abstract class TimedSolverSimulation implements SolverSimulation {
   private final MazeState mazeState;
   private GridPosition position;
   private Duration elapsedTime = Duration.ZERO;
   private Duration timeUntilDecision;
   private boolean delayedDecision;
   private int moveCount;
-  private MouseRunStatus status = MouseRunStatus.RUNNING;
+  private SolverRunStatus status = SolverRunStatus.RUNNING;
 
-  TimedMouseSimulation(MazeState mazeState) {
+  TimedSolverSimulation(MazeState mazeState) {
     this.mazeState = Objects.requireNonNull(mazeState, "mazeState");
-    position = mazeState.levelDefinition().mouseStart();
-    timeUntilDecision = mazeState.levelDefinition().mouseMoveInterval();
+    position = mazeState.levelDefinition().solverStart();
+    timeUntilDecision = mazeState.levelDefinition().solverMoveInterval();
   }
 
   @Override
-  public final MouseRunResult update(Duration deltaTime) {
+  public final SolverRunResult update(Duration deltaTime) {
     Objects.requireNonNull(deltaTime, "deltaTime");
     if (deltaTime.isNegative()) {
       throw new IllegalArgumentException("deltaTime must not be negative");
     }
-    if (status != MouseRunStatus.RUNNING) {
+    if (status != SolverRunStatus.RUNNING) {
       return result();
     }
 
     Duration remainingDelta = deltaTime;
-    while (status == MouseRunStatus.RUNNING && !remainingDelta.isZero()) {
+    while (status == SolverRunStatus.RUNNING && !remainingDelta.isZero()) {
       Duration step = nextStep(remainingDelta);
       elapsedTime = elapsedTime.plus(step);
       timeUntilDecision = timeUntilDecision.minus(step);
@@ -43,12 +43,12 @@ abstract class TimedMouseSimulation implements MouseSimulation {
         moveOnce();
         moveCount++;
         updateStatus();
-        if (status == MouseRunStatus.RUNNING) {
+        if (status == SolverRunStatus.RUNNING) {
           delayedDecision = mazeState.delaysNextDecisionAt(position);
           timeUntilDecision =
               delayedDecision
-                  ? mazeState.levelDefinition().mouseMoveInterval().multipliedBy(2)
-                  : mazeState.levelDefinition().mouseMoveInterval();
+                  ? mazeState.levelDefinition().solverMoveInterval().multipliedBy(2)
+                  : mazeState.levelDefinition().solverMoveInterval();
         }
       } else {
         updateStatus();
@@ -58,8 +58,8 @@ abstract class TimedMouseSimulation implements MouseSimulation {
   }
 
   @Override
-  public final MouseRunResult result() {
-    return new MouseRunResult(position, elapsedTime, moveCount, status);
+  public final SolverRunResult result() {
+    return new SolverRunResult(position, elapsedTime, moveCount, status);
   }
 
   /** Makes one behavior-specific movement decision. */
@@ -98,9 +98,9 @@ abstract class TimedMouseSimulation implements MouseSimulation {
 
   private void updateStatus() {
     if (position.equals(mazeState.levelDefinition().cheese())) {
-      status = MouseRunStatus.REACHED_CHEESE;
+      status = SolverRunStatus.REACHED_CHEESE;
     } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
-      status = MouseRunStatus.TIMED_OUT;
+      status = SolverRunStatus.TIMED_OUT;
     }
   }
 }

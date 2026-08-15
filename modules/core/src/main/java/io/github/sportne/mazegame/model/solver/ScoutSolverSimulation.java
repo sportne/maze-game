@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -6,11 +6,11 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
-/** Deterministic north-facing mouse that prefers left, straight, right, then reverse. */
-final class ScoutMouseSimulation extends TimedMouseSimulation {
+/** Deterministic north-facing solver that prefers left, straight, right, then reverse. */
+final class ScoutSolverSimulation extends TimedSolverSimulation {
   private CardinalDirection heading = CardinalDirection.NORTH;
 
-  ScoutMouseSimulation(MazeState mazeState) {
+  ScoutSolverSimulation(MazeState mazeState) {
     super(mazeState);
   }
 

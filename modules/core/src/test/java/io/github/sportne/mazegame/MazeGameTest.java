@@ -15,9 +15,9 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.layout.ScreenRectangle;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GamePhase;
@@ -280,25 +280,25 @@ final class MazeGameTest {
   }
 
   @Test
-  void buildTimerAutomaticallyStartsMouseRunAtZero() {
+  void buildTimerAutomaticallyStartsSolverRunAtZero() {
     MazeGame game = startedGame();
 
     game.updateGame(30.0F);
 
     assertTrue(game.runRequested());
-    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
-    assertEquals(Levels.milestoneOne().mouseStart(), game.mouseRunResult().position());
+    assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
+    assertEquals(Levels.milestoneOne().solverStart(), game.solverRunResult().position());
   }
 
   @Test
-  void autoStartFrameDoesNotAlsoAdvanceMouseRun() {
+  void autoStartFrameDoesNotAlsoAdvanceSolverRun() {
     MazeGame game = startedGame();
 
     game.updateGame(31.0F);
 
-    assertEquals(GamePhase.MOUSE_RUNNING, game.gamePhase());
-    assertEquals(0, game.mouseRunResult().moveCount());
-    assertEquals(0L, game.mouseRunResult().elapsedTime().toMillis());
+    assertEquals(GamePhase.SOLVER_RUNNING, game.gamePhase());
+    assertEquals(0, game.solverRunResult().moveCount());
+    assertEquals(0L, game.solverRunResult().elapsedTime().toMillis());
   }
 
   @Test
@@ -313,14 +313,14 @@ final class MazeGameTest {
     assertTrue(game.runRequested());
     assertEquals(30.0F, game.buildTimeRemainingSeconds());
     assertFalse(game.mazeState().hasWallAt(wall));
-    assertEquals(Levels.milestoneOne().mouseStart(), game.mouseRunResult().position());
+    assertEquals(Levels.milestoneOne().solverStart(), game.solverRunResult().position());
   }
 
   @Test
   void startRunClearsRejectedPlacementFlash() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.milestoneOne().solverStart(), Input.Buttons.LEFT);
     game.startRun();
 
     assertNull(game.rejectedPosition());
@@ -355,14 +355,14 @@ final class MazeGameTest {
   }
 
   @Test
-  void mouseRunMovesToResultPhaseWhenTerminal() {
+  void solverRunMovesToResultPhaseWhenTerminal() {
     MazeGame game = startedGame();
 
     game.startRun();
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
 
     assertEquals(GamePhase.RESULT, game.gamePhase());
-    assertEquals(MouseRunStatus.TIMED_OUT, game.mouseRunResult().status());
+    assertEquals(SolverRunStatus.TIMED_OUT, game.solverRunResult().status());
     assertTrue(game.resultPassed());
   }
 
@@ -373,20 +373,20 @@ final class MazeGameTest {
 
     game.startLevel(Levels.milestoneOne().id());
     game.startRun();
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
 
     assertEquals(new BestResult(Duration.ofSeconds(10), 40), game.bestResult());
     assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
   }
 
   @Test
-  void updateGameAdvancesMouseRunAfterRunStarts() {
+  void updateGameAdvancesSolverRunAfterRunStarts() {
     MazeGame game = startedGame();
 
     game.startRun();
     game.updateGame(0.25F);
 
-    assertEquals(1, game.mouseRunResult().moveCount());
+    assertEquals(1, game.solverRunResult().moveCount());
   }
 
   @Test
@@ -394,10 +394,10 @@ final class MazeGameTest {
     MazeGame game = startedGame();
 
     game.startRun();
-    MouseRunResult initialRun = game.mouseRunResult();
+    SolverRunResult initialRun = game.solverRunResult();
     game.startRun();
 
-    assertEquals(initialRun, game.mouseRunResult());
+    assertEquals(initialRun, game.solverRunResult());
   }
 
   @Test
@@ -406,10 +406,10 @@ final class MazeGameTest {
     addVerticalCorridorWalls(game);
 
     game.startRun();
-    game.updateMouseRun(1.0F);
+    game.updateSolverRun(1.0F);
 
     assertEquals(GamePhase.RESULT, game.gamePhase());
-    assertEquals(MouseRunStatus.REACHED_CHEESE, game.mouseRunResult().status());
+    assertEquals(SolverRunStatus.REACHED_CHEESE, game.solverRunResult().status());
     assertFalse(game.resultPassed());
   }
 
@@ -419,7 +419,7 @@ final class MazeGameTest {
     GridPosition wall = new GridPosition(2, 2);
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.startRun();
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
 
     game.retryLevel();
 
@@ -435,7 +435,7 @@ final class MazeGameTest {
     GridPosition wall = new GridPosition(2, 2);
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.startRun();
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
 
     ScreenLayout layout = game.debugScreenLayout(GamePhase.RESULT, 1280, 720);
     ScreenRectangle mainMenuButton = layout.bounds(MazeGameLayout.RESULT_MAIN_MENU);
@@ -472,14 +472,14 @@ final class MazeGameTest {
   void replayRunsSameMazeAndSeedAgain() {
     MazeGame game = startedGame();
     game.startRun();
-    game.updateMouseRun(10.0F);
-    MouseRunResult firstResult = game.mouseRunResult();
+    game.updateSolverRun(10.0F);
+    SolverRunResult firstResult = game.solverRunResult();
 
     game.replayRun();
     assertEquals(GamePhase.REPLAY, game.gamePhase());
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
 
-    assertEquals(firstResult, game.mouseRunResult());
+    assertEquals(firstResult, game.solverRunResult());
   }
 
   @Test
@@ -489,7 +489,7 @@ final class MazeGameTest {
     game.replayRun();
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
-    assertNull(game.mouseRunResult());
+    assertNull(game.solverRunResult());
   }
 
   @Test
@@ -506,7 +506,7 @@ final class MazeGameTest {
   void nextLevelResultActionStartsTheUnlockedCatalogEntry() {
     MazeGame game = startedGame();
     game.startRun();
-    game.updateMouseRun(10.0F);
+    game.updateSolverRun(10.0F);
     ScreenLayout layout = game.debugScreenLayout(GamePhase.RESULT, 1280, 720);
     ScreenRectangle nextLevel = layout.bounds(MazeGameLayout.RESULT_NEXT_LEVEL);
 
@@ -525,7 +525,7 @@ final class MazeGameTest {
   void rejectedPlacementDoesNotMutateMaze() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.milestoneOne().solverStart(), Input.Buttons.LEFT);
 
     assertTrue(game.mazeState().walls().isEmpty());
   }
@@ -534,8 +534,8 @@ final class MazeGameTest {
   void rejectedPlacementFlashExpiresDuringBuildTimerUpdates() {
     MazeGame game = startedGame();
 
-    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
-    assertEquals(Levels.milestoneOne().mouseStart(), game.rejectedPosition());
+    game.handleGridClick(Levels.milestoneOne().solverStart(), Input.Buttons.LEFT);
+    assertEquals(Levels.milestoneOne().solverStart(), game.rejectedPosition());
 
     game.updateBuildTimer(0.5F);
 
@@ -549,15 +549,15 @@ final class MazeGameTest {
 
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
     assertEquals(
-        new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.milestoneOne().mouseStart()));
+        new Color(0.24F, 0.62F, 0.95F, 1.0F), game.cellColor(Levels.milestoneOne().solverStart()));
     assertEquals(Color.BLACK, game.cellColor(Levels.milestoneOne().cheese()));
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertEquals(Color.WHITE, game.cellColor(wall));
 
-    game.handleGridClick(Levels.milestoneOne().mouseStart(), Input.Buttons.LEFT);
+    game.handleGridClick(Levels.milestoneOne().solverStart(), Input.Buttons.LEFT);
     assertEquals(
-        new Color(0.95F, 0.42F, 0.42F, 1.0F), game.cellColor(Levels.milestoneOne().mouseStart()));
+        new Color(0.95F, 0.42F, 0.42F, 1.0F), game.cellColor(Levels.milestoneOne().solverStart()));
   }
 
   @Test

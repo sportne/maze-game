@@ -14,7 +14,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -208,7 +208,7 @@ final class MazeInventoryTest {
         placed,
         MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
-        placed.move(level.mouseStart(), position(4, 3)),
+        placed.move(level.solverStart(), position(4, 3)),
         placed,
         MazeEditStatus.REJECTED_MISSING_SOURCE);
     assertRejectedSame(
@@ -218,7 +218,7 @@ final class MazeInventoryTest {
     assertRejectedSame(
         placed.move(FIRST, SECOND), placed, MazeEditStatus.REJECTED_OCCUPIED_DESTINATION);
     assertRejectedSame(
-        placed.move(FIRST, level.mouseStart()), placed, MazeEditStatus.REJECTED_PROTECTED_CELL);
+        placed.move(FIRST, level.solverStart()), placed, MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(
         placed.move(FIRST, position(5, 0)), placed, MazeEditStatus.REJECTED_OUTSIDE_GRID);
 
@@ -266,7 +266,7 @@ final class MazeInventoryTest {
     MazeState maze = MazeState.empty(level(CellSupply.finite(0), CellSupply.finite(0)));
 
     assertRejectedSame(
-        maze.placeOrReplace(PlaceableCellType.WALL, maze.levelDefinition().mouseStart()),
+        maze.placeOrReplace(PlaceableCellType.WALL, maze.levelDefinition().solverStart()),
         maze,
         MazeEditStatus.REJECTED_PROTECTED_CELL);
     assertRejectedSame(
@@ -310,7 +310,7 @@ final class MazeInventoryTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> new MazeState(level, Map.of(level.mouseStart(), PlaceableCellType.SLOW_FLOOR)));
+        () -> new MazeState(level, Map.of(level.solverStart(), PlaceableCellType.SLOW_FLOOR)));
     assertThrows(
         IllegalArgumentException.class,
         () -> new MazeState(level, Map.of(position(-1, 0), PlaceableCellType.WALL)));
@@ -371,7 +371,7 @@ final class MazeInventoryTest {
         List.of(
             new PlaceableCellSupply(PlaceableCellType.WALL, wallSupply),
             new PlaceableCellSupply(PlaceableCellType.SLOW_FLOOR, slowFloorSupply)),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 

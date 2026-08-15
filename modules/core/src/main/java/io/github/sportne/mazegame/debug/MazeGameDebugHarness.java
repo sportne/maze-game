@@ -130,7 +130,7 @@ public final class MazeGameDebugHarness {
   }
 
   /**
-   * Simulates clicking the Start Mouse button.
+   * Simulates clicking the Start Solver button.
    *
    * @return this harness for fluent scripting
    */
@@ -347,7 +347,7 @@ public final class MazeGameDebugHarness {
         game.mazeState(),
         game.buildTimeRemainingSeconds(),
         game.rejectedPosition(),
-        game.mouseRunResult(),
+        game.solverRunResult(),
         game.bestResult(),
         game.resultPassed(),
         game.hasNextLevel(),

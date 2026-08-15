@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
@@ -35,10 +35,10 @@ final class BestResultTest {
   }
 
   @Test
-  void createsCandidateFromMouseRunResult() {
-    MouseRunResult runResult =
-        new MouseRunResult(
-            new GridPosition(0, 2), Duration.ofMillis(1250L), 5, MouseRunStatus.REACHED_CHEESE);
+  void createsCandidateFromSolverRunResult() {
+    SolverRunResult runResult =
+        new SolverRunResult(
+            new GridPosition(0, 2), Duration.ofMillis(1250L), 5, SolverRunStatus.REACHED_CHEESE);
 
     assertEquals(new BestResult(Duration.ofMillis(1250L), 5), BestResult.from(runResult));
   }

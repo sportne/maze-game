@@ -98,7 +98,7 @@ final class MazeGameDebugHarnessTest {
             current.mazeState(),
             current.buildTimeRemainingSeconds(),
             current.rejectedPosition(),
-            current.mouseRunResult(),
+            current.solverRunResult(),
             current.bestResult(),
             current.resultPassed(),
             current.hasNextLevel());
@@ -135,9 +135,9 @@ final class MazeGameDebugHarnessTest {
   void simulatesRejectedPlacementFeedback() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
-    harness.leftClickCell(Levels.milestoneOne().mouseStart());
+    harness.leftClickCell(Levels.milestoneOne().solverStart());
 
-    assertEquals(Levels.milestoneOne().mouseStart(), harness.snapshot().rejectedPosition());
+    assertEquals(Levels.milestoneOne().solverStart(), harness.snapshot().rejectedPosition());
     assertTrue(harness.snapshot().mazeState().walls().isEmpty());
   }
 

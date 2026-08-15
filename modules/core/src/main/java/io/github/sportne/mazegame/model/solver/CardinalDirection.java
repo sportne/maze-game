@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import java.util.List;

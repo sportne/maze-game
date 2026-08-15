@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Deterministic random mouse movement for a maze.
+ * Deterministic random solver movement for a maze.
  *
  * <p>The simulation advances in fixed movement intervals from the level definition. At each move it
  * randomly chooses one currently open orthogonal neighbor, including the previous cell when that
  * cell is open, so backtracking is allowed. The random generator is seeded from the level so replay
  * can reproduce the same path from the same maze.
  */
-public final class RandomMouseSimulation extends TimedMouseSimulation {
+public final class RandomSolverSimulation extends TimedSolverSimulation {
   /** Seeded source of deterministic movement choices. */
   private final Random random;
 
@@ -23,7 +23,7 @@ public final class RandomMouseSimulation extends TimedMouseSimulation {
    *
    * @param mazeState maze to solve
    */
-  public RandomMouseSimulation(MazeState mazeState) {
+  public RandomSolverSimulation(MazeState mazeState) {
     super(mazeState);
     random = new Random(mazeState.levelDefinition().randomSeed());
   }

@@ -19,7 +19,7 @@ final class GameSpriteSheetsTest {
 
   @Test
   void randomBehaviorUsesTheRightFacingClassicMouse() {
-    assertRegion(GameSpriteSheets.randomMouse(new TestTexture()), 384, 0);
+    assertRegion(GameSpriteSheets.randomSolver(new TestTexture()), 384, 0);
   }
 
   @Test

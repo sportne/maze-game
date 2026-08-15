@@ -9,11 +9,11 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
-import io.github.sportne.mazegame.model.mouse.MouseSimulation;
-import io.github.sportne.mazegame.model.mouse.MouseSimulationFactory;
-import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
+import io.github.sportne.mazegame.model.solver.RandomSolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverSimulationFactory;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameResultEvaluator;
 import java.time.Duration;
@@ -113,13 +113,13 @@ final class MilestoneThreeLevelDesignTest {
     assertEquals("milestone-3", PROPOSED_LEVEL.id());
     assertEquals("Level 3", PROPOSED_LEVEL.name());
     assertEquals(GridSize.square(7), PROPOSED_LEVEL.gridSize());
-    assertEquals(position(6, 3), PROPOSED_LEVEL.mouseStart());
+    assertEquals(position(6, 3), PROPOSED_LEVEL.solverStart());
     assertEquals(position(0, 3), PROPOSED_LEVEL.cheese());
     assertEquals(Duration.ofSeconds(25), PROPOSED_LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), PROPOSED_LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(8), PROPOSED_LEVEL.maximumSolveTime());
-    assertEquals(MOVE_INTERVAL, PROPOSED_LEVEL.mouseMoveInterval());
-    assertEquals(MouseBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.mouseBehavior());
+    assertEquals(MOVE_INTERVAL, PROPOSED_LEVEL.solverMoveInterval());
+    assertEquals(SolverBehavior.LEFT_PRIORITY, PROPOSED_LEVEL.solverBehavior());
     assertEquals(53L, PROPOSED_LEVEL.randomSeed());
     assertEquals(
         List.of(
@@ -201,7 +201,7 @@ final class MilestoneThreeLevelDesignTest {
             position(0, 2),
             position(0, 3)),
         scout.trace());
-    assertEquals(MouseRunStatus.REACHED_CHEESE, scout.result().status());
+    assertEquals(SolverRunStatus.REACHED_CHEESE, scout.result().status());
   }
 
   @Test
@@ -210,7 +210,7 @@ final class MilestoneThreeLevelDesignTest {
     ReferenceScout whole = new ReferenceScout(maze);
     ReferenceScout chunked = new ReferenceScout(maze);
 
-    MouseRunResult wholeResult = whole.update(PROPOSED_LEVEL.maximumSolveTime());
+    SolverRunResult wholeResult = whole.update(PROPOSED_LEVEL.maximumSolveTime());
     for (int index = 0; index < 80; index++) {
       chunked.update(Duration.ofMillis(100));
     }
@@ -224,13 +224,13 @@ final class MilestoneThreeLevelDesignTest {
   void proposedLevelHasTwoSmallDistinctPassingLayouts() {
     assertPassingLayout(
         PASSING_LAYOUT_A,
-        new MouseRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE),
         PASSING_TRACE_A);
     assertPassingLayout(
         PASSING_LAYOUT_B,
-        new MouseRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE),
         PASSING_TRACE_B);
   }
 
@@ -239,40 +239,40 @@ final class MilestoneThreeLevelDesignTest {
     assertProductionTrace(
         PASSING_LAYOUT_A,
         PASSING_TRACE_A,
-        new MouseRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, MouseRunStatus.REACHED_CHEESE));
+        new SolverRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE));
     assertProductionTrace(
         PASSING_LAYOUT_B,
         PASSING_TRACE_B,
-        new MouseRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, MouseRunStatus.REACHED_CHEESE));
+        new SolverRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofMillis(7500), 30, SolverRunStatus.REACHED_CHEESE));
     assertProductionTrace(
         TIMEOUT_LAYOUT,
         TIMEOUT_TRACE,
-        new MouseRunResult(
-            new GridPosition(0, 1), Duration.ofSeconds(8), 32, MouseRunStatus.TIMED_OUT));
+        new SolverRunResult(
+            new GridPosition(0, 1), Duration.ofSeconds(8), 32, SolverRunStatus.TIMED_OUT));
   }
 
   @Test
   void emptyAndNaiveLayoutsFailWhileALongDetourTimesOut() {
     MazeState empty = MazeState.empty(PROPOSED_LEVEL);
-    MouseRunResult emptyResult = new ReferenceScout(empty).update(Duration.ofSeconds(8));
+    SolverRunResult emptyResult = new ReferenceScout(empty).update(Duration.ofSeconds(8));
 
     assertTrue(empty.hasPathFromStartToCheese());
     assertEquals(
-        new MouseRunResult(
-            PROPOSED_LEVEL.cheese(), Duration.ofSeconds(3), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            PROPOSED_LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
         emptyResult);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, emptyResult, PROPOSED_LEVEL));
 
     MazeState timeoutMaze = new MazeState(PROPOSED_LEVEL, TIMEOUT_LAYOUT);
     ReferenceScout timeout = new ReferenceScout(timeoutMaze);
-    MouseRunResult timeoutResult = timeout.update(PROPOSED_LEVEL.maximumSolveTime());
+    SolverRunResult timeoutResult = timeout.update(PROPOSED_LEVEL.maximumSolveTime());
 
     assertTrue(timeoutMaze.hasPathFromStartToCheese());
     assertEquals(
-        new MouseRunResult(
-            new GridPosition(0, 1), Duration.ofSeconds(8), 32, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(
+            new GridPosition(0, 1), Duration.ofSeconds(8), 32, SolverRunStatus.TIMED_OUT),
         timeoutResult);
     assertEquals(TIMEOUT_TRACE, timeout.trace());
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, timeoutResult, PROPOSED_LEVEL));
@@ -280,8 +280,8 @@ final class MilestoneThreeLevelDesignTest {
     LevelDefinition extendedLevel = levelWithMaximumSolveTime(Duration.ofSeconds(9));
     ReferenceScout extended = new ReferenceScout(new MazeState(extendedLevel, TIMEOUT_LAYOUT));
     assertEquals(
-        new MouseRunResult(
-            extendedLevel.cheese(), Duration.ofMillis(8500), 34, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            extendedLevel.cheese(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_CHEESE),
         extended.update(extendedLevel.maximumSolveTime()));
     assertEquals(
         positions(0, 2, 0, 3),
@@ -294,28 +294,28 @@ final class MilestoneThreeLevelDesignTest {
     assertComparison(
         level,
         MILESTONE_TWO_PASSING_LAYOUT,
-        new MouseRunResult(
-            level.cheese(), Duration.ofMillis(9500), 38, MouseRunStatus.REACHED_CHEESE),
-        new MouseRunResult(
-            level.cheese(), Duration.ofSeconds(5), 20, MouseRunStatus.REACHED_CHEESE));
+        new SolverRunResult(
+            level.cheese(), Duration.ofMillis(9500), 38, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            level.cheese(), Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE));
     assertComparison(
         level,
         MILESTONE_TWO_PASSING_LAYOUT_B,
-        new MouseRunResult(
-            level.cheese(), Duration.ofMillis(8500), 34, MouseRunStatus.REACHED_CHEESE),
-        new MouseRunResult(
-            level.cheese(), Duration.ofSeconds(3), 12, MouseRunStatus.REACHED_CHEESE));
+        new SolverRunResult(
+            level.cheese(), Duration.ofMillis(8500), 34, SolverRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            level.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE));
     assertComparison(
         level,
         MILESTONE_TWO_TIMEOUT_LAYOUT,
-        new MouseRunResult(
-            new GridPosition(1, 2), Duration.ofSeconds(15), 60, MouseRunStatus.TIMED_OUT),
-        new MouseRunResult(
-            level.cheese(), Duration.ofMillis(3500), 14, MouseRunStatus.REACHED_CHEESE));
+        new SolverRunResult(
+            new GridPosition(1, 2), Duration.ofSeconds(15), 60, SolverRunStatus.TIMED_OUT),
+        new SolverRunResult(
+            level.cheese(), Duration.ofMillis(3500), 14, SolverRunStatus.REACHED_CHEESE));
   }
 
   private static void assertPassingLayout(
-      Set<GridPosition> walls, MouseRunResult expectedResult, List<GridPosition> expectedTrace) {
+      Set<GridPosition> walls, SolverRunResult expectedResult, List<GridPosition> expectedTrace) {
     MazeState maze = new MazeState(PROPOSED_LEVEL, walls);
     ReferenceScout first = new ReferenceScout(maze);
     ReferenceScout replay = new ReferenceScout(maze);
@@ -331,22 +331,22 @@ final class MilestoneThreeLevelDesignTest {
   private static void assertComparison(
       LevelDefinition level,
       Set<GridPosition> walls,
-      MouseRunResult expectedRandom,
-      MouseRunResult expectedScout) {
+      SolverRunResult expectedRandom,
+      SolverRunResult expectedScout) {
     MazeState maze = new MazeState(level, walls);
 
-    assertEquals(expectedRandom, new RandomMouseSimulation(maze).update(level.maximumSolveTime()));
+    assertEquals(expectedRandom, new RandomSolverSimulation(maze).update(level.maximumSolveTime()));
     assertEquals(expectedScout, new ReferenceScout(maze).update(level.maximumSolveTime()));
   }
 
   private static void assertProductionTrace(
-      Set<GridPosition> walls, List<GridPosition> expectedTrace, MouseRunResult expectedResult) {
+      Set<GridPosition> walls, List<GridPosition> expectedTrace, SolverRunResult expectedResult) {
     MazeState maze = new MazeState(PROPOSED_LEVEL, walls);
-    MouseSimulation simulation = MouseSimulationFactory.create(maze);
+    SolverSimulation simulation = SolverSimulationFactory.create(maze);
     List<GridPosition> trace = new ArrayList<>();
     trace.add(simulation.result().position());
 
-    while (simulation.result().status() == MouseRunStatus.RUNNING) {
+    while (simulation.result().status() == SolverRunStatus.RUNNING) {
       trace.add(simulation.update(MOVE_INTERVAL).position());
     }
 
@@ -359,14 +359,14 @@ final class MilestoneThreeLevelDesignTest {
         PROPOSED_LEVEL.id(),
         PROPOSED_LEVEL.name(),
         PROPOSED_LEVEL.gridSize(),
-        PROPOSED_LEVEL.mouseStart(),
+        PROPOSED_LEVEL.solverStart(),
         PROPOSED_LEVEL.cheese(),
         PROPOSED_LEVEL.buildTime(),
         PROPOSED_LEVEL.targetSolveTime(),
         maximumSolveTime,
-        PROPOSED_LEVEL.mouseMoveInterval(),
+        PROPOSED_LEVEL.solverMoveInterval(),
         PROPOSED_LEVEL.placeableCellSupplies(),
-        PROPOSED_LEVEL.mouseBehavior(),
+        PROPOSED_LEVEL.solverBehavior(),
         PROPOSED_LEVEL.randomSeed());
   }
 
@@ -382,7 +382,7 @@ final class MilestoneThreeLevelDesignTest {
         Duration.ofSeconds(2),
         MOVE_INTERVAL,
         PlaceableCellSupply.releasedDefaults(),
-        MouseBehavior.LEFT_PRIORITY,
+        SolverBehavior.LEFT_PRIORITY,
         1L);
   }
 
@@ -453,23 +453,23 @@ final class MilestoneThreeLevelDesignTest {
     private Duration elapsedTime = Duration.ZERO;
     private Duration accumulatedTime = Duration.ZERO;
     private int moveCount;
-    private MouseRunStatus status = MouseRunStatus.RUNNING;
+    private SolverRunStatus status = SolverRunStatus.RUNNING;
 
     private ReferenceScout(MazeState mazeState) {
       this.mazeState = Objects.requireNonNull(mazeState, "mazeState");
-      position = mazeState.levelDefinition().mouseStart();
+      position = mazeState.levelDefinition().solverStart();
       trace.add(position);
     }
 
-    private MouseRunResult update(Duration deltaTime) {
+    private SolverRunResult update(Duration deltaTime) {
       Objects.requireNonNull(deltaTime, "deltaTime");
       Duration remaining = deltaTime;
-      while (status == MouseRunStatus.RUNNING && !remaining.isZero()) {
+      while (status == SolverRunStatus.RUNNING && !remaining.isZero()) {
         Duration step = min(remaining, min(timeUntilMove(), timeUntilTimeout()));
         elapsedTime = elapsedTime.plus(step);
         accumulatedTime = accumulatedTime.plus(step);
         remaining = remaining.minus(step);
-        if (accumulatedTime.compareTo(mazeState.levelDefinition().mouseMoveInterval()) >= 0) {
+        if (accumulatedTime.compareTo(mazeState.levelDefinition().solverMoveInterval()) >= 0) {
           accumulatedTime = Duration.ZERO;
           moveOnce();
         }
@@ -513,14 +513,14 @@ final class MilestoneThreeLevelDesignTest {
 
     private void updateStatus() {
       if (position.equals(mazeState.levelDefinition().cheese())) {
-        status = MouseRunStatus.REACHED_CHEESE;
+        status = SolverRunStatus.REACHED_CHEESE;
       } else if (elapsedTime.compareTo(mazeState.levelDefinition().maximumSolveTime()) >= 0) {
-        status = MouseRunStatus.TIMED_OUT;
+        status = SolverRunStatus.TIMED_OUT;
       }
     }
 
     private Duration timeUntilMove() {
-      return mazeState.levelDefinition().mouseMoveInterval().minus(accumulatedTime);
+      return mazeState.levelDefinition().solverMoveInterval().minus(accumulatedTime);
     }
 
     private Duration timeUntilTimeout() {
@@ -531,8 +531,8 @@ final class MilestoneThreeLevelDesignTest {
       return first.compareTo(second) <= 0 ? first : second;
     }
 
-    private MouseRunResult result() {
-      return new MouseRunResult(position, elapsedTime, moveCount, status);
+    private SolverRunResult result() {
+      return new SolverRunResult(position, elapsedTime, moveCount, status);
     }
 
     private Direction heading() {

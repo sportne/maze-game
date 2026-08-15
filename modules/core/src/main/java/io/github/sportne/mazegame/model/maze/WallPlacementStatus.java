@@ -16,13 +16,13 @@ public enum WallPlacementStatus {
   /** The requested position is outside the level grid. */
   REJECTED_OUTSIDE_GRID(false),
 
-  /** The requested position is reserved for the mouse start or cheese. */
+  /** The requested position is reserved for the solver start or cheese. */
   REJECTED_PROTECTED_CELL(false),
 
   /** The compatibility wall tool has no remaining finite supply. */
   REJECTED_EXHAUSTED_SUPPLY(false),
 
-  /** Adding the requested wall would disconnect the mouse from the cheese. */
+  /** Adding the requested wall would disconnect the solver from the cheese. */
   REJECTED_BLOCKS_PATH(false);
 
   /** Whether callers should treat this status as a successful placement. */

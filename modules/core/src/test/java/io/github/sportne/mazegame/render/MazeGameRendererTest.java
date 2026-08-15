@@ -24,11 +24,11 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
@@ -52,7 +52,7 @@ final class MazeGameRendererTest {
     assertEquals(Color.WHITE, MazeGameRenderer.cellColor(maze, null, 0.0F, wall));
     assertEquals(
         new Color(0.24F, 0.62F, 0.95F, 1.0F),
-        MazeGameRenderer.cellColor(maze, null, 0.0F, LEVEL.mouseStart()));
+        MazeGameRenderer.cellColor(maze, null, 0.0F, LEVEL.solverStart()));
     assertEquals(
         new Color(0.95F, 0.42F, 0.42F, 1.0F), MazeGameRenderer.cellColor(maze, wall, 0.2F, wall));
   }
@@ -92,7 +92,7 @@ final class MazeGameRendererTest {
             MazeGameRenderer.spriteDestination(
                 new ScreenRectangle(400.0F, 100.0F, 500.0F, 500.0F),
                 LEVEL,
-                LEVEL.mouseStart(),
+                LEVEL.solverStart(),
                 0.0F,
                 100.0F));
   }
@@ -101,13 +101,14 @@ final class MazeGameRendererTest {
   void renderSnapshotExposesFrameData() {
     MazeState maze = MazeState.empty(LEVEL);
     GridPosition rejected = new GridPosition(2, 2);
-    MouseRunResult runResult =
-        new MouseRunResult(LEVEL.mouseStart(), Duration.ofMillis(250L), 1, MouseRunStatus.RUNNING);
+    SolverRunResult runResult =
+        new SolverRunResult(
+            LEVEL.solverStart(), Duration.ofMillis(250L), 1, SolverRunStatus.RUNNING);
     BestResult bestResult = new BestResult(Duration.ofSeconds(10L), 40);
 
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
-            GamePhase.MOUSE_RUNNING,
+            GamePhase.SOLVER_RUNNING,
             LEVEL,
             maze,
             12.0F,
@@ -120,13 +121,13 @@ final class MazeGameRendererTest {
             false,
             true);
 
-    assertEquals(GamePhase.MOUSE_RUNNING, snapshot.phase());
+    assertEquals(GamePhase.SOLVER_RUNNING, snapshot.phase());
     assertEquals(LEVEL, snapshot.levelDefinition());
     assertEquals(maze, snapshot.mazeState());
     assertEquals(12.0F, snapshot.buildTimeRemainingSeconds());
     assertEquals(rejected, snapshot.rejectedPosition());
     assertEquals(0.4F, snapshot.rejectedFlashRemainingSeconds());
-    assertEquals(runResult, snapshot.mouseRunResult());
+    assertEquals(runResult, snapshot.solverRunResult());
     assertEquals(bestResult, snapshot.bestResult());
     assertEquals(levelProgress(bestResult), snapshot.levelProgress());
     assertTrue(snapshot.audioEnabled());
@@ -225,8 +226,8 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer =
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
-    MouseRunResult result =
-        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    SolverRunResult result =
+        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
             GamePhase.RESULT,
@@ -260,9 +261,9 @@ final class MazeGameRendererTest {
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
     LevelDefinition finalLevel = Levels.milestoneFive();
-    MouseRunResult result =
-        new MouseRunResult(
-            finalLevel.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    SolverRunResult result =
+        new SolverRunResult(
+            finalLevel.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     List<LevelProgress> progress =
         Levels.catalog().levels().stream()
             .map(level -> new LevelProgress(level, true, null))
@@ -297,24 +298,24 @@ final class MazeGameRendererTest {
     RecordingShapeRenderer shapeRenderer = allocate(RecordingShapeRenderer.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, shapeRenderer, font);
-    MouseRunResult running =
-        new MouseRunResult(
-            LEVEL.mouseStart(), Duration.ofMillis(2500L), 10, MouseRunStatus.RUNNING);
-    MouseRunResult result =
-        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, MouseRunStatus.TIMED_OUT);
-    MouseRunResult failedResult =
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(2L), 8, MouseRunStatus.REACHED_CHEESE);
+    SolverRunResult running =
+        new SolverRunResult(
+            LEVEL.solverStart(), Duration.ofMillis(2500L), 10, SolverRunStatus.RUNNING);
+    SolverRunResult result =
+        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10L), 40, SolverRunStatus.TIMED_OUT);
+    SolverRunResult failedResult =
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(2L), 8, SolverRunStatus.REACHED_CHEESE);
 
     renderer.render(layout(GamePhase.BUILDING), snapshot(GamePhase.BUILDING, null));
-    renderer.render(layout(GamePhase.MOUSE_RUNNING), snapshot(GamePhase.MOUSE_RUNNING, running));
+    renderer.render(layout(GamePhase.SOLVER_RUNNING), snapshot(GamePhase.SOLVER_RUNNING, running));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, result));
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, failedResult));
 
     assertTrue(font.capturedText().contains("Level 1"));
     assertTrue(font.capturedText().contains("Build: 30.0s"));
     assertTrue(font.capturedText().contains("Delay past 5.0s; keep a path to the cheese"));
-    assertTrue(font.capturedText().contains("Start Mouse"));
+    assertTrue(font.capturedText().contains("Start Solver"));
     assertTrue(font.capturedText().contains("Level 1 | 7.5s | >5.0s"));
     assertTrue(font.capturedText().contains("Level 1 | Success | >5.0s"));
     assertTrue(font.capturedText().contains("Level 1 | Failed | >5.0s"));
@@ -591,8 +592,8 @@ final class MazeGameRendererTest {
             false,
             false));
 
-    MouseRunResult result =
-        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, MouseRunStatus.TIMED_OUT);
+    SolverRunResult result =
+        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(10), 40, SolverRunStatus.TIMED_OUT);
     GameRenderSnapshot resultSnapshot =
         new GameRenderSnapshot(
             GamePhase.RESULT,
@@ -630,12 +631,12 @@ final class MazeGameRendererTest {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
-    MouseRunResult running =
-        new MouseRunResult(
-            scoutLevel.mouseStart(), Duration.ofSeconds(1), 4, MouseRunStatus.RUNNING);
-    MouseRunResult result =
-        new MouseRunResult(
-            scoutLevel.cheese(), Duration.ofMillis(6500), 26, MouseRunStatus.REACHED_CHEESE);
+    SolverRunResult running =
+        new SolverRunResult(
+            scoutLevel.solverStart(), Duration.ofSeconds(1), 4, SolverRunStatus.RUNNING);
+    SolverRunResult result =
+        new SolverRunResult(
+            scoutLevel.cheese(), Duration.ofMillis(6500), 26, SolverRunStatus.REACHED_CHEESE);
     List<LevelProgress> progress =
         List.of(
             new LevelProgress(Levels.milestoneOne(), true, null),
@@ -661,8 +662,8 @@ final class MazeGameRendererTest {
     renderer.render(
         scoutLayout(GamePhase.BUILDING), scoutSnapshot(GamePhase.BUILDING, null, progress));
     renderer.render(
-        scoutLayout(GamePhase.MOUSE_RUNNING),
-        scoutSnapshot(GamePhase.MOUSE_RUNNING, running, progress));
+        scoutLayout(GamePhase.SOLVER_RUNNING),
+        scoutSnapshot(GamePhase.SOLVER_RUNNING, running, progress));
     renderer.render(
         scoutLayout(GamePhase.RESULT), scoutSnapshot(GamePhase.RESULT, result, progress));
 
@@ -679,11 +680,11 @@ final class MazeGameRendererTest {
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     MazeGameRenderer renderer =
         renderer(spriteBatch, allocate(RecordingShapeRenderer.class), recordingFont());
-    MouseRunResult randomResult =
-        new MouseRunResult(LEVEL.mouseStart(), Duration.ZERO, 0, MouseRunStatus.RUNNING);
+    SolverRunResult randomResult =
+        new SolverRunResult(LEVEL.solverStart(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
 
     renderer.render(
-        layout(GamePhase.MOUSE_RUNNING), snapshot(GamePhase.MOUSE_RUNNING, randomResult));
+        layout(GamePhase.SOLVER_RUNNING), snapshot(GamePhase.SOLVER_RUNNING, randomResult));
 
     assertTrue(spriteBatch.drawnRegionXs().contains(10));
     assertFalse(spriteBatch.drawnRegionXs().contains(20));
@@ -695,25 +696,25 @@ final class MazeGameRendererTest {
             LEVEL.id(),
             LEVEL.name(),
             LEVEL.gridSize(),
-            LEVEL.mouseStart(),
+            LEVEL.solverStart(),
             LEVEL.cheese(),
             LEVEL.buildTime(),
             LEVEL.targetSolveTime(),
             LEVEL.maximumSolveTime(),
-            LEVEL.mouseMoveInterval(),
+            LEVEL.solverMoveInterval(),
             LEVEL.placeableCellSupplies(),
-            MouseBehavior.LEFT_PRIORITY,
+            SolverBehavior.LEFT_PRIORITY,
             LEVEL.randomSeed());
-    MouseRunResult scoutResult =
-        new MouseRunResult(
-            scoutBehaviorOnFirstLevelIdentity.mouseStart(),
+    SolverRunResult scoutResult =
+        new SolverRunResult(
+            scoutBehaviorOnFirstLevelIdentity.solverStart(),
             Duration.ZERO,
             0,
-            MouseRunStatus.RUNNING);
+            SolverRunStatus.RUNNING);
     spriteBatch.drawnRegionXs().clear();
     renderer.render(
         MazeGameLayout.forPhase(
-            GamePhase.MOUSE_RUNNING,
+            GamePhase.SOLVER_RUNNING,
             1280,
             720,
             scoutBehaviorOnFirstLevelIdentity.gridSize(),
@@ -721,7 +722,7 @@ final class MazeGameRendererTest {
             3,
             false),
         new GameRenderSnapshot(
-            GamePhase.MOUSE_RUNNING,
+            GamePhase.SOLVER_RUNNING,
             scoutBehaviorOnFirstLevelIdentity,
             MazeState.empty(scoutBehaviorOnFirstLevelIdentity),
             30.0F,
@@ -741,20 +742,20 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void multiMouseLevelDrawsBothCharactersAndBothMatchingGoals() {
+  void multiSolverLevelDrawsBothCharactersAndBothMatchingGoals() {
     LevelDefinition level = Levels.milestoneFive();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
-    List<MouseRunResult> results =
+    List<SolverRunResult> results =
         List.of(
-            new MouseRunResult(
-                level.mice().get(0).start(), Duration.ZERO, 0, MouseRunStatus.RUNNING),
-            new MouseRunResult(
-                level.mice().get(1).start(), Duration.ZERO, 0, MouseRunStatus.RUNNING));
+            new SolverRunResult(
+                level.solvers().get(0).start(), Duration.ZERO, 0, SolverRunStatus.RUNNING),
+            new SolverRunResult(
+                level.solvers().get(1).start(), Duration.ZERO, 0, SolverRunStatus.RUNNING));
     GameRenderSnapshot snapshot =
         new GameRenderSnapshot(
-            GamePhase.MOUSE_RUNNING,
+            GamePhase.SOLVER_RUNNING,
             level,
             MazeState.empty(level),
             0.0F,
@@ -773,14 +774,14 @@ final class MazeGameRendererTest {
 
     renderer.render(
         MazeGameLayout.forPhase(
-            GamePhase.MOUSE_RUNNING, 1280, 720, level.gridSize(), true, 1, false),
+            GamePhase.SOLVER_RUNNING, 1280, 720, level.gridSize(), true, 1, false),
         snapshot);
 
     assertTrue(spriteBatch.drawnRegionXs().contains(1));
     assertTrue(spriteBatch.drawnRegionXs().contains(2));
     assertTrue(spriteBatch.drawnRegionXs().contains(10));
     assertTrue(spriteBatch.drawnRegionXs().contains(20));
-    assertTrue(font.capturedText().stream().anyMatch(text -> text.contains("Mouse + Scout")));
+    assertTrue(font.capturedText().stream().anyMatch(text -> text.contains("Solver + Scout")));
   }
 
   @Test
@@ -818,7 +819,7 @@ final class MazeGameRendererTest {
   }
 
   private static GameRenderSnapshot scoutSnapshot(
-      GamePhase phase, MouseRunResult result, List<LevelProgress> progress) {
+      GamePhase phase, SolverRunResult result, List<LevelProgress> progress) {
     LevelDefinition level = Levels.milestoneThree();
     return new GameRenderSnapshot(
         phase,
@@ -831,14 +832,14 @@ final class MazeGameRendererTest {
         result == null ? null : new BestResult(Duration.ofMillis(6500), 26),
         progress,
         true,
-        result != null && result.status() == MouseRunStatus.REACHED_CHEESE,
+        result != null && result.status() == SolverRunStatus.REACHED_CHEESE,
         false);
   }
 
-  private static GameRenderSnapshot snapshot(GamePhase phase, MouseRunResult mouseRunResult) {
+  private static GameRenderSnapshot snapshot(GamePhase phase, SolverRunResult solverRunResult) {
     boolean resultPassed =
-        mouseRunResult != null
-            && mouseRunResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0;
+        solverRunResult != null
+            && solverRunResult.elapsedTime().compareTo(LEVEL.targetSolveTime()) > 0;
     return new GameRenderSnapshot(
         phase,
         LEVEL,
@@ -846,9 +847,9 @@ final class MazeGameRendererTest {
         30.0F,
         null,
         0.0F,
-        mouseRunResult,
-        mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
-        levelProgress(mouseRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40)),
+        solverRunResult,
+        solverRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40),
+        levelProgress(solverRunResult == null ? null : new BestResult(Duration.ofSeconds(10L), 40)),
         true,
         resultPassed,
         false);
@@ -874,7 +875,7 @@ final class MazeGameRendererTest {
         List.of(
             PlaceableCellSupply.infinite(PlaceableCellType.WALL),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 1)),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 

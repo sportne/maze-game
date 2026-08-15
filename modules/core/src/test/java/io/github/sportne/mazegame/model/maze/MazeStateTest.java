@@ -93,19 +93,19 @@ final class MazeStateTest {
   }
 
   @Test
-  void rejectsWallOnMouseStart() {
+  void rejectsWallOnSolverStart() {
     MazeState maze = MazeState.empty(LEVEL);
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> assertEquals(maze, maze.withWall(LEVEL.mouseStart())));
+        () -> assertEquals(maze, maze.withWall(LEVEL.solverStart())));
   }
 
   @Test
-  void placeWallRejectsMouseStartWithoutMutatingMaze() {
+  void placeWallRejectsSolverStartWithoutMutatingMaze() {
     MazeState maze = MazeState.empty(LEVEL);
 
-    WallPlacementResult result = maze.placeWall(LEVEL.mouseStart());
+    WallPlacementResult result = maze.placeWall(LEVEL.solverStart());
 
     assertFalse(result.accepted());
     assertEquals(WallPlacementStatus.REJECTED_PROTECTED_CELL, result.status());
@@ -201,7 +201,7 @@ final class MazeStateTest {
   void identifiesProtectedCells() {
     MazeState maze = MazeState.empty(LEVEL);
 
-    assertTrue(maze.isProtected(LEVEL.mouseStart()));
+    assertTrue(maze.isProtected(LEVEL.solverStart()));
     assertTrue(maze.isProtected(LEVEL.cheese()));
     assertFalse(maze.isProtected(new GridPosition(2, 2)));
   }
@@ -210,7 +210,7 @@ final class MazeStateTest {
   void cellContentIdentifiesStartCheeseWallAndEmptyCells() {
     MazeState maze = MazeState.empty(LEVEL).withWall(new GridPosition(2, 2));
 
-    assertEquals(CellContent.MOUSE_START, maze.cellContentAt(LEVEL.mouseStart()));
+    assertEquals(CellContent.SOLVER_START, maze.cellContentAt(LEVEL.solverStart()));
     assertEquals(CellContent.CHEESE, maze.cellContentAt(LEVEL.cheese()));
     assertEquals(CellContent.NORMAL_WALL, maze.cellContentAt(new GridPosition(2, 2)));
     assertEquals(CellContent.EMPTY, maze.cellContentAt(new GridPosition(1, 1)));

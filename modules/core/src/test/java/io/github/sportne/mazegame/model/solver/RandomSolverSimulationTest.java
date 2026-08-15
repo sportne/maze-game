@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,45 +9,45 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-final class RandomMouseSimulationTest {
+final class RandomSolverSimulationTest {
   @Test
-  void startsAtMouseStartWithoutMoves() {
-    RandomMouseSimulation simulation =
-        new RandomMouseSimulation(MazeState.empty(Levels.milestoneOne()));
+  void startsAtSolverStartWithoutMoves() {
+    RandomSolverSimulation simulation =
+        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
 
-    MouseRunResult result = simulation.result();
+    SolverRunResult result = simulation.result();
 
-    assertEquals(Levels.milestoneOne().mouseStart(), result.position());
+    assertEquals(Levels.milestoneOne().solverStart(), result.position());
     assertEquals(Duration.ZERO, result.elapsedTime());
     assertEquals(0, result.moveCount());
-    assertEquals(MouseRunStatus.RUNNING, result.status());
+    assertEquals(SolverRunStatus.RUNNING, result.status());
   }
 
   @Test
   void ignoresPartialMoveIntervalsUntilEnoughTimeAccumulates() {
-    RandomMouseSimulation simulation =
-        new RandomMouseSimulation(MazeState.empty(Levels.milestoneOne()));
+    RandomSolverSimulation simulation =
+        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
 
-    MouseRunResult result = simulation.update(Duration.ofMillis(249));
+    SolverRunResult result = simulation.update(Duration.ofMillis(249));
 
-    assertEquals(Levels.milestoneOne().mouseStart(), result.position());
+    assertEquals(Levels.milestoneOne().solverStart(), result.position());
     assertEquals(0, result.moveCount());
   }
 
   @Test
   void movesDeterministicallyForTheSameMazeAndSeed() {
     MazeState maze = MazeState.empty(Levels.milestoneOne());
-    RandomMouseSimulation first = new RandomMouseSimulation(maze);
-    RandomMouseSimulation second = new RandomMouseSimulation(maze);
+    RandomSolverSimulation first = new RandomSolverSimulation(maze);
+    RandomSolverSimulation second = new RandomSolverSimulation(maze);
 
-    MouseRunResult firstResult = first.update(Duration.ofSeconds(1));
-    MouseRunResult secondResult = second.update(Duration.ofSeconds(1));
+    SolverRunResult firstResult = first.update(Duration.ofSeconds(1));
+    SolverRunResult secondResult = second.update(Duration.ofSeconds(1));
 
     assertEquals(firstResult, secondResult);
   }
@@ -55,10 +55,10 @@ final class RandomMouseSimulationTest {
   @Test
   void preservesResultsThroughTheSharedSimulationContract() {
     MazeState maze = MazeState.empty(Levels.milestoneOne());
-    MouseSimulation simulation = new RandomMouseSimulation(maze);
+    SolverSimulation simulation = new RandomSolverSimulation(maze);
 
     assertEquals(
-        new RandomMouseSimulation(maze).update(Duration.ofSeconds(1)),
+        new RandomSolverSimulation(maze).update(Duration.ofSeconds(1)),
         simulation.update(Duration.ofSeconds(1)));
     assertEquals(simulation.result(), simulation.update(Duration.ZERO));
   }
@@ -73,9 +73,9 @@ final class RandomMouseSimulationTest {
                 new GridPosition(4, 3),
                 new GridPosition(3, 1),
                 new GridPosition(3, 3)));
-    RandomMouseSimulation simulation = new RandomMouseSimulation(maze);
+    RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
-    MouseRunResult result = simulation.update(Duration.ofMillis(250));
+    SolverRunResult result = simulation.update(Duration.ofMillis(250));
 
     assertEquals(new GridPosition(3, 2), result.position());
     assertEquals(1, result.moveCount());
@@ -84,12 +84,12 @@ final class RandomMouseSimulationTest {
   @Test
   void reachesCheeseWhenRandomWalkArrivesThere() {
     MazeState maze = verticalCorridor(Levels.milestoneOne());
-    RandomMouseSimulation simulation = new RandomMouseSimulation(maze);
+    RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
-    MouseRunResult result = simulation.update(Duration.ofSeconds(1));
+    SolverRunResult result = simulation.update(Duration.ofSeconds(1));
 
     assertEquals(Levels.milestoneOne().cheese(), result.position());
-    assertEquals(MouseRunStatus.REACHED_CHEESE, result.status());
+    assertEquals(SolverRunStatus.REACHED_CHEESE, result.status());
     assertEquals(4, result.moveCount());
   }
 
@@ -97,24 +97,24 @@ final class RandomMouseSimulationTest {
   void canImmediatelyMoveBackToPreviousCell() {
     LevelDefinition level = levelWithSeed(3L);
     MazeState maze = verticalCorridor(level);
-    RandomMouseSimulation simulation = new RandomMouseSimulation(maze);
+    RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
-    MouseRunResult result = simulation.update(Duration.ofMillis(500));
+    SolverRunResult result = simulation.update(Duration.ofMillis(500));
 
-    assertEquals(level.mouseStart(), result.position());
+    assertEquals(level.solverStart(), result.position());
     assertEquals(2, result.moveCount());
   }
 
   @Test
   void timesOutAtMaximumSolveTime() {
-    RandomMouseSimulation simulation =
-        new RandomMouseSimulation(MazeState.empty(Levels.milestoneOne()));
+    RandomSolverSimulation simulation =
+        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
 
-    MouseRunResult result = simulation.update(Duration.ofSeconds(10));
+    SolverRunResult result = simulation.update(Duration.ofSeconds(10));
 
     assertTrue(result.moveCount() > 0);
     assertEquals(Duration.ofSeconds(10), result.elapsedTime());
-    assertEquals(MouseRunStatus.TIMED_OUT, result.status());
+    assertEquals(SolverRunStatus.TIMED_OUT, result.status());
   }
 
   @Test
@@ -131,21 +131,21 @@ final class RandomMouseSimulationTest {
             Duration.ofMillis(100),
             Duration.ofMillis(250),
             PlaceableCellSupply.releasedDefaults(),
-            MouseBehavior.RANDOM,
+            SolverBehavior.RANDOM,
             1L);
-    RandomMouseSimulation simulation = new RandomMouseSimulation(MazeState.empty(level));
+    RandomSolverSimulation simulation = new RandomSolverSimulation(MazeState.empty(level));
 
-    MouseRunResult result = simulation.update(Duration.ofMillis(500));
+    SolverRunResult result = simulation.update(Duration.ofMillis(500));
 
     assertEquals(Duration.ofMillis(100), result.elapsedTime());
     assertEquals(0, result.moveCount());
-    assertEquals(MouseRunStatus.TIMED_OUT, result.status());
+    assertEquals(SolverRunStatus.TIMED_OUT, result.status());
   }
 
   @Test
   void rejectsNegativeDeltaTime() {
-    RandomMouseSimulation simulation =
-        new RandomMouseSimulation(MazeState.empty(Levels.milestoneOne()));
+    RandomSolverSimulation simulation =
+        new RandomSolverSimulation(MazeState.empty(Levels.milestoneOne()));
 
     assertThrows(IllegalArgumentException.class, () -> simulation.update(Duration.ofMillis(-1)));
   }
@@ -156,14 +156,14 @@ final class RandomMouseSimulationTest {
         "seed-" + seed,
         "Seed " + seed,
         milestoneOne.gridSize(),
-        milestoneOne.mouseStart(),
+        milestoneOne.solverStart(),
         milestoneOne.cheese(),
         milestoneOne.buildTime(),
         milestoneOne.targetSolveTime(),
         milestoneOne.maximumSolveTime(),
-        milestoneOne.mouseMoveInterval(),
+        milestoneOne.solverMoveInterval(),
         milestoneOne.placeableCellSupplies(),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         seed);
   }
 

@@ -31,7 +31,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -66,7 +66,7 @@ final class BrowserSmokeTest {
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
   private static final GridPosition MOVED_CELL = new GridPosition(2, 3);
   private static final int STARTUP_SAMPLE_COUNT = 5;
-  private static final long MOUSE_STATUS_SIGNATURE = 1_484_529_530_432_220_098L;
+  private static final long SOLVER_STATUS_SIGNATURE = 1_484_529_530_432_220_098L;
   private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
   private static final Set<String> COMMON_ASSETS =
@@ -205,9 +205,9 @@ final class BrowserSmokeTest {
     assertFalse(milestoneOneResult.equals(milestoneTwoResult));
     Files.createDirectories(reportDirectory);
     page.screenshot(
-        new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-mouse-result.png")));
-    assertRenderedMousePresentation(
-        page, Levels.milestoneTwo(), new GridPosition(3, 0), true, MOUSE_STATUS_SIGNATURE, false);
+        new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-solver-result.png")));
+    assertRenderedSolverPresentation(
+        page, Levels.milestoneTwo(), new GridPosition(3, 0), true, SOLVER_STATUS_SIGNATURE, false);
     BrowserGameScenario.openMilestoneThree(controls);
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -223,7 +223,7 @@ final class BrowserSmokeTest {
     assertFalse(milestoneTwoResult.equals(milestoneThreeResult));
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-scout-result.png")));
-    assertRenderedMousePresentation(
+    assertRenderedSolverPresentation(
         page,
         Levels.milestoneThree(),
         Levels.milestoneThree().cheese(),
@@ -454,7 +454,7 @@ final class BrowserSmokeTest {
         List.of(
             PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 
@@ -689,10 +689,10 @@ final class BrowserSmokeTest {
     assertEquals("running", audioState);
   }
 
-  private static void assertRenderedMousePresentation(
+  private static void assertRenderedSolverPresentation(
       Page page,
       LevelDefinition level,
-      GridPosition finalMousePosition,
+      GridPosition finalSolverPosition,
       boolean hasNextLevel,
       long expectedStatusSignature,
       boolean expectScoutMarker)
@@ -713,13 +713,13 @@ final class BrowserSmokeTest {
 
     ScreenRectangle grid = layout.bounds(MazeGameLayout.GAME_GRID);
     int cellSize = Math.round(grid.width() / level.gridSize().columns());
-    ScreenRectangle mouseCell =
+    ScreenRectangle solverCell =
         new ScreenRectangle(
-            grid.x() + finalMousePosition.column() * cellSize,
-            grid.y() + (level.gridSize().rows() - 1 - finalMousePosition.row()) * cellSize,
+            grid.x() + finalSolverPosition.column() * cellSize,
+            grid.y() + (level.gridSize().rows() - 1 - finalSolverPosition.row()) * cellSize,
             cellSize,
             cellSize);
-    int scoutMarkerPixels = blueMarkerPixelCount(image, mouseCell);
+    int scoutMarkerPixels = blueMarkerPixelCount(image, solverCell);
     assertEquals(expectScoutMarker, scoutMarkerPixels >= 20);
   }
 

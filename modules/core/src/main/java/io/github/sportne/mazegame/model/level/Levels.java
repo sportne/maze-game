@@ -27,7 +27,7 @@ public final class Levels {
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          MouseBehavior.RANDOM,
+          SolverBehavior.RANDOM,
           1L);
 
   /** Larger second level specified by the Milestone 2 design. */
@@ -43,7 +43,7 @@ public final class Levels {
           Duration.ofSeconds(15),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          MouseBehavior.RANDOM,
+          SolverBehavior.RANDOM,
           38L);
 
   /** Third 7x7 level introducing Scout's deterministic search pattern. */
@@ -59,7 +59,7 @@ public final class Levels {
           Duration.ofSeconds(8),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          MouseBehavior.LEFT_PRIORITY,
+          SolverBehavior.LEFT_PRIORITY,
           53L);
 
   /** Fourth 7x7 level introducing finite Walls and Slow Floors with Scout. */
@@ -77,7 +77,7 @@ public final class Levels {
           List.of(
               PlaceableCellSupply.finite(PlaceableCellType.WALL, 4),
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
-          MouseBehavior.LEFT_PRIORITY,
+          SolverBehavior.LEFT_PRIORITY,
           53L);
 
   /** Fifth 7x7 level combining Random and Scout with distinct starts and goals. */
@@ -95,15 +95,15 @@ public final class Levels {
           List.of(
               PlaceableCellSupply.finite(PlaceableCellType.WALL, 5),
               PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 4)),
-          MouseBehavior.RANDOM,
+          SolverBehavior.RANDOM,
           23L,
           List.of(
-              new LevelMouse(
-                  new GridPosition(6, 0), new GridPosition(3, 3), MouseBehavior.RANDOM, 23L),
-              new LevelMouse(
+              new LevelSolver(
+                  new GridPosition(6, 0), new GridPosition(3, 3), SolverBehavior.RANDOM, 23L),
+              new LevelSolver(
                   new GridPosition(1, 4),
                   new GridPosition(2, 4),
-                  MouseBehavior.LEFT_PRIORITY,
+                  SolverBehavior.LEFT_PRIORITY,
                   53L)));
 
   /** Authored levels in stable display order. */

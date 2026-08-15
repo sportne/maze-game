@@ -11,9 +11,9 @@ import io.github.sportne.mazegame.layout.ScreenLayout;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.maze.MazeState;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
-import io.github.sportne.mazegame.model.mouse.RandomMouseSimulation;
+import io.github.sportne.mazegame.model.solver.RandomSolverSimulation;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.GameResultEvaluator;
 import java.time.Duration;
@@ -66,12 +66,12 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals("milestone-2", LEVEL.id());
     assertEquals("Level 2", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());
-    assertEquals(new GridPosition(6, 3), LEVEL.mouseStart());
+    assertEquals(new GridPosition(6, 3), LEVEL.solverStart());
     assertEquals(new GridPosition(0, 3), LEVEL.cheese());
     assertEquals(Duration.ofSeconds(25), LEVEL.buildTime());
     assertEquals(Duration.ofSeconds(6), LEVEL.targetSolveTime());
     assertEquals(Duration.ofSeconds(15), LEVEL.maximumSolveTime());
-    assertEquals(Duration.ofMillis(250), LEVEL.mouseMoveInterval());
+    assertEquals(Duration.ofMillis(250), LEVEL.solverMoveInterval());
     assertEquals(38L, LEVEL.randomSeed());
     assertEquals(
         List.of(
@@ -87,12 +87,12 @@ final class MilestoneTwoLevelDesignTest {
   void emptyMazeIsSolvableButFailsTheTarget() {
     MazeState maze = MazeState.empty(LEVEL);
 
-    MouseRunResult result = run(maze);
+    SolverRunResult result = run(maze);
 
     assertTrue(maze.hasPathFromStartToCheese());
     assertEquals(
-        new MouseRunResult(
-            LEVEL.cheese(), Duration.ofSeconds(3), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            LEVEL.cheese(), Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
         result);
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, result, LEVEL));
   }
@@ -106,8 +106,8 @@ final class MilestoneTwoLevelDesignTest {
   private static void assertPassingLayout(
       Set<GridPosition> walls, Duration elapsedTime, int moveCount) {
     MazeState maze = new MazeState(LEVEL, walls);
-    MouseRunResult expected =
-        new MouseRunResult(LEVEL.cheese(), elapsedTime, moveCount, MouseRunStatus.REACHED_CHEESE);
+    SolverRunResult expected =
+        new SolverRunResult(LEVEL.cheese(), elapsedTime, moveCount, SolverRunStatus.REACHED_CHEESE);
 
     assertTrue(maze.hasPathFromStartToCheese());
     assertEquals(expected, run(maze));
@@ -119,12 +119,12 @@ final class MilestoneTwoLevelDesignTest {
   void representativeValidLayoutCanReachTheTimeout() {
     MazeState maze = new MazeState(LEVEL, TIMEOUT_LAYOUT);
 
-    MouseRunResult result = run(maze);
+    SolverRunResult result = run(maze);
 
     assertTrue(maze.hasPathFromStartToCheese());
     assertEquals(
-        new MouseRunResult(
-            new GridPosition(1, 2), Duration.ofSeconds(15), 60, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(
+            new GridPosition(1, 2), Duration.ofSeconds(15), 60, SolverRunStatus.TIMED_OUT),
         result);
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, result, LEVEL));
   }
@@ -150,7 +150,7 @@ final class MilestoneTwoLevelDesignTest {
     }
   }
 
-  private static MouseRunResult run(MazeState maze) {
-    return new RandomMouseSimulation(maze).update(LEVEL.maximumSolveTime());
+  private static SolverRunResult run(MazeState maze) {
+    return new RandomSolverSimulation(maze).update(LEVEL.maximumSolveTime());
   }
 }

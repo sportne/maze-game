@@ -1,4 +1,4 @@
-package io.github.sportne.mazegame.model.mouse;
+package io.github.sportne.mazegame.model.solver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -8,7 +8,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -43,28 +43,28 @@ final class SlowFloorSimulationTest {
 
   @Test
   void productionScoutReproducesEveryAcceptedLevelFourTimingFixture() {
-    LevelDefinition level = level(MouseBehavior.LEFT_PRIORITY, 53L, TIMEOUT);
+    LevelDefinition level = level(SolverBehavior.LEFT_PRIORITY, 53L, TIMEOUT);
 
     assertEquals(
-        new MouseRunResult(CHEESE, Duration.ofSeconds(3), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofSeconds(3), 12, SolverRunStatus.REACHED_CHEESE),
         run(maze(level, Set.of(), Set.of())));
     assertEquals(
-        new MouseRunResult(CHEESE, Duration.ofSeconds(5), 20, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofSeconds(5), 20, SolverRunStatus.REACHED_CHEESE),
         run(maze(level, PASSING_WALLS, Set.of())));
     assertEquals(
-        new MouseRunResult(CHEESE, Duration.ofMillis(3750), 12, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofMillis(3750), 12, SolverRunStatus.REACHED_CHEESE),
         run(maze(level, Set.of(), PASSING_SLOW_FLOORS)));
     assertEquals(
-        new MouseRunResult(CHEESE, Duration.ofMillis(5750), 20, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofMillis(5750), 20, SolverRunStatus.REACHED_CHEESE),
         run(maze(level, PASSING_WALLS, PASSING_SLOW_FLOORS)));
     assertEquals(
-        new MouseRunResult(position(1, 3), TIMEOUT, 19, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(position(1, 3), TIMEOUT, 19, SolverRunStatus.TIMED_OUT),
         run(maze(level, TIMEOUT_WALLS, TIMEOUT_SLOW_FLOORS)));
   }
 
   @Test
   void scoutSlowFloorsPreserveLiteralRouteAndAddOnlyDocumentedWaits() {
-    LevelDefinition level = level(MouseBehavior.LEFT_PRIORITY, 53L, TIMEOUT);
+    LevelDefinition level = level(SolverBehavior.LEFT_PRIORITY, 53L, TIMEOUT);
     Trace normal = trace(maze(level, PASSING_WALLS, Set.of()));
     Trace slowed = trace(maze(level, PASSING_WALLS, PASSING_SLOW_FLOORS));
 
@@ -80,7 +80,7 @@ final class SlowFloorSimulationTest {
 
   @Test
   void seededRandomSlowFloorPreservesRouteAndMoveCount() {
-    LevelDefinition level = level(MouseBehavior.RANDOM, 41L, TIMEOUT);
+    LevelDefinition level = level(SolverBehavior.RANDOM, 41L, TIMEOUT);
     Trace normal = trace(maze(level, PASSING_WALLS, Set.of()));
     Trace slowed = trace(maze(level, PASSING_WALLS, PASSING_SLOW_FLOORS));
 
@@ -94,32 +94,32 @@ final class SlowFloorSimulationTest {
     assertEquals(
         Duration.ofMillis(250), slowed.result().elapsedTime().minus(normal.result().elapsedTime()));
     assertEquals(
-        new MouseRunResult(CHEESE, Duration.ofMillis(4250), 16, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(CHEESE, Duration.ofMillis(4250), 16, SolverRunStatus.REACHED_CHEESE),
         slowed.result());
   }
 
   @Test
   void productionRandomReproducesSeedFiftyThreeDesignFixtures() {
-    LevelDefinition level = level(MouseBehavior.RANDOM, 53L, TIMEOUT);
+    LevelDefinition level = level(SolverBehavior.RANDOM, 53L, TIMEOUT);
 
     assertEquals(
-        new MouseRunResult(position(4, 3), TIMEOUT, 26, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(position(4, 3), TIMEOUT, 26, SolverRunStatus.TIMED_OUT),
         run(maze(level, Set.of(), Set.of())));
     assertEquals(
-        new MouseRunResult(position(4, 4), TIMEOUT, 25, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(position(4, 4), TIMEOUT, 25, SolverRunStatus.TIMED_OUT),
         run(maze(level, PASSING_WALLS, PASSING_SLOW_FLOORS)));
   }
 
   @ParameterizedTest
   @MethodSource("behaviors")
-  void wholeFractionalOversizedAndChunkedUpdatesAreEquivalent(MouseBehavior behavior) {
-    long seed = behavior == MouseBehavior.RANDOM ? 41L : 53L;
+  void wholeFractionalOversizedAndChunkedUpdatesAreEquivalent(SolverBehavior behavior) {
+    long seed = behavior == SolverBehavior.RANDOM ? 41L : 53L;
     MazeState maze = maze(level(behavior, seed, TIMEOUT), PASSING_WALLS, PASSING_SLOW_FLOORS);
-    MouseSimulation whole = MouseSimulationFactory.create(maze);
-    MouseSimulation fractional = MouseSimulationFactory.create(maze);
-    MouseSimulation chunked = MouseSimulationFactory.create(maze);
+    SolverSimulation whole = SolverSimulationFactory.create(maze);
+    SolverSimulation fractional = SolverSimulationFactory.create(maze);
+    SolverSimulation chunked = SolverSimulationFactory.create(maze);
 
-    MouseRunResult wholeResult = whole.update(Duration.ofSeconds(20));
+    SolverRunResult wholeResult = whole.update(Duration.ofSeconds(20));
     fractional.update(Duration.ofMillis(125));
     fractional.update(Duration.ofMillis(625));
     fractional.update(Duration.ofSeconds(20));
@@ -133,13 +133,13 @@ final class SlowFloorSimulationTest {
 
   @ParameterizedTest
   @MethodSource("behaviors")
-  void replayOfCompletedSlowFloorMazeIsDeterministic(MouseBehavior behavior) {
-    long seed = behavior == MouseBehavior.RANDOM ? 41L : 53L;
+  void replayOfCompletedSlowFloorMazeIsDeterministic(SolverBehavior behavior) {
+    long seed = behavior == SolverBehavior.RANDOM ? 41L : 53L;
     MazeState maze = maze(level(behavior, seed, TIMEOUT), PASSING_WALLS, PASSING_SLOW_FLOORS);
 
     assertEquals(
-        MouseSimulationFactory.create(maze).update(TIMEOUT),
-        MouseSimulationFactory.create(maze).update(TIMEOUT));
+        SolverSimulationFactory.create(maze).update(TIMEOUT),
+        SolverSimulationFactory.create(maze).update(TIMEOUT));
   }
 
   @Test
@@ -152,7 +152,7 @@ final class SlowFloorSimulationTest {
             Set.of(position(1, 1)));
 
     assertEquals(
-        new MouseRunResult(position(1, 1), Duration.ofMillis(500), 1, MouseRunStatus.TIMED_OUT),
+        new SolverRunResult(position(1, 1), Duration.ofMillis(500), 1, SolverRunStatus.TIMED_OUT),
         run(maze));
   }
 
@@ -166,8 +166,8 @@ final class SlowFloorSimulationTest {
             Set.of(position(1, 1)));
 
     assertEquals(
-        new MouseRunResult(
-            level.cheese(), Duration.ofMillis(750), 2, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(
+            level.cheese(), Duration.ofMillis(750), 2, SolverRunStatus.REACHED_CHEESE),
         run(maze));
   }
 
@@ -185,27 +185,27 @@ final class SlowFloorSimulationTest {
             MOVE_INTERVAL,
             MOVE_INTERVAL,
             infiniteSupplies(),
-            MouseBehavior.LEFT_PRIORITY,
+            SolverBehavior.LEFT_PRIORITY,
             1L);
     MazeState maze = maze(level, Set.of(position(1, 0), position(1, 2)), Set.of());
 
     assertEquals(
-        new MouseRunResult(level.cheese(), MOVE_INTERVAL, 1, MouseRunStatus.REACHED_CHEESE),
+        new SolverRunResult(level.cheese(), MOVE_INTERVAL, 1, SolverRunStatus.REACHED_CHEESE),
         run(maze));
   }
 
-  private static MouseRunResult run(MazeState maze) {
-    return MouseSimulationFactory.create(maze).update(maze.levelDefinition().maximumSolveTime());
+  private static SolverRunResult run(MazeState maze) {
+    return SolverSimulationFactory.create(maze).update(maze.levelDefinition().maximumSolveTime());
   }
 
   private static Trace trace(MazeState maze) {
-    MouseSimulation simulation = MouseSimulationFactory.create(maze);
+    SolverSimulation simulation = SolverSimulationFactory.create(maze);
     List<GridPosition> positions = new ArrayList<>();
     List<Long> decisionTimes = new ArrayList<>();
     positions.add(simulation.result().position());
     int previousMoveCount = 0;
-    while (simulation.result().status() == MouseRunStatus.RUNNING) {
-      MouseRunResult result = simulation.update(MOVE_INTERVAL);
+    while (simulation.result().status() == SolverRunStatus.RUNNING) {
+      SolverRunResult result = simulation.update(MOVE_INTERVAL);
       if (result.moveCount() != previousMoveCount) {
         positions.add(result.position());
         decisionTimes.add(result.elapsedTime().toMillis());
@@ -224,7 +224,7 @@ final class SlowFloorSimulationTest {
   }
 
   private static LevelDefinition level(
-      MouseBehavior behavior, long seed, Duration maximumSolveTime) {
+      SolverBehavior behavior, long seed, Duration maximumSolveTime) {
     return new LevelDefinition(
         "slow-floor-" + behavior.name().toLowerCase(java.util.Locale.ROOT),
         "Slow Floor " + behavior,
@@ -252,7 +252,7 @@ final class SlowFloorSimulationTest {
         maximumSolveTime,
         MOVE_INTERVAL,
         infiniteSupplies(),
-        MouseBehavior.LEFT_PRIORITY,
+        SolverBehavior.LEFT_PRIORITY,
         1L);
   }
 
@@ -262,8 +262,8 @@ final class SlowFloorSimulationTest {
         new PlaceableCellSupply(PlaceableCellType.SLOW_FLOOR, CellSupply.infinite()));
   }
 
-  private static Stream<MouseBehavior> behaviors() {
-    return Stream.of(MouseBehavior.values());
+  private static Stream<SolverBehavior> behaviors() {
+    return Stream.of(SolverBehavior.values());
   }
 
   private static GridPosition position(int row, int column) {
@@ -279,5 +279,5 @@ final class SlowFloorSimulationTest {
   }
 
   private record Trace(
-      MouseRunResult result, List<GridPosition> positions, List<Long> decisionTimesMillis) {}
+      SolverRunResult result, List<GridPosition> positions, List<Long> decisionTimesMillis) {}
 }

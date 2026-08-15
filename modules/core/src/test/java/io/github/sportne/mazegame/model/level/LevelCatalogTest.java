@@ -47,14 +47,14 @@ final class LevelCatalogTest {
         id,
         "Test Level",
         FIRST_LEVEL.gridSize(),
-        FIRST_LEVEL.mouseStart(),
+        FIRST_LEVEL.solverStart(),
         FIRST_LEVEL.cheese(),
         FIRST_LEVEL.buildTime(),
         FIRST_LEVEL.targetSolveTime(),
         FIRST_LEVEL.maximumSolveTime(),
-        FIRST_LEVEL.mouseMoveInterval(),
+        FIRST_LEVEL.solverMoveInterval(),
         FIRST_LEVEL.placeableCellSupplies(),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         2L);
   }
 }

@@ -215,8 +215,8 @@ final class GameInputRouterTest {
   void ignoresInactiveOrMissedClicks() {
     GameInputAction action =
         GameInputRouter.route(
-            layout(GamePhase.MOUSE_RUNNING),
-            GamePhase.MOUSE_RUNNING,
+            layout(GamePhase.SOLVER_RUNNING),
+            GamePhase.SOLVER_RUNNING,
             640,
             360,
             Input.Buttons.LEFT,

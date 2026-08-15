@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -17,18 +17,18 @@ final class GameResultEvaluatorTest {
 
   @Test
   void passRequiresResultPhaseAndElapsedTimeAboveTarget() {
-    MouseRunResult passingResult =
-        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, MouseRunStatus.TIMED_OUT);
+    SolverRunResult passingResult =
+        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertTrue(GameResultEvaluator.passed(GamePhase.RESULT, passingResult, LEVEL));
-    assertFalse(GameResultEvaluator.passed(GamePhase.MOUSE_RUNNING, passingResult, LEVEL));
+    assertFalse(GameResultEvaluator.passed(GamePhase.SOLVER_RUNNING, passingResult, LEVEL));
   }
 
   @Test
   void equalOrFasterThanTargetDoesNotPass() {
-    MouseRunResult exactTarget =
-        new MouseRunResult(
-            LEVEL.cheese(), LEVEL.targetSolveTime(), 8, MouseRunStatus.REACHED_CHEESE);
+    SolverRunResult exactTarget =
+        new SolverRunResult(
+            LEVEL.cheese(), LEVEL.targetSolveTime(), 8, SolverRunStatus.REACHED_CHEESE);
 
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, exactTarget, LEVEL));
     assertFalse(GameResultEvaluator.passed(GamePhase.RESULT, null, LEVEL));
@@ -36,8 +36,8 @@ final class GameResultEvaluatorTest {
 
   @Test
   void requiresPhaseAndLevelDefinition() {
-    MouseRunResult result =
-        new MouseRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, MouseRunStatus.TIMED_OUT);
+    SolverRunResult result =
+        new SolverRunResult(LEVEL.cheese(), Duration.ofSeconds(6L), 12, SolverRunStatus.TIMED_OUT);
 
     assertThrows(NullPointerException.class, () -> GameResultEvaluator.passed(null, result, LEVEL));
     assertThrows(
@@ -46,19 +46,22 @@ final class GameResultEvaluatorTest {
   }
 
   @Test
-  void multiMousePassRequiresEveryAuthoredResultPastTheTarget() {
+  void multiSolverPassRequiresEveryAuthoredResultPastTheTarget() {
     LevelDefinition level = Levels.milestoneFive();
-    MouseRunResult passing =
-        new MouseRunResult(
-            level.cheese(), Duration.ofSeconds(6), 20, MouseRunStatus.REACHED_CHEESE);
-    MouseRunResult exact =
-        new MouseRunResult(
-            level.mice().get(1).goal(), level.targetSolveTime(), 18, MouseRunStatus.REACHED_CHEESE);
+    SolverRunResult passing =
+        new SolverRunResult(
+            level.cheese(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_CHEESE);
+    SolverRunResult exact =
+        new SolverRunResult(
+            level.solvers().get(1).goal(),
+            level.targetSolveTime(),
+            18,
+            SolverRunStatus.REACHED_CHEESE);
 
     assertTrue(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, passing), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing, exact), level));
     assertFalse(
-        GameResultEvaluator.passedAll(GamePhase.MOUSE_RUNNING, List.of(passing, passing), level));
+        GameResultEvaluator.passedAll(GamePhase.SOLVER_RUNNING, List.of(passing, passing), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(passing), level));
     assertFalse(GameResultEvaluator.passedAll(GamePhase.RESULT, List.of(), level));
     assertThrows(

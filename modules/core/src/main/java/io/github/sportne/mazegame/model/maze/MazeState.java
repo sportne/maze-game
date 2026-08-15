@@ -25,8 +25,8 @@ public record MazeState(
       validatePlacedCell(levelDefinition, entry.getKey(), entry.getValue());
     }
     deriveRemainingSupplies(levelDefinition, placedCells);
-    if (!hasPathsForEveryMouse(levelDefinition, placedCells)) {
-      throw new IllegalArgumentException("maze must keep a path for every mouse");
+    if (!hasPathsForEverySolver(levelDefinition, placedCells)) {
+      throw new IllegalArgumentException("maze must keep a path for every solver");
     }
   }
 
@@ -71,7 +71,7 @@ public record MazeState(
     }
     Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
     updated.put(destination, type);
-    if (!hasPathsForEveryMouse(levelDefinition, updated)) {
+    if (!hasPathsForEverySolver(levelDefinition, updated)) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
     }
     return MazeEditResult.accepted(
@@ -118,7 +118,7 @@ public record MazeState(
     Map<GridPosition, PlaceableCellType> updated = new HashMap<>(placedCells);
     updated.remove(source);
     updated.put(destination, type);
-    if (!hasPathsForEveryMouse(levelDefinition, updated)) {
+    if (!hasPathsForEverySolver(levelDefinition, updated)) {
       return MazeEditResult.rejected(this, MazeEditStatus.REJECTED_BLOCKS_PATH);
     }
     return MazeEditResult.accepted(new MazeState(levelDefinition, updated), MazeEditStatus.MOVED);
@@ -130,14 +130,14 @@ public record MazeState(
     return placedCells.containsKey(position);
   }
 
-  /** Returns whether a candidate position is inside the grid and walkable by either mouse. */
+  /** Returns whether a candidate position is inside the grid and walkable by either solver. */
   public boolean isTraversable(GridPosition position) {
     Objects.requireNonNull(position, "position");
     return position.isWithin(levelDefinition.gridSize())
         && placedCells.get(position) != PlaceableCellType.WALL;
   }
 
-  /** Returns whether entering a cell delays the next mouse decision by one movement interval. */
+  /** Returns whether entering a cell delays the next solver decision by one movement interval. */
   public boolean delaysNextDecisionAt(GridPosition position) {
     requireInsideGrid(position);
     return placedCells.get(position) == PlaceableCellType.SLOW_FLOOR;
@@ -152,10 +152,10 @@ public record MazeState(
   /** Returns the content rendered for one grid position. */
   public CellContent cellContentAt(GridPosition position) {
     requireInsideGrid(position);
-    if (levelDefinition.mice().stream().anyMatch(mouse -> position.equals(mouse.start()))) {
-      return CellContent.MOUSE_START;
+    if (levelDefinition.solvers().stream().anyMatch(solver -> position.equals(solver.start()))) {
+      return CellContent.SOLVER_START;
     }
-    if (levelDefinition.mice().stream().anyMatch(mouse -> position.equals(mouse.goal()))) {
+    if (levelDefinition.solvers().stream().anyMatch(solver -> position.equals(solver.goal()))) {
       return CellContent.CHEESE;
     }
     return switch (placedCells.get(position)) {
@@ -167,7 +167,7 @@ public record MazeState(
 
   /** Returns whether the start remains connected to the cheese through walkable cells. */
   public boolean hasPathFromStartToCheese() {
-    return hasPathsForEveryMouse(levelDefinition, placedCells);
+    return hasPathsForEverySolver(levelDefinition, placedCells);
   }
 
   /** Wall-only compatibility view retained until session and renderer migration is complete. */
@@ -218,19 +218,19 @@ public record MazeState(
     return remove(position).mazeState();
   }
 
-  /** Returns whether a position is reserved for the mouse start or cheese. */
+  /** Returns whether a position is reserved for the solver start or cheese. */
   public boolean isProtected(GridPosition position) {
     requireInsideGrid(position);
-    return levelDefinition.mice().stream()
-        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()));
+    return levelDefinition.solvers().stream()
+        .anyMatch(solver -> position.equals(solver.start()) || position.equals(solver.goal()));
   }
 
   private MazeEditStatus validateDestination(GridPosition position) {
     if (!position.isWithin(levelDefinition.gridSize())) {
       return MazeEditStatus.REJECTED_OUTSIDE_GRID;
     }
-    if (levelDefinition.mice().stream()
-        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()))) {
+    if (levelDefinition.solvers().stream()
+        .anyMatch(solver -> position.equals(solver.start()) || position.equals(solver.goal()))) {
       return MazeEditStatus.REJECTED_PROTECTED_CELL;
     }
     return null;
@@ -259,8 +259,8 @@ public record MazeState(
     if (!position.isWithin(levelDefinition.gridSize())) {
       throw new IllegalArgumentException("placed cell must be inside the grid");
     }
-    if (levelDefinition.mice().stream()
-        .anyMatch(mouse -> position.equals(mouse.start()) || position.equals(mouse.goal()))) {
+    if (levelDefinition.solvers().stream()
+        .anyMatch(solver -> position.equals(solver.start()) || position.equals(solver.goal()))) {
       throw new IllegalArgumentException("placed cell must not be protected");
     }
   }
@@ -281,10 +281,10 @@ public record MazeState(
     return Map.copyOf(remaining);
   }
 
-  private static boolean hasPathsForEveryMouse(
+  private static boolean hasPathsForEverySolver(
       LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
-    return levelDefinition.mice().stream()
-        .allMatch(mouse -> hasPath(levelDefinition, placedCells, mouse.start(), mouse.goal()));
+    return levelDefinition.solvers().stream()
+        .allMatch(solver -> hasPath(levelDefinition, placedCells, solver.start(), solver.goal()));
   }
 
   private static boolean hasPath(

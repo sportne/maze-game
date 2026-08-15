@@ -14,10 +14,10 @@ import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
-import io.github.sportne.mazegame.model.mouse.MouseRunResult;
-import io.github.sportne.mazegame.model.mouse.MouseRunStatus;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.result.BestResult;
+import io.github.sportne.mazegame.model.solver.SolverRunResult;
+import io.github.sportne.mazegame.model.solver.SolverRunStatus;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ final class GameSessionTest {
           Duration.ofSeconds(10),
           Duration.ofMillis(250),
           PlaceableCellSupply.releasedDefaults(),
-          MouseBehavior.RANDOM,
+          SolverBehavior.RANDOM,
           1L);
 
   private static final LevelCatalog TEST_CATALOG =
@@ -60,7 +60,7 @@ final class GameSessionTest {
     assertTrue(session.mazeState().walls().isEmpty());
     assertEquals(30.0F, session.buildTimeRemainingSeconds());
     assertFalse(session.runRequested());
-    assertNull(session.mouseRunResult());
+    assertNull(session.solverRunResult());
     assertNull(session.bestResult());
   }
 
@@ -108,7 +108,7 @@ final class GameSessionTest {
     assertEquals(GamePhase.LEVEL_SELECT, session.gamePhase());
     assertTrue(session.mazeState().walls().isEmpty());
     assertFalse(session.runRequested());
-    assertNull(session.mouseRunResult());
+    assertNull(session.solverRunResult());
   }
 
   @Test
@@ -117,10 +117,10 @@ final class GameSessionTest {
 
     session.updateBuildTimer(31.0F);
 
-    assertEquals(GamePhase.MOUSE_RUNNING, session.gamePhase());
+    assertEquals(GamePhase.SOLVER_RUNNING, session.gamePhase());
     assertEquals(0.0F, session.buildTimeRemainingSeconds());
     assertTrue(session.runRequested());
-    assertEquals(Levels.milestoneOne().mouseStart(), session.mouseRunResult().position());
+    assertEquals(Levels.milestoneOne().solverStart(), session.solverRunResult().position());
   }
 
   @Test
@@ -143,8 +143,8 @@ final class GameSessionTest {
   void rejectedPlacementFlashesAndExpires() {
     GameSession session = startedSession();
 
-    session.placeWall(Levels.milestoneOne().mouseStart());
-    assertEquals(Levels.milestoneOne().mouseStart(), session.rejectedPosition());
+    session.placeWall(Levels.milestoneOne().solverStart());
+    assertEquals(Levels.milestoneOne().solverStart(), session.rejectedPosition());
     assertEquals(0.5F, session.rejectedFlashRemainingSeconds());
 
     session.updateBuildTimer(0.5F);
@@ -159,18 +159,18 @@ final class GameSessionTest {
     session.startRun();
 
     assertEquals(GamePhase.MAIN_MENU, session.gamePhase());
-    assertNull(session.mouseRunResult());
+    assertNull(session.solverRunResult());
   }
 
   @Test
-  void updateMouseRunMovesToResultWhenTerminal() {
+  void updateSolverRunMovesToResultWhenTerminal() {
     GameSession session = startedSession();
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(GamePhase.RESULT, session.gamePhase());
-    assertEquals(MouseRunStatus.TIMED_OUT, session.mouseRunResult().status());
+    assertEquals(SolverRunStatus.TIMED_OUT, session.solverRunResult().status());
     assertTrue(session.resultPassed());
   }
 
@@ -181,7 +181,7 @@ final class GameSessionTest {
     session.startLevel(Levels.milestoneOne().id());
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(new BestResult(Duration.ofSeconds(10), 40), session.bestResult());
     assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
@@ -196,7 +196,7 @@ final class GameSessionTest {
     session.startLevel(Levels.milestoneOne().id());
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(new BestResult(Duration.ofSeconds(11), 1), session.bestResult());
     assertEquals(0, store.saveCount);
@@ -210,7 +210,7 @@ final class GameSessionTest {
     addVerticalCorridorWalls(session);
 
     session.startRun();
-    session.updateMouseRun(1.0F);
+    session.updateSolverRun(1.0F);
 
     assertNull(session.bestResult());
     assertEquals(0, store.saveCount);
@@ -222,10 +222,10 @@ final class GameSessionTest {
     GameSession session = new GameSession(store);
     session.startLevel(Levels.milestoneOne().id());
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     session.replayRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(1, store.saveCount);
   }
@@ -236,45 +236,45 @@ final class GameSessionTest {
     GridPosition wall = new GridPosition(2, 2);
     session.placeWall(wall);
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     session.retryLevel();
 
     assertEquals(GamePhase.BUILDING, session.gamePhase());
     assertFalse(session.runRequested());
     assertTrue(session.mazeState().walls().isEmpty());
-    assertNull(session.mouseRunResult());
+    assertNull(session.solverRunResult());
   }
 
   @Test
   void replayUsesSameMazeAndSeed() {
     GameSession session = startedSession();
     session.startRun();
-    session.updateMouseRun(10.0F);
-    MouseRunResult firstResult = session.mouseRunResult();
+    session.updateSolverRun(10.0F);
+    SolverRunResult firstResult = session.solverRunResult();
 
     session.replayRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
-    assertEquals(firstResult, session.mouseRunResult());
+    assertEquals(firstResult, session.solverRunResult());
   }
 
   @Test
-  void sessionUsesTheAuthoredMouseBehavior() {
+  void sessionUsesTheAuthoredSolverBehavior() {
     LevelDefinition source = Levels.milestoneOne();
     LevelDefinition scoutLevel =
         new LevelDefinition(
             "scout-session",
             "Scout Session",
             source.gridSize(),
-            source.mouseStart(),
+            source.solverStart(),
             source.cheese(),
             source.buildTime(),
             source.targetSolveTime(),
             source.maximumSolveTime(),
-            source.mouseMoveInterval(),
+            source.solverMoveInterval(),
             source.placeableCellSupplies(),
-            MouseBehavior.LEFT_PRIORITY,
+            SolverBehavior.LEFT_PRIORITY,
             256L);
     GameSession session =
         new GameSession(
@@ -283,12 +283,12 @@ final class GameSessionTest {
     session.startLevel(scoutLevel.id());
     session.startRun();
     List<GridPosition> firstTrace = nextFourPositions(session);
-    session.updateMouseRun(10.0F);
-    MouseRunResult firstResult = session.mouseRunResult();
+    session.updateSolverRun(10.0F);
+    SolverRunResult firstResult = session.solverRunResult();
 
     session.replayRun();
     List<GridPosition> replayTrace = nextFourPositions(session);
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(
         List.of(
@@ -298,7 +298,7 @@ final class GameSessionTest {
             new GridPosition(2, 0)),
         firstTrace);
     assertEquals(firstTrace, replayTrace);
-    assertEquals(firstResult, session.mouseRunResult());
+    assertEquals(firstResult, session.solverRunResult());
   }
 
   @Test
@@ -336,20 +336,20 @@ final class GameSessionTest {
     GameSession session = new GameSession(TEST_CATALOG, Levels.milestoneOne().id(), store);
     session.startLevel(SECOND_LEVEL.id());
     session.startRun();
-    session.updateMouseRun(10.0F);
-    MouseRunResult firstResult = session.mouseRunResult();
+    session.updateSolverRun(10.0F);
+    SolverRunResult firstResult = session.solverRunResult();
 
     session.retryLevel();
     assertEquals(SECOND_LEVEL, session.levelDefinition());
     assertEquals(SECOND_LEVEL, session.mazeState().levelDefinition());
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
     session.replayRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(SECOND_LEVEL, session.levelDefinition());
-    assertEquals(firstResult, session.mouseRunResult());
+    assertEquals(firstResult, session.solverRunResult());
   }
 
   @Test
@@ -360,7 +360,7 @@ final class GameSessionTest {
     session.startLevel(SECOND_LEVEL.id());
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertEquals(SECOND_LEVEL.id(), store.savedLevelId);
   }
@@ -376,7 +376,7 @@ final class GameSessionTest {
 
     session.startLevel(Levels.milestoneOne().id());
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertTrue(session.levelProgress().get(1).unlocked());
     assertEquals(Optional.of(SECOND_LEVEL.id()), session.nextLevelId());
@@ -392,7 +392,7 @@ final class GameSessionTest {
     addVerticalCorridorWalls(session);
 
     session.startRun();
-    session.updateMouseRun(1.0F);
+    session.updateSolverRun(1.0F);
 
     assertFalse(session.resultPassed());
     assertFalse(session.levelProgress().get(1).unlocked());
@@ -436,7 +436,7 @@ final class GameSessionTest {
     session.startLevel(SECOND_LEVEL.id());
 
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertTrue(session.resultPassed());
     assertFalse(session.hasNextLevel());
@@ -462,7 +462,7 @@ final class GameSessionTest {
 
     session.startLevel(Levels.milestoneOne().id());
     session.startRun();
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
 
     assertTrue(session.levelProgress().get(1).unlocked());
     assertTrue(session.startLevel(SECOND_LEVEL.id()));
@@ -490,10 +490,10 @@ final class GameSessionTest {
     addMilestoneTwoTimeoutWalls(session);
 
     session.updateBuildTimer(25.0F);
-    session.updateMouseRun(15.0F);
+    session.updateSolverRun(15.0F);
 
     assertTrue(session.resultPassed());
-    assertEquals(MouseRunStatus.TIMED_OUT, session.mouseRunResult().status());
+    assertEquals(SolverRunStatus.TIMED_OUT, session.solverRunResult().status());
     assertEquals(Levels.milestoneTwo().id(), store.savedLevelId);
     assertEquals(9, session.mazeState().walls().size());
 
@@ -503,14 +503,14 @@ final class GameSessionTest {
     assertEquals(25.0F, session.buildTimeRemainingSeconds());
 
     session.startRun();
-    session.updateMouseRun(3.0F);
-    MouseRunResult failedResult = session.mouseRunResult();
+    session.updateSolverRun(3.0F);
+    SolverRunResult failedResult = session.solverRunResult();
     assertFalse(session.resultPassed());
-    assertEquals(MouseRunStatus.REACHED_CHEESE, failedResult.status());
+    assertEquals(SolverRunStatus.REACHED_CHEESE, failedResult.status());
 
     session.replayRun();
-    session.updateMouseRun(15.0F);
-    assertEquals(failedResult, session.mouseRunResult());
+    session.updateSolverRun(15.0F);
+    assertEquals(failedResult, session.solverRunResult());
     assertEquals(1, store.saveCount);
 
     session.returnToMainMenu();
@@ -586,7 +586,7 @@ final class GameSessionTest {
     session.startLevel(Levels.milestoneTwo().id());
     addMilestoneTwoTimeoutWalls(session);
     session.startRun();
-    session.updateMouseRun(15.0F);
+    session.updateSolverRun(15.0F);
     BestResult secondBest = session.bestResult();
     assertEquals(Optional.of(Levels.milestoneThree().id()), session.nextLevelId());
     assertTrue(session.startLevel(Levels.milestoneThree().id()));
@@ -594,17 +594,17 @@ final class GameSessionTest {
     addMilestoneThreePassingWalls(session);
     Set<GridPosition> acceptedMaze = session.mazeState().walls();
     session.startRun();
-    session.updateMouseRun(8.0F);
-    MouseRunResult firstRun = session.mouseRunResult();
+    session.updateSolverRun(8.0F);
+    SolverRunResult firstRun = session.solverRunResult();
     BestResult thirdBest = session.bestResult();
 
     assertTrue(session.resultPassed());
     assertEquals(
-        new MouseRunResult(
+        new SolverRunResult(
             Levels.milestoneThree().cheese(),
             Duration.ofMillis(6500),
             26,
-            MouseRunStatus.REACHED_CHEESE),
+            SolverRunStatus.REACHED_CHEESE),
         firstRun);
     assertEquals(Levels.milestoneThree().id(), store.savedLevelId);
     assertEquals(firstBest, store.results.get(Levels.milestoneOne().id()));
@@ -614,8 +614,8 @@ final class GameSessionTest {
     assertEquals(Optional.of(Levels.milestoneFour().id()), session.nextLevelId());
 
     session.replayRun();
-    session.updateMouseRun(8.0F);
-    assertEquals(firstRun, session.mouseRunResult());
+    session.updateSolverRun(8.0F);
+    assertEquals(firstRun, session.solverRunResult());
     assertEquals(acceptedMaze, session.mazeState().walls());
 
     session.retryLevel();
@@ -655,17 +655,17 @@ final class GameSessionTest {
     addMilestoneFourPassingCells(session);
     Map<GridPosition, PlaceableCellType> acceptedMaze = session.mazeState().placedCells();
     session.startRun();
-    session.updateMouseRun(6.5F);
-    MouseRunResult firstRun = session.mouseRunResult();
+    session.updateSolverRun(6.5F);
+    SolverRunResult firstRun = session.solverRunResult();
     BestResult fourthBest = session.bestResult();
 
     assertTrue(session.resultPassed());
     assertEquals(
-        new MouseRunResult(
+        new SolverRunResult(
             Levels.milestoneFour().cheese(),
             Duration.ofMillis(5750),
             20,
-            MouseRunStatus.REACHED_CHEESE),
+            SolverRunStatus.REACHED_CHEESE),
         firstRun);
     assertEquals(Levels.milestoneFour().id(), store.savedLevelId);
     assertEquals(1, store.saveCount);
@@ -677,8 +677,8 @@ final class GameSessionTest {
     assertEquals(Optional.of(Levels.milestoneFive().id()), session.nextLevelId());
 
     session.replayRun();
-    session.updateMouseRun(6.5F);
-    assertEquals(firstRun, session.mouseRunResult());
+    session.updateSolverRun(6.5F);
+    assertEquals(firstRun, session.solverRunResult());
     assertEquals(acceptedMaze, session.mazeState().placedCells());
     assertEquals(1, store.saveCount);
 
@@ -711,8 +711,8 @@ final class GameSessionTest {
     assertEquals(level, session.mazeState().levelDefinition());
     assertEquals(level.buildTime().toMillis() / 1000.0F, session.buildTimeRemainingSeconds());
 
-    session.placeWall(level.mouseStart());
-    assertEquals(level.mouseStart(), session.rejectedPosition());
+    session.placeWall(level.solverStart());
+    assertEquals(level.solverStart(), session.rejectedPosition());
     session.placeWall(level.cheese());
     assertEquals(level.cheese(), session.rejectedPosition());
     assertTrue(session.mazeState().walls().isEmpty());
@@ -742,8 +742,8 @@ final class GameSessionTest {
   private static List<GridPosition> nextFourPositions(GameSession session) {
     List<GridPosition> positions = new ArrayList<>();
     for (int index = 0; index < 4; index++) {
-      session.updateMouseRun(0.25F);
-      positions.add(session.mouseRunResult().position());
+      session.updateSolverRun(0.25F);
+      positions.add(session.solverRunResult().position());
     }
     return List.copyOf(positions);
   }

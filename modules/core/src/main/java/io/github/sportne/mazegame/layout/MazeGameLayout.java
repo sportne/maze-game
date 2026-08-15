@@ -217,7 +217,7 @@ public final class MazeGameLayout {
           case LEVEL_SELECT -> levelSelect(screenWidth, screenHeight, levelCount);
           case SETTINGS -> settings(screenWidth, screenHeight);
           case BUILDING -> building(screenWidth, screenHeight, gridSize);
-          case MOUSE_RUNNING, REPLAY -> running(phase, screenWidth, screenHeight, gridSize);
+          case SOLVER_RUNNING, REPLAY -> running(phase, screenWidth, screenHeight, gridSize);
           case RESULT -> result(screenWidth, screenHeight, gridSize, hasNextLevel);
         };
     return new ScreenLayout(layout.phase(), layout.viewport(), layout.elements(), gridSize);

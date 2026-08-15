@@ -7,7 +7,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.runtime.MazeGameRuntimeConfiguration;
 import io.github.sportne.mazegame.state.BestResultStore;
 import io.github.sportne.mazegame.state.GameSession;
@@ -56,7 +56,7 @@ final class BrowserBuildGestureFixture {
         List.of(
             PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 }

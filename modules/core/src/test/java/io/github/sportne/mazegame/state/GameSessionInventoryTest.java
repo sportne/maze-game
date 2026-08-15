@@ -13,7 +13,7 @@ import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import io.github.sportne.mazegame.model.level.LevelCatalog;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
-import io.github.sportne.mazegame.model.level.MouseBehavior;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeEditResult;
 import io.github.sportne.mazegame.model.maze.MazeEditStatus;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -231,7 +231,7 @@ final class GameSessionInventoryTest {
       session.startRun();
     }
 
-    assertEquals(GamePhase.MOUSE_RUNNING, session.gamePhase());
+    assertEquals(GamePhase.SOLVER_RUNNING, session.gamePhase());
     assertTrue(session.placeOrReplaceCell(THIRD).isEmpty());
     assertTrue(session.removeCell(FIRST).isEmpty());
     assertTrue(session.moveCell(SECOND, THIRD).isEmpty());
@@ -239,7 +239,7 @@ final class GameSessionInventoryTest {
     assertSame(frozen, session.mazeState());
     assertEquals(frozenPalette, session.paletteState());
 
-    session.updateMouseRun(10.0F);
+    session.updateSolverRun(10.0F);
     MazeState completed = session.mazeState();
     session.replayRun();
     assertSame(completed, session.mazeState());
@@ -300,7 +300,7 @@ final class GameSessionInventoryTest {
         Duration.ofSeconds(10),
         Duration.ofMillis(250),
         supplies,
-        MouseBehavior.RANDOM,
+        SolverBehavior.RANDOM,
         1L);
   }
 
