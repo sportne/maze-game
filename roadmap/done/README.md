@@ -47,6 +47,7 @@ and planned cards remain in the parent `roadmap/` directory.
 
 ## Gameplay Foundations
 
+- [GAMEPLAY-01: Brainstorm and select additional cell types](gameplay-01-additional-cell-types.md)
 - [GRID-01: Add fixed authored grid cells](grid-01-fixed-authored-cells.md)
 - [SOLVER-01: Design and deliver a third solver type](solver-01-third-solver-type.md)
 

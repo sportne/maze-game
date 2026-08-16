@@ -116,9 +116,15 @@ Status: complete.
 
 ### Future Gameplay Foundations
 
-- [GAMEPLAY-01: Brainstorm and select additional cell types](gameplay-01-additional-cell-types.md)
-  compares candidate mechanics and produces a bounded, evidence-backed shortlist before the closed
-  production cell model changes.
+- [GAMEPLAY-01: Brainstorm and select additional cell types](done/gameplay-01-additional-cell-types.md)
+  is complete. The accepted [additional-cell design](../docs/additional-cell-types-design.md)
+  shortlists Right-Turn Floor and North–South Rail Gate without changing the production cell model.
+- [GAMEPLAY-02: Add Right-Turn Floor](gameplay-02-right-turn-floor.md) is the primary mechanic
+  implementation follow-up.
+- [GAMEPLAY-03: Add North–South Rail Gate](gameplay-03-north-south-rail-gate.md) is the static topology
+  follow-up after the shared palette descriptor boundary exists.
+- [GAMEPLAY-04: Design and release additional-cell levels](gameplay-04-additional-cell-levels.md)
+  owns balancing, progression, and physical playtest after both mechanics are implemented.
 - [GRID-01: Add fixed authored grid cells](done/grid-01-fixed-authored-cells.md) is complete. The
   accepted [fixed-cell contract](../docs/fixed-authored-cells.md) keeps level-owned geometry separate
   from editable player inventory.
@@ -133,7 +139,8 @@ These remain outside the planned Milestone 4 scope. Proposed items are not commi
 milestone, while completed foundations are not yet used by a released level:
 
 - Grid progression beyond the five authored levels.
-- [Cell types beyond Wall and Slow Floor](gameplay-01-additional-cell-types.md).
+- [Right-Turn Floor](gameplay-02-right-turn-floor.md) and
+  [North–South Rail Gate](gameplay-03-north-south-rail-gate.md) implementation.
 - [Fixed authored grid cells](done/grid-01-fixed-authored-cells.md).
 - [A third solver type](done/solver-01-third-solver-type.md).
 - Retro/pixel visual style.
