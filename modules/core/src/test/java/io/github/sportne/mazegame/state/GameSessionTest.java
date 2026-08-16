@@ -86,7 +86,8 @@ final class GameSessionTest {
             Levels.levelTwo().id(),
             Levels.levelThree().id(),
             Levels.levelFour().id(),
-            Levels.levelFive().id()),
+            Levels.levelFive().id(),
+            Levels.levelSix().id()),
         store.loadedLevelIds);
   }
 
@@ -801,6 +802,7 @@ final class GameSessionTest {
     store.results.put(Levels.levelTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
     store.results.put(Levels.levelThree().id(), new BestResult(Duration.ofMillis(6500), 26));
     store.results.put(Levels.levelFour().id(), new BestResult(Duration.ofMillis(5750), 20));
+    store.results.put(Levels.levelFive().id(), new BestResult(Duration.ofSeconds(9), 69));
     GameSession session = new GameSession(store);
 
     assertTrue(session.startLevel(level.id()));

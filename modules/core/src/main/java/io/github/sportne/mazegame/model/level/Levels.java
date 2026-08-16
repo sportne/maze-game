@@ -1,5 +1,6 @@
 package io.github.sportne.mazegame.model.level;
 
+import io.github.sportne.mazegame.model.cell.FixedCellType;
 import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
@@ -126,9 +127,35 @@ public final class Levels {
                   SolverAppearance.SCOUT_SQUIRREL,
                   GoalType.ACORN)));
 
+  /** Sixth 5x5 level introducing Tracker's visit-memory behavior and fixed geometry. */
+  private static final LevelDefinition LEVEL_SIX =
+      new LevelDefinition(
+          "level-6",
+          "Level 6",
+          GridSize.square(5),
+          Duration.ofSeconds(20),
+          Duration.ofSeconds(6),
+          Duration.ofSeconds(8),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 1),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
+          List.of(
+              new FixedCell(new GridPosition(0, 2), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 1), FixedCellType.WALL)),
+          List.of(
+              new LevelSolver(
+                  new GridPosition(0, 0),
+                  new GridPosition(4, 4),
+                  SolverBehavior.LEAST_VISITED,
+                  OptionalLong.empty(),
+                  SolverAppearance.TRACKER_RACCOON,
+                  GoalType.TRASH_CAN)));
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
-      new LevelCatalog(List.of(LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE));
+      new LevelCatalog(
+          List.of(LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE, LEVEL_SIX));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -172,6 +199,11 @@ public final class Levels {
   /** Returns the fifth authored level featuring both Random and Scout. */
   public static LevelDefinition levelFive() {
     return LEVEL_FIVE;
+  }
+
+  /** Returns the sixth authored level featuring Tracker and fixed geometry. */
+  public static LevelDefinition levelSix() {
+    return LEVEL_SIX;
   }
 
   /**

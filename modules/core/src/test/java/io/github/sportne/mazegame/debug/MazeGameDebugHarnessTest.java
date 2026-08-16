@@ -57,6 +57,11 @@ final class MazeGameDebugHarnessTest {
           new GridPosition(2, 5),
           new GridPosition(1, 2));
 
+  private static final Set<GridPosition> LEVEL_SIX_WALLS = Set.of(new GridPosition(3, 4));
+
+  private static final Set<GridPosition> LEVEL_SIX_SLOW_FLOORS =
+      Set.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4));
+
   @Test
   void rejectsInvalidScreenDimensions() {
     assertThrows(IllegalArgumentException.class, () -> new MazeGameDebugHarness(0, 720));
@@ -225,18 +230,29 @@ final class MazeGameDebugHarnessTest {
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.levelSix(), harness.snapshot().mazeState().levelDefinition());
+
+    LEVEL_SIX_WALLS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
+    LEVEL_SIX_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(8));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
     assertFalse(harness.snapshot().hasNextLevel());
-    harness.clickReplay().advance(Duration.ofSeconds(10)).clickRetry();
+    harness.clickReplay().advance(Duration.ofSeconds(8)).clickRetry();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelFive(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelSix(), harness.snapshot().mazeState().levelDefinition());
 
     harness
         .clickStartRun()
-        .advance(Duration.ofSeconds(10))
+        .advance(Duration.ofSeconds(8))
         .clickResultMainMenu()
         .clickMainMenuStart()
-        .clickLevelFive();
+        .clickLevelSix();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelFive(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelSix(), harness.snapshot().mazeState().levelDefinition());
   }
 }

@@ -220,7 +220,7 @@ final class MazeGameLayoutTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 1, 2, 5})
+  @ValueSource(ints = {0, 1, 2, 5, 6})
   void levelSelectionDeclaresExactlyTheRequestedCards(int levelCount) {
     ScreenLayout layout =
         MazeGameLayout.forPhase(

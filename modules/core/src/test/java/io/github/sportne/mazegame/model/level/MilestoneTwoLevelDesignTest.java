@@ -76,7 +76,12 @@ final class MilestoneTwoLevelDesignTest {
     assertEquals(38L, LEVEL.primarySolver().randomSeed().orElseThrow());
     assertEquals(
         List.of(
-            Levels.levelOne(), LEVEL, Levels.levelThree(), Levels.levelFour(), Levels.levelFive()),
+            Levels.levelOne(),
+            LEVEL,
+            Levels.levelThree(),
+            Levels.levelFour(),
+            Levels.levelFive(),
+            Levels.levelSix()),
         Levels.catalog().levels());
   }
 

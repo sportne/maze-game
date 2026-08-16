@@ -9,8 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.sportne.mazegame.browser.BrowserGameScenario.ScreenPoint;
+import io.github.sportne.mazegame.layout.MazeGameLayout;
+import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.state.GamePhase;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -48,6 +51,9 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 final class SafariReleaseTest {
   private static final int REFERENCE_WIDTH = 1280;
   private static final int REFERENCE_HEIGHT = 720;
+  private static final String LEVEL_FOUR_RESULT_KEY = "maze-game.best-result.milestone-4";
+  private static final String LEVEL_FIVE_RESULT_KEY = "maze-game.best-result.milestone-5";
+  private static final String LEVEL_SIX_RESULT_KEY = "maze-game.best-result.level-6";
   private static final Set<String> JAVASCRIPT_ASSETS =
       Set.of(
           "app.js",
@@ -188,7 +194,12 @@ final class SafariReleaseTest {
         .executeScript(
             "arguments[0].forEach(function(key) { window.localStorage.removeItem(key); });",
             List.of(
-                MILESTONE_ONE_RESULT_KEY, MILESTONE_TWO_RESULT_KEY, MILESTONE_THREE_RESULT_KEY));
+                MILESTONE_ONE_RESULT_KEY,
+                MILESTONE_TWO_RESULT_KEY,
+                MILESTONE_THREE_RESULT_KEY,
+                LEVEL_FOUR_RESULT_KEY,
+                LEVEL_FIVE_RESULT_KEY,
+                LEVEL_SIX_RESULT_KEY));
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
@@ -226,6 +237,39 @@ final class SafariReleaseTest {
     String milestoneThreeResult = readSavedResult(driver, MILESTONE_THREE_RESULT_KEY);
     assertEquals("6500:26", milestoneThreeResult);
     assertFalse(milestoneTwoResult.equals(milestoneThreeResult));
+
+    javascript(driver)
+        .executeScript(
+            "window.localStorage.setItem(arguments[0], '5750:20');"
+                + "window.localStorage.setItem(arguments[1], '9000:69');",
+            LEVEL_FOUR_RESULT_KEY,
+            LEVEL_FIVE_RESULT_KEY);
+    driver.navigate().refresh();
+    waitForRenderedControl(driver, 640, 280);
+    installRuntimeErrorCapture(driver);
+    controls.clickButton(
+        GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
+    controls.waitForButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
+    controls.placeWalls(Levels.levelSix(), List.of(new GridPosition(3, 4)));
+    controls.clickButton(
+        GamePhase.BUILDING,
+        Levels.levelSix(),
+        false,
+        MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+    controls.placeWalls(
+        Levels.levelSix(),
+        List.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4)));
+    controls.clickButton(GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
+    controls.waitForButton(GamePhase.RESULT, Levels.levelSix(), false, MazeGameLayout.RESULT_RETRY);
+    waitForSavedResult(driver, LEVEL_SIX_RESULT_KEY);
+    String levelSixResult = readSavedResult(driver, LEVEL_SIX_RESULT_KEY);
+    assertEquals("6500:20", levelSixResult);
+
     assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
     recordResponsiveLayouts(driver, target, evidence);
@@ -236,6 +280,7 @@ final class SafariReleaseTest {
     assertEquals(milestoneOneResult, readSavedResult(driver, MILESTONE_ONE_RESULT_KEY));
     assertEquals(milestoneTwoResult, readSavedResult(driver, MILESTONE_TWO_RESULT_KEY));
     assertEquals(milestoneThreeResult, readSavedResult(driver, MILESTONE_THREE_RESULT_KEY));
+    assertEquals(levelSixResult, readSavedResult(driver, LEVEL_SIX_RESULT_KEY));
     assertPageStarted(driver);
     assertReleaseLocation(driver, activeReleaseUrl);
     installRuntimeErrorCapture(driver);
@@ -252,9 +297,10 @@ final class SafariReleaseTest {
     evidence.add(target + " Milestone 1 saved result: " + milestoneOneResult);
     evidence.add(target + " Milestone 2 saved result: " + milestoneTwoResult);
     evidence.add(target + " Milestone 3 Scout saved result: " + milestoneThreeResult);
+    evidence.add(target + " Level 6 Tracker saved result: " + levelSixResult);
     evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
     evidence.add(target + " audio context after interaction: running");
-    evidence.add(target + " three-level progression, refresh, interaction, and persistence: PASS");
+    evidence.add(target + " Tracker level, refresh, interaction, and persistence: PASS");
     evidence.add(target + " runtime errors after initialization: none");
   }
 

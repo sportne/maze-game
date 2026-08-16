@@ -130,19 +130,18 @@ Status: complete.
   from editable player inventory.
 - [SOLVER-01: Design and deliver a third solver type](done/solver-01-third-solver-type.md) selects,
   specifies, implements, and presents one behavior distinct from Random and Scout.
-- [SOLVER-02: Design and deliver a Tracker level](solver-02-tracker-level.md) is the follow-up
-  authored-level and balancing task produced by SOLVER-01.
+- [SOLVER-02: Design and deliver a Tracker level](done/solver-02-tracker-level.md) is complete. The
+  accepted [Level 6 design](../docs/level-6-tracker-design.md) introduces Tracker, fixed geometry,
+  and exhaustively balanced combined inventory.
 
 ## Deferred Ideas
 
 These remain outside the planned Milestone 4 scope. Proposed items are not committed to a release
 milestone, while completed foundations are not yet used by a released level:
 
-- Grid progression beyond the five authored levels.
+- Grid progression beyond the six authored levels.
 - [Right-Turn Floor](gameplay-02-right-turn-floor.md) and
   [North–South Rail Gate](gameplay-03-north-south-rail-gate.md) implementation.
-- [Fixed authored grid cells](done/grid-01-fixed-authored-cells.md).
-- [A third solver type](done/solver-01-third-solver-type.md).
 - Retro/pixel visual style.
 - More authored levels with mixed grid sizes, block types, and solver behaviors.
 

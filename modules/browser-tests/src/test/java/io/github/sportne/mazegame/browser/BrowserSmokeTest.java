@@ -75,6 +75,7 @@ final class BrowserSmokeTest {
   private static final long SOLVER_STATUS_SIGNATURE = 1_484_529_530_432_220_098L;
   private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
+  private static final String LEVEL_SIX_RESULT_KEY = "maze-game.best-result.level-6";
   private static final Set<String> COMMON_ASSETS =
       Set.of(
           "styles.css",
@@ -118,6 +119,7 @@ final class BrowserSmokeTest {
       try {
         runGameFlow(page, server.uri(), browserLog, artifactDirectory, reportDirectory, browser);
         runBuildGestureFixtureFlows(browser, server.uri(), reportDirectory);
+        runLevelSixReleaseFlow(browser, server.uri(), reportDirectory);
         runMobileTouchFlows(browser, server.uri(), reportDirectory);
       } catch (Throwable failure) {
         captureFailure(page, browserLog, reportDirectory, failure);
@@ -387,6 +389,61 @@ final class BrowserSmokeTest {
         reportDirectory.resolve("touch-build-gesture-fixture.png"),
         new MobileViewport(PORTRAIT_WIDTH, PORTRAIT_HEIGHT),
         true);
+  }
+
+  private static void runLevelSixReleaseFlow(
+      Browser browser, URI applicationUri, Path reportDirectory) throws IOException {
+    try (BrowserContext context =
+        browser.newContext(
+            new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
+      context.addInitScript(
+          "window.localStorage.setItem('maze-game.best-result.milestone-1', '10000:40');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-2', '15000:60');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-3', '6500:26');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-4', '5750:20');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-5', '9000:69');");
+      try (Page page = context.newPage()) {
+        BrowserLog levelLog = BrowserLog.forAuxiliaryTouchContext();
+        levelLog.observe(page);
+        page.navigate(applicationUri.toString());
+        waitForRenderedControl(page, 640, 280);
+        BrowserControls controls =
+            new BrowserControls(page, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, false);
+        controls.clickButton(
+            GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
+        controls.waitForButton(
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+        controls.clickButton(
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+        controls.waitForButton(
+            GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
+
+        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(0, 2)));
+        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(1, 1)));
+        controls.placeWalls(Levels.levelSix(), List.of(new GridPosition(3, 4)));
+        controls.clickButton(
+            GamePhase.BUILDING,
+            Levels.levelSix(),
+            false,
+            MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+        for (GridPosition slowFloor :
+            List.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4))) {
+          controls.clickCell(Levels.levelSix(), slowFloor);
+        }
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-level-6.png")));
+        controls.clickButton(
+            GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
+        controls.waitForButton(
+            GamePhase.RESULT, Levels.levelSix(), false, MazeGameLayout.RESULT_RETRY);
+
+        waitForSavedResult(page, LEVEL_SIX_RESULT_KEY);
+        assertEquals("6500:20", readSavedResult(page, LEVEL_SIX_RESULT_KEY));
+        assertTrue(
+            levelLog.errors().isEmpty(),
+            () -> String.join(System.lineSeparator(), levelLog.errors()));
+      }
+    }
   }
 
   private static void runBuildGestureFixtureFlow(

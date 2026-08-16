@@ -273,7 +273,7 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer =
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
-    LevelDefinition finalLevel = Levels.levelFive();
+    LevelDefinition finalLevel = Levels.levelSix();
     SolverRunResult result =
         new SolverRunResult(
             finalLevel.primarySolver().goal(),
@@ -805,7 +805,7 @@ final class MazeGameRendererTest {
     assertTrue(spriteBatch.drawnRegionXs().contains(2));
     assertFalse(spriteBatch.drawnRegionXs().contains(1));
 
-    LevelDefinition trackerLevel = trackerLevel();
+    LevelDefinition trackerLevel = Levels.levelSix();
     SolverRunResult trackerResult =
         new SolverRunResult(
             trackerLevel.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
@@ -1165,26 +1165,6 @@ final class MazeGameRendererTest {
             new LevelSolver(
                 new GridPosition(4, 4),
                 new GridPosition(0, 4),
-                SolverBehavior.LEAST_VISITED,
-                OptionalLong.empty(),
-                SolverAppearance.TRACKER_RACCOON,
-                GoalType.TRASH_CAN)));
-  }
-
-  private static LevelDefinition trackerLevel() {
-    return new LevelDefinition(
-        LEVEL.id(),
-        "Tracker Fixture",
-        LEVEL.gridSize(),
-        LEVEL.buildTime(),
-        LEVEL.targetSolveTime(),
-        LEVEL.maximumSolveTime(),
-        LEVEL.solverMoveInterval(),
-        LEVEL.placeableCellSupplies(),
-        List.of(
-            new LevelSolver(
-                LEVEL.primarySolver().start(),
-                LEVEL.primarySolver().goal(),
                 SolverBehavior.LEAST_VISITED,
                 OptionalLong.empty(),
                 SolverAppearance.TRACKER_RACCOON,

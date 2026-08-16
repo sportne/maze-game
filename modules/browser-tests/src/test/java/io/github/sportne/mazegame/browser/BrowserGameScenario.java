@@ -48,6 +48,10 @@ final class BrowserGameScenario {
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(4));
     controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(5));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+    controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(
         GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);

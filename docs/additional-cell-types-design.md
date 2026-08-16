@@ -284,7 +284,7 @@ replace the count reference with all four real enum values across the same viewp
 - Preserve exact Random/Seeker seed use, Scout heading, Tracker visits, fixed-step timing, and first-
   solver-wins multi-solver completion.
 - Generalize fixed and mutable cell-effect lookup while retaining separate ownership and inventory.
-- Migrate all five released definitions to explicit finite-zero supplies for each new placeable type;
+- Migrate every released definition to explicit finite-zero supplies for each new placeable type;
   their initial palettes and traces must remain byte-for-byte/equality compatible where applicable.
 - Replace binary palette names/marks/tooltips with exhaustive data-driven descriptors. Tooltip bounds
   must support two lines, remain clamped, and have the defined transient touch path.
