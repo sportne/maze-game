@@ -533,6 +533,17 @@ final class BrowserSmokeTest {
 
         controls.waitForButton(
             GamePhase.BUILDING, Levels.levelTen(), false, MazeGameLayout.BUILD_START);
+        page.screenshot(
+            new Page.ScreenshotOptions()
+                .setPath(reportDirectory.resolve("desktop-level-10-presets.png")));
+        controls.dragPlacedCell(
+            Levels.levelTen(),
+            BrowserGameScenario.LEVEL_TEN_PRESET_SLOW_FLOOR,
+            BrowserGameScenario.LEVEL_TEN_PRESET_MOVE_DESTINATION);
+        controls.dragPlacedCell(
+            Levels.levelTen(),
+            BrowserGameScenario.LEVEL_TEN_PRESET_MOVE_DESTINATION,
+            BrowserGameScenario.LEVEL_TEN_PRESET_SLOW_FLOOR);
         controls.clickButton(
             GamePhase.BUILDING,
             Levels.levelTen(),

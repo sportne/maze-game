@@ -167,8 +167,9 @@ public final class GameSession {
    */
   public List<CellPaletteState> paletteState() {
     List<CellPaletteState> palette = new ArrayList<>();
+    List<PlaceableCellType> initiallyAvailableTypes = levelDefinition.initiallyAvailableCellTypes();
     for (PlaceableCellSupply authored : levelDefinition.placeableCellSupplies()) {
-      if (!authored.supply().available()) {
+      if (!initiallyAvailableTypes.contains(authored.type())) {
         continue;
       }
       palette.add(
@@ -617,7 +618,7 @@ public final class GameSession {
   private void initializeLevelState(LevelDefinition selectedLevel, GamePhase initialPhase) {
     levelDefinition = Objects.requireNonNull(selectedLevel, "selectedLevel");
     bestResult = bestResults.get(levelDefinition.id());
-    mazeState = MazeState.empty(levelDefinition);
+    mazeState = MazeState.initial(levelDefinition);
     selectedCellType = initialSelectedCellType(levelDefinition);
     buildTimeRemainingSeconds = levelDefinition.buildTime().toMillis() / 1000.0F;
     rejectedPosition = null;

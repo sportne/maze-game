@@ -128,6 +128,9 @@ Status: complete.
 - [GRID-01: Add fixed authored grid cells](done/grid-01-fixed-authored-cells.md) is complete. The
   accepted [fixed-cell contract](../docs/fixed-authored-cells.md) keeps level-owned geometry separate
   from editable player inventory.
+- [GRID-02: Add movable preset grid cells](done/grid-02-preset-mutable-cells.md) is complete. The
+  accepted [preset-cell contract](../docs/preset-authored-cells.md) materializes authored starting
+  cells as ordinary consumed inventory that players can move, replace, or remove.
 - [SOLVER-01: Design and deliver a third solver type](done/solver-01-third-solver-type.md) selects,
   specifies, implements, and presents one behavior distinct from Random and Scout.
 - [SOLVER-02: Design and deliver a Tracker level](done/solver-02-tracker-level.md) is complete. The

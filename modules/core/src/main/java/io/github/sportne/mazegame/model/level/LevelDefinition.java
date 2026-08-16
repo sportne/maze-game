@@ -8,9 +8,11 @@ import io.github.sportne.mazegame.model.grid.GridPathfinder;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.grid.GridSize;
 import java.time.Duration;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -19,8 +21,8 @@ import java.util.Set;
  * Immutable authoring data for one playable level.
  *
  * <p>A level definition contains the static data shared by maze editing, solver simulation, and
- * result evaluation. It does not contain player-placed cells; those live in {@link
- * io.github.sportne.mazegame.model.maze.MazeState}.
+ * result evaluation. Preset authoring is materialized alongside player placements in {@link
+ * io.github.sportne.mazegame.model.maze.MazeState} when an attempt begins.
  *
  * @param id stable machine-readable level identifier
  * @param name display name for the level
@@ -31,6 +33,7 @@ import java.util.Set;
  * @param solverMoveInterval time between solver movement decisions
  * @param placeableCellSupplies finite or infinite authored supply for every placeable type
  * @param fixedCells level-owned cells that player editing cannot change
+ * @param presetCells level-authored starting cells that become mutable player inventory
  * @param solvers authored solvers in stable presentation order
  */
 public record LevelDefinition(
@@ -43,8 +46,9 @@ public record LevelDefinition(
     Duration solverMoveInterval,
     List<PlaceableCellSupply> placeableCellSupplies,
     List<FixedCell> fixedCells,
+    List<PresetCell> presetCells,
     List<LevelSolver> solvers) {
-  /** Creates a level without fixed authored cells. */
+  /** Creates a level without fixed or preset authored cells. */
   public LevelDefinition(
       String id,
       String name,
@@ -64,6 +68,33 @@ public record LevelDefinition(
         maximumSolveTime,
         solverMoveInterval,
         placeableCellSupplies,
+        List.of(),
+        List.of(),
+        solvers);
+  }
+
+  /** Creates a level with fixed cells but no mutable preset cells. */
+  public LevelDefinition(
+      String id,
+      String name,
+      GridSize gridSize,
+      Duration buildTime,
+      Duration targetSolveTime,
+      Duration maximumSolveTime,
+      Duration solverMoveInterval,
+      List<PlaceableCellSupply> placeableCellSupplies,
+      List<FixedCell> fixedCells,
+      List<LevelSolver> solvers) {
+    this(
+        id,
+        name,
+        gridSize,
+        buildTime,
+        targetSolveTime,
+        maximumSolveTime,
+        solverMoveInterval,
+        placeableCellSupplies,
+        fixedCells,
         List.of(),
         solvers);
   }
@@ -85,6 +116,8 @@ public record LevelDefinition(
     placeableCellSupplies = validateSupplies(placeableCellSupplies);
     solvers = validateSolvers(solvers, gridSize);
     fixedCells = validateFixedCells(fixedCells, gridSize, solvers);
+    presetCells =
+        validatePresetCells(presetCells, gridSize, solvers, fixedCells, placeableCellSupplies);
     if (targetSolveTime.compareTo(maximumSolveTime) > 0) {
       throw new IllegalArgumentException("targetSolveTime must not exceed maximumSolveTime");
     }
@@ -103,7 +136,13 @@ public record LevelDefinition(
   /** Returns placeable types whose authored supply is usable when the level starts. */
   public List<PlaceableCellType> initiallyAvailableCellTypes() {
     return placeableCellSupplies.stream()
-        .filter(entry -> entry.supply().available())
+        .filter(
+            entry -> {
+              int presetCount =
+                  (int) presetCells.stream().filter(cell -> cell.type() == entry.type()).count();
+              return entry.supply().isInfinite()
+                  || entry.supply().finiteCount().orElseThrow() > presetCount;
+            })
         .map(PlaceableCellSupply::type)
         .toList();
   }
@@ -120,12 +159,27 @@ public record LevelDefinition(
     return List.copyOf(fixedCells);
   }
 
+  /** Returns immutable preset cells in authored order. */
+  @Override
+  public List<PresetCell> presetCells() {
+    return List.copyOf(presetCells);
+  }
+
   /** Returns the fixed effect at a position, or empty for an editable cell. */
   public Optional<FixedCellType> fixedCellAt(GridPosition position) {
     Objects.requireNonNull(position, "position");
     return fixedCells.stream()
         .filter(cell -> cell.position().equals(position))
         .map(FixedCell::type)
+        .findFirst();
+  }
+
+  /** Returns the authored mutable starting type at a position, or an empty value. */
+  public Optional<PlaceableCellType> presetCellAt(GridPosition position) {
+    Objects.requireNonNull(position, "position");
+    return presetCells.stream()
+        .filter(cell -> cell.position().equals(position))
+        .map(PresetCell::type)
         .findFirst();
   }
 
@@ -211,6 +265,71 @@ public record LevelDefinition(
                                     cell.position().equals(position)
                                         && cell.type().blocksMovement())))) {
       throw new IllegalArgumentException("fixed cells must keep a path for every solver");
+    }
+    return copied;
+  }
+
+  private static List<PresetCell> validatePresetCells(
+      List<PresetCell> authoredCells,
+      GridSize gridSize,
+      List<LevelSolver> solvers,
+      List<FixedCell> fixedCells,
+      List<PlaceableCellSupply> supplies) {
+    Objects.requireNonNull(authoredCells, "presetCells");
+    List<PresetCell> copied = List.copyOf(authoredCells);
+    Set<GridPosition> occupied = new HashSet<>();
+    EnumMap<PlaceableCellType, Integer> counts = new EnumMap<>(PlaceableCellType.class);
+    for (PresetCell cell : copied) {
+      Objects.requireNonNull(cell, "presetCells entry");
+      requireWithinGrid(cell.position(), gridSize, "preset cell");
+      if (!occupied.add(cell.position())) {
+        throw new IllegalArgumentException("preset cells must occupy unique positions");
+      }
+      if (fixedCells.stream().anyMatch(fixed -> fixed.position().equals(cell.position()))) {
+        throw new IllegalArgumentException("preset cell must not overlap a fixed cell");
+      }
+      if (solvers.stream()
+          .anyMatch(
+              solver ->
+                  cell.position().equals(solver.start())
+                      || cell.position().equals(solver.goal()))) {
+        throw new IllegalArgumentException("preset cell must not overlap a solver start or goal");
+      }
+      counts.merge(cell.type(), 1, Integer::sum);
+    }
+    for (Map.Entry<PlaceableCellType, Integer> entry : counts.entrySet()) {
+      int available =
+          supplies.stream()
+              .filter(supply -> supply.type() == entry.getKey())
+              .findFirst()
+              .orElseThrow()
+              .supply()
+              .finiteCount()
+              .orElse(Integer.MAX_VALUE);
+      if (entry.getValue() > available) {
+        throw new IllegalArgumentException(
+            "preset cells exceed authored supply for " + entry.getKey());
+      }
+    }
+    if (solvers.stream()
+        .anyMatch(
+            solver ->
+                !GridPathfinder.hasPath(
+                    gridSize,
+                    solver.start(),
+                    solver.goal(),
+                    position ->
+                        fixedCells.stream()
+                                .noneMatch(
+                                    cell ->
+                                        cell.position().equals(position)
+                                            && cell.type().blocksMovement())
+                            && copied.stream()
+                                .noneMatch(
+                                    cell ->
+                                        cell.position().equals(position)
+                                            && cell.type() == PlaceableCellType.WALL)))) {
+      throw new IllegalArgumentException("preset cells must keep a path for every solver");
     }
     return copied;
   }

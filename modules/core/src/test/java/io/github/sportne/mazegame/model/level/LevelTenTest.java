@@ -29,6 +29,10 @@ import org.junit.jupiter.api.Test;
 
 /** Release evidence for the authored 10x10 Level 10. */
 final class LevelTenTest {
+  private static final Map<GridPosition, PlaceableCellType> PRESET_CELLS =
+      slowFloors(p(7, 4), p(2, 8));
+  private static final Map<GridPosition, PlaceableCellType> REMAINING_PASSING_CELLS =
+      slowFloors(p(5, 6), p(4, 6), p(3, 6), p(2, 9));
   private static final Map<GridPosition, PlaceableCellType> PASSING_CELLS =
       slowFloors(p(7, 4), p(2, 8), p(5, 6), p(4, 6), p(3, 6), p(2, 9));
 
@@ -61,11 +65,16 @@ final class LevelTenTest {
             p(5, 4), p(6, 7), p(7, 7), p(8, 7), p(7, 1), p(7, 2), p(1, 7), p(2, 7)),
         fixedPositions(level, FixedCellType.WALL));
     assertEquals(Set.of(p(8, 2), p(3, 8)), fixedPositions(level, FixedCellType.SLOW_FLOOR));
+    assertEquals(
+        Set.of(
+            new PresetCell(p(7, 4), PlaceableCellType.SLOW_FLOOR),
+            new PresetCell(p(2, 8), PlaceableCellType.SLOW_FLOOR)),
+        Set.copyOf(level.presetCells()));
   }
 
   @Test
   void followsTheAcceptedSeededRouteAcrossTheAuthoredGeometry() {
-    Trace empty = trace(Map.of());
+    Trace initial = trace(MazeState.initial(Levels.levelTen()));
     Trace passing = trace(PASSING_CELLS);
 
     assertEquals(
@@ -74,40 +83,41 @@ final class LevelTenTest {
             p(7, 3), p(7, 4), p(6, 4), p(7, 4), p(7, 3), p(7, 4), p(7, 5), p(7, 6), p(6, 6),
             p(5, 6), p(5, 7), p(5, 6), p(4, 6), p(3, 6), p(4, 6), p(3, 6), p(3, 7), p(3, 8),
             p(2, 8), p(1, 8), p(2, 8), p(2, 9), p(2, 8), p(2, 9), p(1, 9), p(0, 9)),
-        empty.positions());
+        initial.positions());
     assertEquals(
-        new SolverRunResult(p(0, 9), Duration.ofSeconds(9), 34, SolverRunStatus.REACHED_GOAL),
-        empty.result());
+        new SolverRunResult(p(0, 9), Duration.ofMillis(10750), 34, SolverRunStatus.REACHED_GOAL),
+        initial.result());
     assertEquals(
         new SolverRunResult(p(0, 9), Duration.ofMillis(12750), 34, SolverRunStatus.REACHED_GOAL),
         passing.result());
   }
 
   @Test
-  void requiresAllSixSlowFloorsAndCompletesBeforeTimeout() {
-    Trace empty = trace(Map.of());
+  void requiresBothPresetsAndAllFourRemainingSlowFloorsToCompleteBeforeTimeout() {
+    MazeState initialMaze = MazeState.initial(Levels.levelTen());
+    Trace initial = trace(initialMaze);
     Map<GridPosition, Long> editableVisitCounts = new HashMap<>();
-    empty.positions().stream()
+    initial.positions().stream()
         .skip(1)
         .filter(position -> Levels.levelTen().fixedCellAt(position).isEmpty())
+        .filter(position -> !initialMaze.hasPlacedCellAt(position))
         .filter(position -> !position.equals(Levels.levelTen().primarySolver().goal()))
         .forEach(position -> editableVisitCounts.merge(position, 1L, Long::sum));
     List<Long> descendingVisits =
         editableVisitCounts.values().stream().sorted(java.util.Comparator.reverseOrder()).toList();
 
     List<Long> maximumBySlowFloorCount = new ArrayList<>();
-    long maximum = empty.result().elapsedTime().toMillis();
+    long maximum = initial.result().elapsedTime().toMillis();
     maximumBySlowFloorCount.add(maximum);
-    for (int count = 0; count < 6; count++) {
+    for (int count = 0; count < 4; count++) {
       maximum += descendingVisits.get(count) * 250L;
       maximumBySlowFloorCount.add(maximum);
     }
-    assertEquals(
-        List.of(9000L, 10000L, 10750L, 11250L, 11750L, 12250L, 12750L), maximumBySlowFloorCount);
-    assertTrue(maximumBySlowFloorCount.subList(0, 6).stream().allMatch(value -> value <= 12500L));
-    assertTrue(maximumBySlowFloorCount.get(6) > 12500L);
+    assertEquals(List.of(10750L, 11250L, 11750L, 12250L, 12750L), maximumBySlowFloorCount);
+    assertTrue(maximumBySlowFloorCount.subList(0, 4).stream().allMatch(value -> value <= 12500L));
+    assertTrue(maximumBySlowFloorCount.get(4) > 12500L);
 
-    GameSession session = runSession(PASSING_CELLS);
+    GameSession session = runSession(REMAINING_PASSING_CELLS);
     assertTrue(session.resultPassed());
     assertEquals(new BestResult(Duration.ofMillis(12750), 34), session.bestResult());
     assertEquals(GamePhase.RESULT, session.gamePhase());
@@ -116,8 +126,12 @@ final class LevelTenTest {
 
   private static Trace trace(Map<GridPosition, PlaceableCellType> cells) {
     LevelDefinition level = Levels.levelTen();
-    SolverSimulation simulation =
-        SolverSimulationFactory.create(new MazeState(level, cells), level.primarySolver());
+    return trace(new MazeState(level, cells));
+  }
+
+  private static Trace trace(MazeState mazeState) {
+    LevelDefinition level = mazeState.levelDefinition();
+    SolverSimulation simulation = SolverSimulationFactory.create(mazeState, level.primarySolver());
     List<GridPosition> positions = new ArrayList<>();
     positions.add(simulation.result().position());
     do {
@@ -136,6 +150,9 @@ final class LevelTenTest {
     GameSession session =
         new GameSession(catalog, catalog.levels().getFirst().id(), BestResultStore.none());
     assertTrue(session.startLevel(level.id()));
+    assertEquals(PRESET_CELLS, session.mazeState().placedCells());
+    assertEquals(
+        CellSupply.finite(4), session.mazeState().remainingSupply(PlaceableCellType.SLOW_FLOOR));
     for (Map.Entry<GridPosition, PlaceableCellType> entry : cells.entrySet()) {
       session.selectCellType(entry.getValue());
       assertTrue(session.placeOrReplaceCell(entry.getKey()).orElseThrow().accepted());

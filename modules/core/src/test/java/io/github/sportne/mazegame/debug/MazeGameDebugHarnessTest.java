@@ -80,8 +80,6 @@ final class MazeGameDebugHarnessTest {
 
   private static final Set<GridPosition> LEVEL_TEN_SLOW_FLOORS =
       Set.of(
-          new GridPosition(7, 4),
-          new GridPosition(2, 8),
           new GridPosition(5, 6),
           new GridPosition(4, 6),
           new GridPosition(3, 6),
@@ -311,6 +309,11 @@ final class MazeGameDebugHarnessTest {
     harness.clickNextLevel();
     assertEquals(Levels.levelTen(), harness.snapshot().mazeState().levelDefinition());
 
+    GridPosition preset = new GridPosition(7, 4);
+    GridPosition movedPreset = new GridPosition(8, 4);
+    assertEquals(PlaceableCellType.SLOW_FLOOR, harness.snapshot().mazeState().placedCellAt(preset));
+    harness.dragPlacedCell(preset, movedPreset).dragPlacedCell(movedPreset, preset);
+    assertEquals(PlaceableCellType.SLOW_FLOOR, harness.snapshot().mazeState().placedCellAt(preset));
     LEVEL_TEN_SLOW_FLOORS.forEach(harness::leftClickCell);
     harness.clickStartRun().advance(Duration.ofSeconds(14));
 

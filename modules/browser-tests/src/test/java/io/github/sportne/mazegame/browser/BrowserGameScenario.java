@@ -53,12 +53,12 @@ final class BrowserGameScenario {
           new GridPosition(0, 3));
   static final List<GridPosition> LEVEL_TEN_SLOW_FLOORS =
       List.of(
-          new GridPosition(7, 4),
-          new GridPosition(2, 8),
           new GridPosition(5, 6),
           new GridPosition(4, 6),
           new GridPosition(3, 6),
           new GridPosition(2, 9));
+  static final GridPosition LEVEL_TEN_PRESET_SLOW_FLOOR = new GridPosition(7, 4);
+  static final GridPosition LEVEL_TEN_PRESET_MOVE_DESTINATION = new GridPosition(8, 4);
 
   private BrowserGameScenario() {}
 

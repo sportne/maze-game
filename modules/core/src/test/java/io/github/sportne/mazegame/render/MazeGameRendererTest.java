@@ -30,6 +30,7 @@ import io.github.sportne.mazegame.model.level.GoalType;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.PresetCell;
 import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
@@ -483,6 +484,55 @@ final class MazeGameRendererTest {
         new Color(0.62F, 0.36F, 0.08F, 1.0F),
         MazeGameRenderer.cellColor(maze, null, 0.0F, slowFloor));
     assertEquals(withoutFixed.rectLines + 18, withFixed.rectLines);
+  }
+
+  @Test
+  void presetCellsUseTheSameUnlockedTreatmentAsOrdinaryPlacedCells() {
+    LevelDefinition base = paletteLevel();
+    GridPosition slowFloor = new GridPosition(1, 4);
+    LevelDefinition presetLevel =
+        new LevelDefinition(
+            base.id(),
+            base.name(),
+            base.gridSize(),
+            base.buildTime(),
+            base.targetSolveTime(),
+            base.maximumSolveTime(),
+            base.solverMoveInterval(),
+            base.placeableCellSupplies(),
+            List.of(),
+            List.of(new PresetCell(slowFloor, PlaceableCellType.SLOW_FLOOR)),
+            base.solvers());
+    MazeState ordinary = new MazeState(base, Map.of(slowFloor, PlaceableCellType.SLOW_FLOOR));
+    MazeState preset = MazeState.initial(presetLevel);
+    RecordingShapeRenderer ordinaryShapes = allocate(RecordingShapeRenderer.class);
+    RecordingShapeRenderer presetShapes = allocate(RecordingShapeRenderer.class);
+
+    renderer(allocate(RecordingSpriteBatch.class), ordinaryShapes, recordingFont())
+        .render(
+            MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, base.gridSize()),
+            snapshot(
+                GamePhase.BUILDING,
+                base,
+                ordinary,
+                25.0F,
+                null,
+                0.0F,
+                null,
+                null,
+                List.of(),
+                true,
+                false,
+                false));
+    renderer(allocate(RecordingSpriteBatch.class), presetShapes, recordingFont())
+        .render(
+            MazeGameLayout.forPhase(GamePhase.BUILDING, 1280, 720, presetLevel.gridSize()),
+            buildSnapshot(presetLevel));
+
+    assertEquals(
+        MazeGameRenderer.cellColor(ordinary, null, 0.0F, slowFloor),
+        MazeGameRenderer.cellColor(preset, null, 0.0F, slowFloor));
+    assertEquals(ordinaryShapes.rectLines, presetShapes.rectLines);
   }
 
   @Test
@@ -1238,7 +1288,7 @@ final class MazeGameRendererTest {
     return snapshot(
         GamePhase.BUILDING,
         level,
-        MazeState.empty(level),
+        MazeState.initial(level),
         level.buildTime().toMillis() / 1000.0F,
         null,
         0.0F,

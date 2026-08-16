@@ -19,6 +19,7 @@ import io.github.sportne.mazegame.model.level.LevelSolver;
 import io.github.sportne.mazegame.model.level.Levels;
 import io.github.sportne.mazegame.model.level.SolverAppearance;
 import io.github.sportne.mazegame.model.level.SolverBehavior;
+import io.github.sportne.mazegame.model.maze.MazeState;
 import io.github.sportne.mazegame.model.result.BestResult;
 import io.github.sportne.mazegame.model.solver.CardinalDirection;
 import io.github.sportne.mazegame.model.solver.SolverDecisionState;
@@ -816,7 +817,7 @@ final class GameSessionTest {
     assertEquals(level.primarySolver().start(), session.rejectedPosition());
     placeWall(session, level.primarySolver().goal());
     assertEquals(level.primarySolver().goal(), session.rejectedPosition());
-    assertTrue(session.mazeState().placedCells().isEmpty());
+    assertEquals(MazeState.initial(level).placedCells(), session.mazeState().placedCells());
   }
 
   @Test

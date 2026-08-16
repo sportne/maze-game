@@ -7,10 +7,11 @@ to the classic Random mouse and cheese, uses a reproducible seed, and combines a
 wall pattern with fixed and player Slow Floors. This increases route-reading and placement scope
 without escalating the number of simultaneous characters.
 
-The level deliberately authors zero player Walls and six player Slow Floors. The established
-palette rule therefore hides the unavailable Wall tool and presents only the usable Slow Floor.
-Fixed Walls supply the topology; the player's puzzle is to recognize revisited cells on the seeded
-route and spend every delay where it has the greatest effect.
+The level deliberately authors zero player Walls and six player Slow Floors. Two Slow Floors begin
+on the grid as movable presets and consume two units, leaving four in the palette. The established
+palette rule hides the unavailable Wall tool and presents only the usable Slow Floor. Fixed Walls
+supply the topology; the player's puzzle is to recognize revisited cells on the seeded route and
+either keep or reposition the presets before spending the remaining delay inventory.
 
 ## Authored Definition
 
@@ -23,39 +24,42 @@ route and spend every delay where it has the greatest effect.
 | Start / cheese | `(9,0)` / `(0,9)` |
 | Fixed Walls | `(0,3)`, `(1,3)`, `(2,1)`–`(2,3)`, `(1,7)`, `(2,7)`, `(3,5)`–`(5,5)`, `(5,3)`, `(5,4)`, `(6,7)`–`(8,7)`, `(7,1)`, `(7,2)` |
 | Fixed Slow Floors | `(8,2)`, `(3,8)` |
-| Player supply | 0 Walls, 6 Slow Floors |
+| Player supply | 0 Walls, 6 Slow Floors total; 2 preset and 4 remaining |
+| Preset Slow Floors | `(7,4)`, `(2,8)` |
 
 The accepted Slow Floors are `(7,4)`, `(2,8)`, `(5,6)`, `(4,6)`, `(3,6)`, and `(2,9)`.
 
 ```text
 . . . # . . . . . g
 . . . # . . . # . .
-. # # # . . . # s s
+. # # # . . . # p s
 . . . . . # s . ~ .
 . . . . . # s . . .
 . . . # # # s . . .
 . . . . . . . # . .
-. # # . s . . # . .
+. # # . p . . # . .
 . . ~ . . . . # . .
 R . . . . . . . . .
 ```
 
-In the diagram, `#` is a fixed Wall, `~` is a fixed Slow Floor, `s` is a player Slow Floor, and
-`R`/`g` are Random and its cheese goal.
+In the diagram, `#` is a fixed Wall, `~` is a fixed Slow Floor, `p` is a movable preset Slow Floor,
+`s` is an additional player Slow Floor, and `R`/`g` are Random and its cheese goal.
 
 ## Balance Evidence
 
-Fixed Slow Floors make the unedited 34-move trace complete in 9.0 seconds. Because Slow Floors do
-not change movement choices, the exhaustive maximum for each inventory size is obtained by sorting
-every editable cell by its exact number of entries on that production trace.
+Fixed Slow Floors make the empty 34-move trace complete in 9.0 seconds. The two accepted preset
+positions add 1.75 seconds, so the actual unedited starting board completes in 10.75 seconds.
+Because Slow Floors do not change movement choices, the exhaustive maximum for each remaining
+inventory size is obtained by sorting every empty editable cell by its exact number of entries on
+that production trace.
 
-| Slow Floors used | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Greatest completion | 9.00 s | 10.00 s | 10.75 s | 11.25 s | 11.75 s | 12.25 s | 12.75 s |
+| Additional Slow Floors used | 0 | 1 | 2 | 3 | 4 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Greatest completion | 10.75 s | 11.25 s | 11.75 s | 12.25 s | 12.75 s |
 
-Thus every layout using five or fewer Slow Floors fails the exclusive 12.5-second target. The
-accepted six-cell layout reaches the cheese in 12.75 seconds and 34 moves, before the 13.5-second
-timeout. Its saved result is `12750:34`.
+Thus the presets plus three or fewer additional Slow Floors cannot exceed the exclusive 12.5-second
+target. The accepted six-cell total layout reaches the cheese in 12.75 seconds and 34 moves, before
+the 13.5-second timeout. Its saved result is `12750:34`.
 
 ## Layout and Progression
 
@@ -71,7 +75,8 @@ their larger cell sizes, while action and palette controls remain at least 44 pi
 ## Verification
 
 - Assert exact metadata, supplies, fixed-cell counts, seeded trace, and terminal results.
-- Prove the exact best completion for every inventory count from zero through six.
+- Prove the exact best completion for every remaining inventory count from zero through four.
+- Move a preset through desktop and browser drag paths, then restore and solve the level.
 - Exercise Level 9-to-10 progression, retry, replay, final-level presentation, and persistence.
 - Validate all declared viewports, the ten-card selector, JavaScript/WebAssembly browser flow, and
   Safari release flow.

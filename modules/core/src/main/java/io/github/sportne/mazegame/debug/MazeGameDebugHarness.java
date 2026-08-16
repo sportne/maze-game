@@ -280,10 +280,20 @@ public final class MazeGameDebugHarness {
     return this;
   }
 
+  /** Drags one mutable grid cell to an empty destination through the desktop pointer path. */
+  public MazeGameDebugHarness dragPlacedCell(GridPosition source, GridPosition destination) {
+    ScreenPoint start = cellCenter(source);
+    ScreenPoint end = cellCenter(destination);
+    game.handlePointerDown(start.x(), start.y(), 0, Input.Buttons.LEFT, screenWidth, screenHeight);
+    game.handlePointerDragged(end.x(), end.y(), 0);
+    game.handlePointerUp(end.x(), end.y(), 0, screenWidth, screenHeight);
+    return this;
+  }
+
   /**
    * Simulates clicking a locked future level card.
    *
-   * @param index zero-based level card index from 1 to 8
+   * @param index zero-based level card index from 1 to 9
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickLockedLevel(int index) {

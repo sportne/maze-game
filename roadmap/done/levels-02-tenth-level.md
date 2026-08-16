@@ -14,7 +14,8 @@ vocabulary, without increasing concurrent solver count.
 ## Completed Scope
 
 - Added Level 10 as a seeded Random mouse/cheese puzzle on a 10x10 grid.
-- Authored 17 fixed Walls and two fixed Slow Floors around a six-Slow-Floor player solution.
+- Authored 17 fixed Walls, two fixed Slow Floors, and two movable preset Slow Floors around a
+  six-Slow-Floor final arrangement.
 - Hid the zero-supply Wall tool so the build palette contains only usable cells.
 - Expanded level selection, progression, persistence, debug, renderer, browser, Safari, responsive,
   and native release coverage through Level 10.
@@ -25,8 +26,10 @@ vocabulary, without increasing concurrent solver count.
 
 - The accepted [Level 10 design](../../docs/level-10-design.md) records the full authored definition,
   diagram, exact trace, timing proof, and responsive behavior.
-- Every placement using at most five Slow Floors completes at or before 12.25 seconds and fails.
-- The accepted six-cell layout reaches the cheese in 12.75 seconds and 34 moves before timeout.
+- With both presets in place, every arrangement using at most three of the four remaining Slow
+  Floors completes at or before 12.25 seconds and fails.
+- The accepted six-cell total layout reaches the cheese in 12.75 seconds and 34 moves before
+  timeout.
 
 ## Verification
 

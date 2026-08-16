@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/** Immutable player-placed cells and derived inventory for one authored level. */
+/** Immutable mutable cells and derived inventory for one authored level attempt. */
 public record MazeState(
     LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
   /** Creates a validated, defensively copied maze. */
@@ -31,6 +31,14 @@ public record MazeState(
   /** Creates an empty maze with inventory derived from the level definition. */
   public static MazeState empty(LevelDefinition levelDefinition) {
     return new MazeState(levelDefinition, Map.of());
+  }
+
+  /** Creates a fresh maze populated with the level's mutable preset cells. */
+  public static MazeState initial(LevelDefinition levelDefinition) {
+    Objects.requireNonNull(levelDefinition, "levelDefinition");
+    Map<GridPosition, PlaceableCellType> initialCells = new HashMap<>();
+    levelDefinition.presetCells().forEach(cell -> initialCells.put(cell.position(), cell.type()));
+    return new MazeState(levelDefinition, initialCells);
   }
 
   /** Returns remaining finite or infinite supply for every placeable type. */

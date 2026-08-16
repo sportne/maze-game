@@ -282,6 +282,9 @@ public final class Levels {
               new FixedCell(new GridPosition(8, 2), FixedCellType.SLOW_FLOOR),
               new FixedCell(new GridPosition(3, 8), FixedCellType.SLOW_FLOOR)),
           List.of(
+              new PresetCell(new GridPosition(7, 4), PlaceableCellType.SLOW_FLOOR),
+              new PresetCell(new GridPosition(2, 8), PlaceableCellType.SLOW_FLOOR)),
+          List.of(
               new LevelSolver(
                   new GridPosition(9, 0),
                   new GridPosition(0, 9),

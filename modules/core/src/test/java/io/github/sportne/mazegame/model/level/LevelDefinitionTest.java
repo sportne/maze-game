@@ -75,6 +75,19 @@ final class LevelDefinitionTest {
             Levels.levelNine().fixedCells(),
             Levels.levelTen().fixedCells()),
         Levels.catalog().levels().stream().map(LevelDefinition::fixedCells).toList());
+    assertEquals(
+        List.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            Levels.levelTen().presetCells()),
+        Levels.catalog().levels().stream().map(LevelDefinition::presetCells).toList());
   }
 
   @Test

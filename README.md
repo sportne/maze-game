@@ -9,9 +9,10 @@ logger.
 
 Maze Game now includes ten authored levels, persistent unlock progression and per-level best
 results, finite/infinite Wall and Slow Floor inventory, responsive click/drag building, fixed level
-geometry, and four distinct solver behaviors. Levels 7–9 introduce Seeker in authored play, grow
-from 5x5 through 7x7, and add fixed Slow Floors while keeping one solver active per level. Level 10
-extends that progression to a 10x10 Random puzzle with a focused Slow-Floor-only palette.
+geometry, movable preset cells, and four distinct solver behaviors. Levels 7–9 introduce Seeker in
+authored play, grow from 5x5 through 7x7, and add fixed Slow Floors while keeping one solver active
+per level. Level 10 extends that progression to a 10x10 Random puzzle with two preset Slow Floors
+and four more available from its focused palette.
 
 ## Local Commands
 
