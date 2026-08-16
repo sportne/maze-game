@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameTest {
+  private static final GridPosition TUTORIAL_WALL = new GridPosition(1, 2);
+
   @Test
   void gameCanBeConstructed() {
     assertNotNull(new MazeGame());
@@ -44,7 +46,7 @@ final class MazeGameTest {
 
     assertFalse(game.runRequested());
     assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
-    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+    assertEquals(20.0F, game.buildTimeRemainingSeconds());
     assertEquals(Levels.levelOne(), game.mazeState().levelDefinition());
   }
 
@@ -66,7 +68,9 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().placedCells().isEmpty());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        game.mazeState().placedCells());
   }
 
   @Test
@@ -316,14 +320,14 @@ final class MazeGameTest {
   @Test
   void startRunLocksOutBuildTimerUpdatesAndWallPlacement() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
 
     game.startRun();
     game.updateBuildTimer(1.0F);
     game.handleGridClick(wall, Input.Buttons.LEFT);
 
     assertTrue(game.runRequested());
-    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+    assertEquals(20.0F, game.buildTimeRemainingSeconds());
     assertFalse(game.mazeState().placedCells().containsKey(wall));
     assertEquals(Levels.levelOne().primarySolver().start(), game.solverRunResult().position());
   }
@@ -341,7 +345,7 @@ final class MazeGameTest {
   @Test
   void leftClickTogglesWallAndRightClickStillClearsWall() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
 
     game.handleGridClick(wall, Input.Buttons.LEFT);
     assertTrue(game.mazeState().placedCells().containsKey(wall));
@@ -357,24 +361,25 @@ final class MazeGameTest {
   @Test
   void primaryPointerClearsAnOccupiedCellOnItsSecondClick() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
 
-    game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
+    clickGridCell(game, wall);
     assertTrue(game.mazeState().placedCells().containsKey(wall));
 
-    game.handleScreenClick(640, 360, Input.Buttons.LEFT, 1280, 720);
+    clickGridCell(game, wall);
     assertFalse(game.mazeState().placedCells().containsKey(wall));
   }
 
   @Test
   void solverRunMovesToResultPhaseWhenTerminal() {
     MazeGame game = startedGame();
+    placeTutorialWall(game);
 
     game.startRun();
     game.updateSolverRun(10.0F);
 
     assertEquals(GamePhase.RESULT, game.gamePhase());
-    assertEquals(SolverRunStatus.TIMED_OUT, game.solverRunResult().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, game.solverRunResult().status());
     assertTrue(game.resultPassed());
   }
 
@@ -384,11 +389,12 @@ final class MazeGameTest {
     MazeGame game = new MazeGame(null, runtimeConfiguration(true, () -> {}), store);
 
     game.startLevel(Levels.levelOne().id());
+    placeTutorialWall(game);
     game.startRun();
     game.updateSolverRun(10.0F);
 
-    assertEquals(new BestResult(Duration.ofSeconds(10), 40), game.bestResult());
-    assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
+    assertEquals(new BestResult(Duration.ofSeconds(9), 36), game.bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(9), 36), store.savedBestResult);
   }
 
   @Test
@@ -415,10 +421,9 @@ final class MazeGameTest {
   @Test
   void reachingCheeseBeforeTargetFailsTheLevel() {
     MazeGame game = startedGame();
-    addVerticalCorridorWalls(game);
 
     game.startRun();
-    game.updateSolverRun(1.0F);
+    game.updateSolverRun(3.0F);
 
     assertEquals(GamePhase.RESULT, game.gamePhase());
     assertEquals(SolverRunStatus.REACHED_GOAL, game.solverRunResult().status());
@@ -428,7 +433,7 @@ final class MazeGameTest {
   @Test
   void retryResetsLevelToBuildPhase() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.startRun();
     game.updateSolverRun(10.0F);
@@ -437,14 +442,16 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().placedCells().isEmpty());
-    assertEquals(30.0F, game.buildTimeRemainingSeconds());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        game.mazeState().placedCells());
+    assertEquals(20.0F, game.buildTimeRemainingSeconds());
   }
 
   @Test
   void resultMainMenuReturnsToStartupMenuAndResetsLevelState() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
     game.handleGridClick(wall, Input.Buttons.LEFT);
     game.startRun();
     game.updateSolverRun(10.0F);
@@ -460,7 +467,9 @@ final class MazeGameTest {
 
     assertEquals(GamePhase.MAIN_MENU, game.gamePhase());
     assertFalse(game.runRequested());
-    assertTrue(game.mazeState().placedCells().isEmpty());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        game.mazeState().placedCells());
   }
 
   @Test
@@ -517,6 +526,7 @@ final class MazeGameTest {
   @Test
   void nextLevelResultActionStartsTheUnlockedCatalogEntry() {
     MazeGame game = startedGame();
+    placeTutorialWall(game);
     game.startRun();
     game.updateSolverRun(10.0F);
     ScreenLayout layout = game.debugScreenLayout(GamePhase.RESULT, 1280, 720);
@@ -539,7 +549,9 @@ final class MazeGameTest {
 
     game.handleGridClick(Levels.levelOne().primarySolver().start(), Input.Buttons.LEFT);
 
-    assertTrue(game.mazeState().placedCells().isEmpty());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        game.mazeState().placedCells());
   }
 
   @Test
@@ -557,7 +569,7 @@ final class MazeGameTest {
   @Test
   void cellColorReflectsCurrentCellContentAndRejectedPlacement() {
     MazeGame game = startedGame();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
 
     assertEquals(Color.BLACK, game.cellColor(new GridPosition(1, 1)));
     assertEquals(
@@ -605,17 +617,22 @@ final class MazeGameTest {
         FileHandle::new, ignoredDelta -> {}, exitAction, true, audioAvailable, false);
   }
 
-  private static void addVerticalCorridorWalls(MazeGame game) {
-    game.handleGridClick(new GridPosition(4, 1), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(4, 3), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(3, 1), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(3, 3), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(2, 1), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(2, 3), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(1, 1), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(1, 3), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(0, 1), Input.Buttons.LEFT);
-    game.handleGridClick(new GridPosition(0, 3), Input.Buttons.LEFT);
+  private static void placeTutorialWall(MazeGame game) {
+    game.handleGridClick(TUTORIAL_WALL, Input.Buttons.LEFT);
+  }
+
+  private static void clickGridCell(MazeGame game, GridPosition position) {
+    ScreenRectangle grid =
+        game.debugScreenLayout(GamePhase.BUILDING, 1280, 720).bounds(MazeGameLayout.GAME_GRID);
+    float cellWidth = grid.width() / Levels.levelOne().gridSize().columns();
+    float cellHeight = grid.height() / Levels.levelOne().gridSize().rows();
+    int x = Math.round(grid.x() + (position.column() + 0.5F) * cellWidth);
+    int y =
+        Math.round(
+            720.0F
+                - grid.y()
+                - (Levels.levelOne().gridSize().rows() - position.row() - 0.5F) * cellHeight);
+    game.handleScreenClick(x, y, Input.Buttons.LEFT, 1280, 720);
   }
 
   private static final class RecordingBestResultStore implements BestResultStore {

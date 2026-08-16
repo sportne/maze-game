@@ -140,8 +140,11 @@ Status: complete.
   [Levels 7–9 design](../docs/levels-7-9-design.md) introduces Seeker in authored play, grows the
   grids from 5x5 through 7x7, and adds fixed Slow Floors without increasing concurrent solvers.
 - [LEVELS-02: Add a tenth authored level](done/levels-02-tenth-level.md) is complete. The accepted
-  [Level 10 design](../docs/level-10-design.md) grows to 10x10 and focuses the player inventory on
-  Slow Floors while retaining one solver.
+  historical [Level 10 design](../docs/level-10-design.md) records its original introduction.
+- [LEVELS-03: Redesign the ten-level progression](done/levels-03-progression-redesign.md) is complete.
+  The current [level progression design](../docs/level-progression-design.md) makes Levels 1–4
+  character tutorials, introduces Slow Floors on Level 5's open grid, grows through single-solver
+  combinations, and reserves the first two-solver run for the 10x10 Level 10.
 
 ## Deferred Ideas
 

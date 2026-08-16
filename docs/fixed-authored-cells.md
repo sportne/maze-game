@@ -9,8 +9,9 @@ contents, but they are not player inventory and never appear in the build palett
 - Each value combines one `GridPosition` with one `FixedCellType`.
 - `FixedCellType` is separate from `PlaceableCellType`, so a future fixed-only effect does not have to
   become a palette tool.
-- The existing level constructor defaults the list to empty. All five released levels therefore
-  retain their exact boards, supplies, solver traces, ids, and persistence keys.
+- The existing level constructor defaults the list to empty, so levels opt into fixed geometry
+  explicitly. The current released uses are recorded in the
+  [level progression design](level-progression-design.md).
 
 A definition is rejected when a fixed cell is missing required data, lies outside the grid, shares a
 position with another fixed cell, overlaps any solver start or goal, or causes any authored solver to

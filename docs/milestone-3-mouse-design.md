@@ -1,5 +1,8 @@
 # Milestone 3 Scout Solver Design
 
+> The solver-behavior decisions remain relevant, but the original Level 3 layout in this record has
+> been superseded by the [ten-level progression design](level-progression-design.md).
+
 ## Player-Facing Rule
 
 Milestone 3 introduces **Scout**, a deterministic solver that internally prefers turns in this order:

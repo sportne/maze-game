@@ -1,5 +1,8 @@
 # Levels 7–9 Design
 
+> Historical layout record. The current Levels 7–9 are specified in the
+> [ten-level progression design](level-progression-design.md).
+
 ## Decision
 
 Levels 7–9 extend the released progression through larger grids and richer authored cells rather

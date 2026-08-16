@@ -54,6 +54,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [SOLVER-02: Design and deliver a Tracker level](solver-02-tracker-level.md)
 - [LEVELS-01: Add three authored levels](levels-01-three-new-levels.md)
 - [LEVELS-02: Add a tenth authored level](levels-02-tenth-level.md)
+- [LEVELS-03: Redesign the ten-level progression](levels-03-progression-redesign.md)
 
 ## TeaVM and GitHub Pages
 

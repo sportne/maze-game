@@ -70,13 +70,13 @@ final class MazeGamePaletteTest {
   }
 
   @Test
-  void releasedPaletteShowsOnlyTheInitiallyUsableWall() {
+  void firstTutorialPaletteShowsOnlyItsSingleRemainingWall() {
     MazeGame game = new MazeGame();
     game.startLevel(io.github.sportne.mazegame.model.level.Levels.levelOne().id());
 
     assertEquals(1, game.paletteState().size());
     assertEquals(PlaceableCellType.WALL, selected(game).type());
-    assertEquals(CellSupply.infinite(), selected(game).remainingSupply());
+    assertEquals(CellSupply.finite(1), selected(game).remainingSupply());
     ScreenLayout layout = game.debugScreenLayout(GamePhase.BUILDING, WIDTH, HEIGHT);
     assertTrue(layout.element(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)).isPresent());
     assertTrue(

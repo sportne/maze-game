@@ -49,10 +49,10 @@ final class GameResultEvaluatorTest {
 
   @Test
   void multiSolverPassRequiresTheFirstGoalOrAllTimeoutsAfterTheTarget() {
-    LevelDefinition level = Levels.levelFive();
+    LevelDefinition level = Levels.levelTen();
     SolverRunResult passing =
         new SolverRunResult(
-            level.primarySolver().goal(), Duration.ofSeconds(6), 20, SolverRunStatus.REACHED_GOAL);
+            level.primarySolver().goal(), Duration.ofSeconds(12), 20, SolverRunStatus.REACHED_GOAL);
     SolverRunResult exact =
         new SolverRunResult(
             level.solvers().get(1).goal(),
@@ -61,7 +61,7 @@ final class GameResultEvaluatorTest {
             SolverRunStatus.REACHED_GOAL);
     SolverRunResult runningPastTarget =
         new SolverRunResult(
-            level.solvers().get(1).start(), Duration.ofSeconds(6), 18, SolverRunStatus.RUNNING);
+            level.solvers().get(1).start(), Duration.ofSeconds(12), 18, SolverRunStatus.RUNNING);
     SolverRunResult timedOut =
         new SolverRunResult(
             level.solvers().get(1).start(),

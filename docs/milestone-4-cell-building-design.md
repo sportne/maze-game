@@ -1,5 +1,9 @@
 # Milestone 4 Cell Building Design
 
+> The cell-building contract remains current. References to the original Level 4 layout are
+> historical; Slow Floor now enters the released progression in
+> [Level 5](level-progression-design.md#level-5-build-from-nothing).
+
 ## Player Goal
 
 Milestone 4 keeps the released objective: delay the solver beyond the level target while preserving

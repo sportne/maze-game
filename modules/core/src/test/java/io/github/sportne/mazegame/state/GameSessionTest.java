@@ -40,6 +40,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 final class GameSessionTest {
   private static final String MISSING_LEVEL_ID = "missing-level";
+  private static final GridPosition TUTORIAL_WALL = new GridPosition(1, 2);
 
   private static final LevelDefinition SECOND_LEVEL =
       singleSolverLevel(
@@ -65,8 +66,9 @@ final class GameSessionTest {
 
     assertEquals(GamePhase.MAIN_MENU, session.gamePhase());
     assertEquals(Levels.levelOne(), session.levelDefinition());
-    assertTrue(session.mazeState().placedCells().isEmpty());
-    assertEquals(30.0F, session.buildTimeRemainingSeconds());
+    assertEquals(
+        MazeState.initial(Levels.levelOne()).placedCells(), session.mazeState().placedCells());
+    assertEquals(20.0F, session.buildTimeRemainingSeconds());
     assertFalse(session.runRequested());
     assertNull(session.solverRunResult());
     assertNull(session.bestResult());
@@ -114,12 +116,13 @@ final class GameSessionTest {
   @Test
   void returnsFromAnUnstartedLevelToSelectionAndClearsTheAttempt() {
     GameSession session = startedSession();
-    placeWall(session, new GridPosition(2, 2));
+    placeWall(session, TUTORIAL_WALL);
 
     session.returnToLevelSelect();
 
     assertEquals(GamePhase.LEVEL_SELECT, session.gamePhase());
-    assertTrue(session.mazeState().placedCells().isEmpty());
+    assertEquals(
+        MazeState.initial(Levels.levelOne()).placedCells(), session.mazeState().placedCells());
     assertFalse(session.runRequested());
     assertNull(session.solverRunResult());
   }
@@ -139,7 +142,7 @@ final class GameSessionTest {
   @Test
   void wallPlacementAndClearingMutateOnlyDuringBuildPhase() {
     GameSession session = startedSession();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
 
     placeWall(session, wall);
     assertTrue(session.mazeState().placedCells().containsKey(wall));
@@ -178,19 +181,19 @@ final class GameSessionTest {
   @Test
   void updateSolverRunMovesToResultWhenTerminal() {
     GameSession session = startedSession();
+    placeWall(session, TUTORIAL_WALL);
 
     session.startRun();
     session.updateSolverRun(10.0F);
 
     assertEquals(GamePhase.RESULT, session.gamePhase());
-    assertEquals(SolverRunStatus.TIMED_OUT, session.solverRunResult().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, session.solverRunResult().status());
     assertTrue(session.resultPassed());
   }
 
   @Test
   void exposesLatestSolverDirectionsAndResetsThemWithTheRun() {
     GameSession session = startedSession();
-    addVerticalCorridorWalls(session);
 
     assertTrue(session.solverDirections().isEmpty());
     session.startRun();
@@ -284,12 +287,13 @@ final class GameSessionTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
     session.startLevel(Levels.levelOne().id());
+    placeWall(session, TUTORIAL_WALL);
 
     session.startRun();
     session.updateSolverRun(10.0F);
 
-    assertEquals(new BestResult(Duration.ofSeconds(10), 40), session.bestResult());
-    assertEquals(new BestResult(Duration.ofSeconds(10), 40), store.savedBestResult);
+    assertEquals(new BestResult(Duration.ofSeconds(9), 36), session.bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(9), 36), store.savedBestResult);
     assertEquals(1, store.saveCount);
   }
 
@@ -312,10 +316,9 @@ final class GameSessionTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
     session.startLevel(Levels.levelOne().id());
-    addVerticalCorridorWalls(session);
 
     session.startRun();
-    session.updateSolverRun(1.0F);
+    session.updateSolverRun(3.0F);
 
     assertNull(session.bestResult());
     assertEquals(0, store.saveCount);
@@ -326,6 +329,7 @@ final class GameSessionTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     GameSession session = new GameSession(store);
     session.startLevel(Levels.levelOne().id());
+    placeWall(session, TUTORIAL_WALL);
     session.startRun();
     session.updateSolverRun(10.0F);
 
@@ -338,7 +342,7 @@ final class GameSessionTest {
   @Test
   void retryResetsTheLevel() {
     GameSession session = startedSession();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = TUTORIAL_WALL;
     placeWall(session, wall);
     session.startRun();
     session.updateSolverRun(10.0F);
@@ -347,7 +351,8 @@ final class GameSessionTest {
 
     assertEquals(GamePhase.BUILDING, session.gamePhase());
     assertFalse(session.runRequested());
-    assertTrue(session.mazeState().placedCells().isEmpty());
+    assertEquals(
+        MazeState.initial(Levels.levelOne()).placedCells(), session.mazeState().placedCells());
     assertNull(session.solverRunResult());
   }
 
@@ -480,6 +485,7 @@ final class GameSessionTest {
     assertFalse(session.startLevel(SECOND_LEVEL.id()));
 
     session.startLevel(Levels.levelOne().id());
+    placeWall(session, TUTORIAL_WALL);
     session.startRun();
     session.updateSolverRun(10.0F);
 
@@ -494,10 +500,9 @@ final class GameSessionTest {
     GameSession session =
         new GameSession(TEST_CATALOG, Levels.levelOne().id(), BestResultStore.none());
     session.startLevel(Levels.levelOne().id());
-    addVerticalCorridorWalls(session);
 
     session.startRun();
-    session.updateSolverRun(1.0F);
+    session.updateSolverRun(3.0F);
 
     assertFalse(session.resultPassed());
     assertFalse(session.levelProgress().get(1).unlocked());
@@ -565,6 +570,7 @@ final class GameSessionTest {
     GameSession session = new GameSession(TEST_CATALOG, Levels.levelOne().id(), unavailableStore);
 
     session.startLevel(Levels.levelOne().id());
+    placeWall(session, TUTORIAL_WALL);
     session.startRun();
     session.updateSolverRun(10.0F);
 
@@ -581,30 +587,26 @@ final class GameSessionTest {
 
     assertTrue(session.startLevel(Levels.levelTwo().id()));
     assertEquals(Levels.levelTwo(), session.levelDefinition());
-    assertEquals(25.0F, session.buildTimeRemainingSeconds());
-    placeWall(session, new GridPosition(7, 0));
-    assertEquals(new GridPosition(7, 0), session.rejectedPosition());
-    for (int column = 0; column < 7; column++) {
-      placeWall(session, new GridPosition(1, column));
-    }
-    assertEquals(6, session.mazeState().placedCells().size());
-    assertEquals(new GridPosition(1, 6), session.rejectedPosition());
+    assertEquals(20.0F, session.buildTimeRemainingSeconds());
+    assertEquals(
+        MazeState.initial(Levels.levelTwo()).placedCells(), session.mazeState().placedCells());
+    placeWall(session, new GridPosition(5, 0));
+    assertEquals(new GridPosition(5, 0), session.rejectedPosition());
+    placeWall(session, new GridPosition(2, 2));
 
-    session.retryLevel();
-    addMilestoneTwoTimeoutWalls(session);
-
-    session.updateBuildTimer(25.0F);
-    session.updateSolverRun(15.0F);
+    session.startRun();
+    session.updateSolverRun(6.0F);
 
     assertTrue(session.resultPassed());
-    assertEquals(SolverRunStatus.TIMED_OUT, session.solverRunResult().status());
+    assertEquals(SolverRunStatus.REACHED_GOAL, session.solverRunResult().status());
+    assertEquals(Duration.ofMillis(4500), session.solverRunResult().elapsedTime());
     assertEquals(Levels.levelTwo().id(), store.savedLevelId);
-    assertEquals(9, session.mazeState().placedCells().size());
 
     session.retryLevel();
     assertEquals(Levels.levelTwo(), session.levelDefinition());
-    assertTrue(session.mazeState().placedCells().isEmpty());
-    assertEquals(25.0F, session.buildTimeRemainingSeconds());
+    assertEquals(
+        MazeState.initial(Levels.levelTwo()).placedCells(), session.mazeState().placedCells());
+    assertEquals(20.0F, session.buildTimeRemainingSeconds());
 
     session.startRun();
     session.updateSolverRun(3.0F);
@@ -625,8 +627,9 @@ final class GameSessionTest {
     assertTrue(session.startLevel(Levels.levelOne().id()));
     assertEquals(Levels.levelOne(), session.levelDefinition());
     assertEquals(firstBest, session.bestResult());
-    assertTrue(session.mazeState().placedCells().isEmpty());
-    assertEquals(30.0F, session.buildTimeRemainingSeconds());
+    assertEquals(
+        MazeState.initial(Levels.levelOne()).placedCells(), session.mazeState().placedCells());
+    assertEquals(20.0F, session.buildTimeRemainingSeconds());
   }
 
   @Test
@@ -684,20 +687,17 @@ final class GameSessionTest {
     RecordingBestResultStore store = new RecordingBestResultStore();
     BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
     store.results.put(Levels.levelOne().id(), firstBest);
+    BestResult secondBest = new BestResult(Duration.ofMillis(4500), 18);
+    store.results.put(Levels.levelTwo().id(), secondBest);
     GameSession session = new GameSession(store);
 
-    session.startLevel(Levels.levelTwo().id());
-    addMilestoneTwoTimeoutWalls(session);
-    session.startRun();
-    session.updateSolverRun(15.0F);
-    BestResult secondBest = session.bestResult();
-    assertEquals(Optional.of(Levels.levelThree().id()), session.nextLevelId());
     assertTrue(session.startLevel(Levels.levelThree().id()));
 
-    addMilestoneThreePassingWalls(session);
+    placeWall(session, new GridPosition(0, 3));
+    placeWall(session, new GridPosition(3, 1));
     Set<GridPosition> acceptedMaze = session.mazeState().placedCells().keySet();
     session.startRun();
-    session.updateSolverRun(8.0F);
+    session.updateSolverRun(7.0F);
     SolverRunResult firstRun = session.solverRunResult();
     BestResult thirdBest = session.bestResult();
 
@@ -705,8 +705,8 @@ final class GameSessionTest {
     assertEquals(
         new SolverRunResult(
             Levels.levelThree().primarySolver().goal(),
-            Duration.ofMillis(6500),
-            26,
+            Duration.ofSeconds(6),
+            24,
             SolverRunStatus.REACHED_GOAL),
         firstRun);
     assertEquals(Levels.levelThree().id(), store.savedLevelId);
@@ -717,13 +717,14 @@ final class GameSessionTest {
     assertEquals(Optional.of(Levels.levelFour().id()), session.nextLevelId());
 
     session.replayRun();
-    session.updateSolverRun(8.0F);
+    session.updateSolverRun(7.0F);
     assertEquals(firstRun, session.solverRunResult());
     assertEquals(acceptedMaze, session.mazeState().placedCells().keySet());
 
     session.retryLevel();
     assertEquals(Levels.levelThree(), session.levelDefinition());
-    assertTrue(session.mazeState().placedCells().isEmpty());
+    assertEquals(
+        MazeState.initial(Levels.levelThree()).placedCells(), session.mazeState().placedCells());
     assertEquals(25.0F, session.buildTimeRemainingSeconds());
 
     session.returnToMainMenu();
@@ -741,24 +742,26 @@ final class GameSessionTest {
   void fourthLevelPreservesResultsAndSupportsBackRetryReplayAndFinalNavigation() {
     RecordingBestResultStore store = new RecordingBestResultStore();
     BestResult firstBest = new BestResult(Duration.ofSeconds(10), 40);
-    BestResult secondBest = new BestResult(Duration.ofSeconds(15), 60);
-    BestResult thirdBest = new BestResult(Duration.ofMillis(6500), 26);
+    BestResult secondBest = new BestResult(Duration.ofMillis(4500), 18);
+    BestResult thirdBest = new BestResult(Duration.ofSeconds(6), 24);
     store.results.put(Levels.levelOne().id(), firstBest);
     store.results.put(Levels.levelTwo().id(), secondBest);
     store.results.put(Levels.levelThree().id(), thirdBest);
     GameSession session = new GameSession(store);
 
     assertTrue(session.startLevel(Levels.levelFour().id()));
-    placeWall(session, new GridPosition(4, 4));
+    placeWall(session, new GridPosition(3, 1));
     session.returnToLevelSelect();
     assertEquals(GamePhase.LEVEL_SELECT, session.gamePhase());
-    assertTrue(session.mazeState().placedCells().isEmpty());
+    assertEquals(
+        MazeState.initial(Levels.levelFour()).placedCells(), session.mazeState().placedCells());
     assertTrue(session.startLevel(Levels.levelFour().id()));
 
-    addMilestoneFourPassingCells(session);
+    placeWall(session, new GridPosition(3, 1));
+    placeWall(session, new GridPosition(1, 0));
     Map<GridPosition, PlaceableCellType> acceptedMaze = session.mazeState().placedCells();
     session.startRun();
-    session.updateSolverRun(6.5F);
+    session.updateSolverRun(7.0F);
     SolverRunResult firstRun = session.solverRunResult();
     BestResult fourthBest = session.bestResult();
 
@@ -766,8 +769,8 @@ final class GameSessionTest {
     assertEquals(
         new SolverRunResult(
             Levels.levelFour().primarySolver().goal(),
-            Duration.ofMillis(5750),
-            20,
+            Duration.ofSeconds(6),
+            24,
             SolverRunStatus.REACHED_GOAL),
         firstRun);
     assertEquals(Levels.levelFour().id(), store.savedLevelId);
@@ -780,17 +783,18 @@ final class GameSessionTest {
     assertEquals(Optional.of(Levels.levelFive().id()), session.nextLevelId());
 
     session.replayRun();
-    session.updateSolverRun(6.5F);
+    session.updateSolverRun(7.0F);
     assertEquals(firstRun, session.solverRunResult());
     assertEquals(acceptedMaze, session.mazeState().placedCells());
     assertEquals(1, store.saveCount);
 
     session.retryLevel();
     assertEquals(Levels.levelFour(), session.levelDefinition());
-    assertTrue(session.mazeState().placedCells().isEmpty());
-    assertEquals(CellSupply.finite(4), session.mazeState().remainingSupply(PlaceableCellType.WALL));
     assertEquals(
-        CellSupply.finite(3), session.mazeState().remainingSupply(PlaceableCellType.SLOW_FLOOR));
+        MazeState.initial(Levels.levelFour()).placedCells(), session.mazeState().placedCells());
+    assertEquals(CellSupply.finite(2), session.mazeState().remainingSupply(PlaceableCellType.WALL));
+    assertEquals(
+        CellSupply.finite(0), session.mazeState().remainingSupply(PlaceableCellType.SLOW_FLOOR));
     assertEquals(Optional.of(PlaceableCellType.WALL), session.selectedCellType());
 
     GameSession reloaded = new GameSession(store);
@@ -860,49 +864,6 @@ final class GameSessionTest {
   private static void placeWall(GameSession session, GridPosition position) {
     session.selectCellType(PlaceableCellType.WALL);
     session.placeOrReplaceCell(position);
-  }
-
-  private static void addVerticalCorridorWalls(GameSession session) {
-    placeWall(session, new GridPosition(4, 1));
-    placeWall(session, new GridPosition(4, 3));
-    placeWall(session, new GridPosition(3, 1));
-    placeWall(session, new GridPosition(3, 3));
-    placeWall(session, new GridPosition(2, 1));
-    placeWall(session, new GridPosition(2, 3));
-    placeWall(session, new GridPosition(1, 1));
-    placeWall(session, new GridPosition(1, 3));
-    placeWall(session, new GridPosition(0, 1));
-    placeWall(session, new GridPosition(0, 3));
-  }
-
-  private static void addMilestoneTwoTimeoutWalls(GameSession session) {
-    int[][] coordinates = {{0, 5}, {1, 6}, {2, 1}, {2, 4}, {3, 5}, {4, 1}, {4, 2}, {5, 6}, {6, 1}};
-    for (int[] coordinate : coordinates) {
-      placeWall(session, new GridPosition(coordinate[0], coordinate[1]));
-    }
-  }
-
-  private static void addMilestoneThreePassingWalls(GameSession session) {
-    int[][] coordinates = {{2, 2}, {3, 1}, {4, 0}, {5, 1}};
-    for (int[] coordinate : coordinates) {
-      placeWall(session, new GridPosition(coordinate[0], coordinate[1]));
-    }
-  }
-
-  private static void addMilestoneFourPassingCells(GameSession session) {
-    int[][] wallCoordinates = {{0, 0}, {1, 1}, {2, 2}};
-    for (int[] coordinate : wallCoordinates) {
-      placeWall(session, new GridPosition(coordinate[0], coordinate[1]));
-    }
-    session.selectCellType(PlaceableCellType.SLOW_FLOOR);
-    int[][] slowFloorCoordinates = {{6, 2}, {6, 1}, {6, 0}};
-    for (int[] coordinate : slowFloorCoordinates) {
-      assertTrue(
-          session
-              .placeOrReplaceCell(new GridPosition(coordinate[0], coordinate[1]))
-              .orElseThrow()
-              .accepted());
-    }
   }
 
   private static Stream<LevelDefinition> authoredLevels() {

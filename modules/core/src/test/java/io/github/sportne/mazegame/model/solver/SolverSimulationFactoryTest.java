@@ -57,7 +57,7 @@ final class SolverSimulationFactoryTest {
 
   @Test
   void createsAnIndependentSimulationFromAnAuthoredSolver() {
-    LevelDefinition level = Levels.levelFive();
+    LevelDefinition level = Levels.levelTen();
     LevelSolver scout = level.solvers().get(1);
 
     SolverSimulation simulation = SolverSimulationFactory.create(MazeState.empty(level), scout);
@@ -68,7 +68,7 @@ final class SolverSimulationFactoryTest {
 
   @Test
   void rejectsASolverThatIsNotAuthoredByTheMazeLevel() {
-    LevelDefinition level = Levels.levelFive();
+    LevelDefinition level = Levels.levelTen();
     LevelSolver unknown =
         new LevelSolver(
             level.primarySolver().goal(),

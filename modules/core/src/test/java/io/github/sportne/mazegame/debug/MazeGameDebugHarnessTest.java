@@ -17,81 +17,59 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 final class MazeGameDebugHarnessTest {
-  private static final Set<GridPosition> MILESTONE_TWO_WALLS =
-      Set.of(
-          new GridPosition(1, 1),
-          new GridPosition(1, 4),
-          new GridPosition(2, 0),
-          new GridPosition(2, 6),
-          new GridPosition(3, 3),
-          new GridPosition(3, 6),
-          new GridPosition(4, 0),
-          new GridPosition(5, 0),
-          new GridPosition(5, 2));
+  private static final GridPosition LEVEL_ONE_WALL = new GridPosition(1, 2);
+  private static final Set<GridPosition> MILESTONE_TWO_WALLS = Set.of(new GridPosition(2, 2));
 
   private static final Set<GridPosition> MILESTONE_THREE_WALLS =
-      Set.of(
-          new GridPosition(2, 2),
-          new GridPosition(3, 1),
-          new GridPosition(4, 0),
-          new GridPosition(5, 1));
+      Set.of(new GridPosition(0, 3), new GridPosition(3, 1));
 
   private static final Set<GridPosition> MILESTONE_FOUR_WALLS =
-      Set.of(new GridPosition(0, 0), new GridPosition(1, 1), new GridPosition(2, 2));
+      Set.of(new GridPosition(3, 1), new GridPosition(1, 0));
 
-  private static final Set<GridPosition> MILESTONE_FOUR_SLOW_FLOORS =
-      Set.of(new GridPosition(6, 2), new GridPosition(6, 1), new GridPosition(6, 0));
-
-  private static final Set<GridPosition> MILESTONE_FIVE_WALLS =
-      Set.of(
-          new GridPosition(0, 2),
-          new GridPosition(3, 2),
-          new GridPosition(6, 1),
-          new GridPosition(1, 3),
-          new GridPosition(4, 0));
+  private static final Set<GridPosition> MILESTONE_FIVE_WALLS = Set.of(new GridPosition(1, 5));
 
   private static final Set<GridPosition> MILESTONE_FIVE_SLOW_FLOORS =
-      Set.of(
-          new GridPosition(6, 3),
-          new GridPosition(2, 2),
-          new GridPosition(2, 5),
-          new GridPosition(1, 2));
+      Set.of(new GridPosition(1, 3), new GridPosition(2, 3));
 
-  private static final Set<GridPosition> LEVEL_SIX_WALLS = Set.of(new GridPosition(3, 4));
+  private static final Set<GridPosition> LEVEL_SIX_WALLS = Set.of(new GridPosition(2, 3));
 
   private static final Set<GridPosition> LEVEL_SIX_SLOW_FLOORS =
-      Set.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4));
+      Set.of(new GridPosition(1, 2), new GridPosition(2, 2), new GridPosition(3, 2));
 
-  private static final Set<GridPosition> LEVEL_SEVEN_WALLS = Set.of(new GridPosition(4, 2));
+  private static final Set<GridPosition> LEVEL_SEVEN_WALLS = Set.of(new GridPosition(1, 2));
 
   private static final Set<GridPosition> LEVEL_SEVEN_SLOW_FLOORS =
-      Set.of(new GridPosition(3, 0), new GridPosition(3, 1), new GridPosition(3, 2));
+      Set.of(new GridPosition(1, 1), new GridPosition(2, 0), new GridPosition(2, 1));
 
-  private static final Set<GridPosition> LEVEL_EIGHT_WALLS = Set.of(new GridPosition(3, 1));
+  private static final Set<GridPosition> LEVEL_EIGHT_WALLS = Set.of(new GridPosition(2, 6));
 
   private static final Set<GridPosition> LEVEL_EIGHT_SLOW_FLOORS =
       Set.of(
-          new GridPosition(0, 0),
-          new GridPosition(0, 1),
-          new GridPosition(0, 2),
-          new GridPosition(2, 1));
+          new GridPosition(2, 5),
+          new GridPosition(2, 4),
+          new GridPosition(3, 4),
+          new GridPosition(1, 5));
 
-  private static final Set<GridPosition> LEVEL_NINE_WALLS = Set.of(new GridPosition(0, 2));
+  private static final Set<GridPosition> LEVEL_NINE_WALLS = Set.of(new GridPosition(7, 1));
+
+  private static final Set<GridPosition> LEVEL_TEN_WALLS =
+      Set.of(new GridPosition(9, 3), new GridPosition(4, 0));
 
   private static final Set<GridPosition> LEVEL_TEN_SLOW_FLOORS =
       Set.of(
-          new GridPosition(5, 6),
-          new GridPosition(4, 6),
-          new GridPosition(3, 6),
-          new GridPosition(2, 9));
+          new GridPosition(7, 0),
+          new GridPosition(8, 0),
+          new GridPosition(7, 1),
+          new GridPosition(9, 1),
+          new GridPosition(6, 1),
+          new GridPosition(8, 4));
 
   private static final Set<GridPosition> LEVEL_NINE_SLOW_FLOORS =
       Set.of(
-          new GridPosition(0, 0),
-          new GridPosition(0, 1),
-          new GridPosition(1, 0),
-          new GridPosition(2, 0),
-          new GridPosition(0, 3));
+          new GridPosition(7, 0),
+          new GridPosition(3, 6),
+          new GridPosition(7, 2),
+          new GridPosition(8, 1));
 
   @Test
   void rejectsInvalidScreenDimensions() {
@@ -102,13 +80,15 @@ final class MazeGameDebugHarnessTest {
   @Test
   void simulatesWallPlacementAndClearingByGridCell() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
-    GridPosition wall = new GridPosition(2, 2);
+    GridPosition wall = LEVEL_ONE_WALL;
 
     harness.leftClickCell(wall);
     assertTrue(harness.snapshot().mazeState().placedCells().containsKey(wall));
 
     harness.rightClickCell(wall);
-    assertTrue(harness.snapshot().mazeState().placedCells().isEmpty());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        harness.snapshot().mazeState().placedCells());
   }
 
   @Test
@@ -197,16 +177,19 @@ final class MazeGameDebugHarnessTest {
     harness.leftClickCell(Levels.levelOne().primarySolver().start());
 
     assertEquals(Levels.levelOne().primarySolver().start(), harness.snapshot().rejectedPosition());
-    assertTrue(harness.snapshot().mazeState().placedCells().isEmpty());
+    assertEquals(
+        io.github.sportne.mazegame.model.maze.MazeState.initial(Levels.levelOne()).placedCells(),
+        harness.snapshot().mazeState().placedCells());
   }
 
   @Test
   void simulatesStartRetryAndReplayButtons() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
+    harness.leftClickCell(LEVEL_ONE_WALL);
     harness.clickStartRun().advance(Duration.ofSeconds(10));
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
-    assertEquals(new BestResult(Duration.ofSeconds(10), 40), harness.snapshot().bestResult());
+    assertEquals(new BestResult(Duration.ofSeconds(9), 36), harness.snapshot().bestResult());
 
     harness.clickReplay();
     assertEquals(GamePhase.REPLAY, harness.snapshot().gamePhase());
@@ -219,6 +202,7 @@ final class MazeGameDebugHarnessTest {
   void completesAllAuthoredLevelsThroughTheDesktopInteractionPath() {
     MazeGameDebugHarness harness = new MazeGameDebugHarness();
 
+    harness.leftClickCell(LEVEL_ONE_WALL);
     harness.clickStartRun().advance(Duration.ofSeconds(10)).clickNextLevel();
     assertEquals(Levels.levelTwo(), harness.snapshot().mazeState().levelDefinition());
 
@@ -239,14 +223,12 @@ final class MazeGameDebugHarnessTest {
     harness.clickNextLevel();
     assertEquals(Levels.levelFour(), harness.snapshot().mazeState().levelDefinition());
 
-    GridPosition draggedWall = new GridPosition(0, 0);
+    GridPosition draggedWall = new GridPosition(3, 1);
     harness.dragPaletteItemToCell(PlaceableCellType.WALL, draggedWall);
     MILESTONE_FOUR_WALLS.stream()
         .filter(position -> !position.equals(draggedWall))
         .forEach(harness::leftClickCell);
-    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
-    MILESTONE_FOUR_SLOW_FLOORS.forEach(harness::leftClickCell);
-    harness.clickStartRun().advance(Duration.ofMillis(6500));
+    harness.clickStartRun().advance(Duration.ofSeconds(7));
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
@@ -290,7 +272,7 @@ final class MazeGameDebugHarnessTest {
     LEVEL_EIGHT_WALLS.forEach(harness::leftClickCell);
     harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
     LEVEL_EIGHT_SLOW_FLOORS.forEach(harness::leftClickCell);
-    harness.clickStartRun().advance(Duration.ofSeconds(9));
+    harness.clickStartRun().advance(Duration.ofSeconds(18));
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
@@ -301,7 +283,7 @@ final class MazeGameDebugHarnessTest {
     LEVEL_NINE_WALLS.forEach(harness::leftClickCell);
     harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
     LEVEL_NINE_SLOW_FLOORS.forEach(harness::leftClickCell);
-    harness.clickStartRun().advance(Duration.ofSeconds(10));
+    harness.clickStartRun().advance(Duration.ofSeconds(19));
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
@@ -309,11 +291,13 @@ final class MazeGameDebugHarnessTest {
     harness.clickNextLevel();
     assertEquals(Levels.levelTen(), harness.snapshot().mazeState().levelDefinition());
 
-    GridPosition preset = new GridPosition(7, 4);
-    GridPosition movedPreset = new GridPosition(8, 4);
-    assertEquals(PlaceableCellType.SLOW_FLOOR, harness.snapshot().mazeState().placedCellAt(preset));
+    GridPosition preset = new GridPosition(6, 0);
+    GridPosition movedPreset = new GridPosition(6, 1);
+    assertEquals(PlaceableCellType.WALL, harness.snapshot().mazeState().placedCellAt(preset));
     harness.dragPlacedCell(preset, movedPreset).dragPlacedCell(movedPreset, preset);
-    assertEquals(PlaceableCellType.SLOW_FLOOR, harness.snapshot().mazeState().placedCellAt(preset));
+    assertEquals(PlaceableCellType.WALL, harness.snapshot().mazeState().placedCellAt(preset));
+    LEVEL_TEN_WALLS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
     LEVEL_TEN_SLOW_FLOORS.forEach(harness::leftClickCell);
     harness.clickStartRun().advance(Duration.ofSeconds(14));
 

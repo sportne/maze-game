@@ -1,5 +1,8 @@
 # Milestone 5 Multi-Solver Level Design
 
+> Historical layout record. The current Level 5 is the open-grid cell tutorial specified in the
+> [ten-level progression design](level-progression-design.md).
+
 ## Authored Layout
 
 Milestone 5 uses a 7x7 grid and combines both released character behaviors in one maze:

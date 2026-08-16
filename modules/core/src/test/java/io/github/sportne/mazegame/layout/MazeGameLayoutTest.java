@@ -278,9 +278,9 @@ final class MazeGameLayoutTest {
   }
 
   @Test
-  void onlyTheTenByTenBoardNeedsDenseCellsAtShortestLandscapeHeight() {
+  void growingBoardsUseTheLargestSupportedCellsAtShortestLandscapeHeight() {
     for (int[] viewport : List.of(new int[] {844, 286}, new int[] {756, 286})) {
-      for (LevelDefinition level : Levels.catalog().levels().subList(0, 9)) {
+      for (LevelDefinition level : Levels.catalog().levels().subList(0, 7)) {
         ScreenRectangle grid =
             MazeGameLayout.forPhase(
                     GamePhase.BUILDING,
@@ -293,6 +293,20 @@ final class MazeGameLayoutTest {
                     level.initiallyAvailableCellTypes())
                 .bounds(MazeGameLayout.GAME_GRID);
         assertTrue(grid.width() / level.gridSize().columns() >= 32.0F);
+      }
+      for (LevelDefinition level : Levels.catalog().levels().subList(7, 10)) {
+        ScreenRectangle grid =
+            MazeGameLayout.forPhase(
+                    GamePhase.BUILDING,
+                    viewport[0],
+                    viewport[1],
+                    level.gridSize(),
+                    false,
+                    10,
+                    true,
+                    level.initiallyAvailableCellTypes())
+                .bounds(MazeGameLayout.GAME_GRID);
+        assertTrue(grid.width() / level.gridSize().columns() >= 24.0F);
       }
       ScreenRectangle denseGrid =
           MazeGameLayout.forPhase(

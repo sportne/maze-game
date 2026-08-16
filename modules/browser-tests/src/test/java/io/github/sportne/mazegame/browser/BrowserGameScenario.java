@@ -16,49 +16,47 @@ final class BrowserGameScenario {
   static final String MILESTONE_TWO_RESULT_KEY = "maze-game.best-result.milestone-2";
   static final String MILESTONE_THREE_RESULT_KEY = "maze-game.best-result.milestone-3";
   static final GridPosition EDITED_CELL = new GridPosition(2, 1);
-  static final List<GridPosition> MILESTONE_TWO_WALLS =
-      List.of(
-          new GridPosition(1, 1),
-          new GridPosition(1, 4),
-          new GridPosition(2, 0),
-          new GridPosition(2, 6),
-          new GridPosition(3, 3),
-          new GridPosition(3, 6),
-          new GridPosition(4, 0),
-          new GridPosition(5, 0),
-          new GridPosition(5, 2));
+  static final GridPosition LEVEL_ONE_WALL = new GridPosition(1, 2);
+  static final List<GridPosition> MILESTONE_TWO_WALLS = List.of(new GridPosition(2, 2));
   static final List<GridPosition> MILESTONE_THREE_WALLS =
-      List.of(
-          new GridPosition(2, 2),
-          new GridPosition(3, 1),
-          new GridPosition(4, 0),
-          new GridPosition(5, 1));
-  static final GridPosition LEVEL_SEVEN_WALL = new GridPosition(4, 2);
+      List.of(new GridPosition(0, 3), new GridPosition(3, 1));
+  static final List<GridPosition> MILESTONE_FOUR_WALLS =
+      List.of(new GridPosition(3, 1), new GridPosition(1, 0));
+  static final GridPosition LEVEL_FIVE_WALL = new GridPosition(1, 5);
+  static final List<GridPosition> LEVEL_FIVE_SLOW_FLOORS =
+      List.of(new GridPosition(1, 3), new GridPosition(2, 3));
+  static final GridPosition LEVEL_SIX_WALL = new GridPosition(2, 3);
+  static final List<GridPosition> LEVEL_SIX_SLOW_FLOORS =
+      List.of(new GridPosition(1, 2), new GridPosition(2, 2), new GridPosition(3, 2));
+  static final GridPosition LEVEL_SEVEN_WALL = new GridPosition(1, 2);
   static final List<GridPosition> LEVEL_SEVEN_SLOW_FLOORS =
-      List.of(new GridPosition(3, 0), new GridPosition(3, 1), new GridPosition(3, 2));
-  static final GridPosition LEVEL_EIGHT_WALL = new GridPosition(3, 1);
+      List.of(new GridPosition(1, 1), new GridPosition(2, 0), new GridPosition(2, 1));
+  static final GridPosition LEVEL_EIGHT_WALL = new GridPosition(2, 6);
   static final List<GridPosition> LEVEL_EIGHT_SLOW_FLOORS =
       List.of(
-          new GridPosition(0, 0),
-          new GridPosition(0, 1),
-          new GridPosition(0, 2),
-          new GridPosition(2, 1));
-  static final GridPosition LEVEL_NINE_WALL = new GridPosition(0, 2);
+          new GridPosition(2, 5),
+          new GridPosition(2, 4),
+          new GridPosition(3, 4),
+          new GridPosition(1, 5));
+  static final GridPosition LEVEL_NINE_WALL = new GridPosition(7, 1);
   static final List<GridPosition> LEVEL_NINE_SLOW_FLOORS =
       List.of(
-          new GridPosition(0, 0),
-          new GridPosition(0, 1),
-          new GridPosition(1, 0),
-          new GridPosition(2, 0),
-          new GridPosition(0, 3));
+          new GridPosition(7, 0),
+          new GridPosition(3, 6),
+          new GridPosition(7, 2),
+          new GridPosition(8, 1));
+  static final List<GridPosition> LEVEL_TEN_WALLS =
+      List.of(new GridPosition(9, 3), new GridPosition(4, 0));
   static final List<GridPosition> LEVEL_TEN_SLOW_FLOORS =
       List.of(
-          new GridPosition(5, 6),
-          new GridPosition(4, 6),
-          new GridPosition(3, 6),
-          new GridPosition(2, 9));
-  static final GridPosition LEVEL_TEN_PRESET_SLOW_FLOOR = new GridPosition(7, 4);
-  static final GridPosition LEVEL_TEN_PRESET_MOVE_DESTINATION = new GridPosition(8, 4);
+          new GridPosition(7, 0),
+          new GridPosition(8, 0),
+          new GridPosition(7, 1),
+          new GridPosition(9, 1),
+          new GridPosition(6, 1),
+          new GridPosition(8, 4));
+  static final GridPosition LEVEL_TEN_PRESET_WALL = new GridPosition(6, 0);
+  static final GridPosition LEVEL_TEN_PRESET_MOVE_DESTINATION = new GridPosition(6, 1);
 
   private BrowserGameScenario() {}
 
@@ -97,6 +95,7 @@ final class BrowserGameScenario {
     controls.waitForButton(
         GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
     controls.placeAndClearWall(Levels.levelOne(), EDITED_CELL);
+    controls.placeWalls(Levels.levelOne(), List.of(LEVEL_ONE_WALL));
     controls.clickButton(GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
   }
 

@@ -72,8 +72,8 @@ final class BrowserSmokeTest {
   private static final int MOBILE_SAFARI_LANDSCAPE_HEIGHT = 286;
   private static final GridPosition MOVED_CELL = new GridPosition(2, 3);
   private static final int STARTUP_SAMPLE_COUNT = 5;
-  private static final long SOLVER_STATUS_SIGNATURE = 1_484_529_530_432_220_098L;
-  private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
+  private static final long LEVEL_TWO_STATUS_SIGNATURE = -314_938_194_220_522_274L;
+  private static final long LEVEL_THREE_STATUS_SIGNATURE = -2_608_151_536_843_095_784L;
   private static final String SITE_PATH = "/maze-game/";
   private static final String LEVEL_SIX_RESULT_KEY = "maze-game.best-result.level-6";
   private static final String LEVEL_SEVEN_RESULT_KEY = "maze-game.best-result.level-7";
@@ -206,14 +206,14 @@ final class BrowserSmokeTest {
     BrowserGameScenario.startMilestoneOne(controls);
     assertAudioResumed(page);
     waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
-    assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
+    assertEquals("9000:36", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
 
     controls.clickButtonAndWaitForChange(
         GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_RETRY);
     BrowserGameScenario.startMilestoneTwo(controls);
     waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
-    assertEquals("9500:38", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+    assertEquals("4500:18", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
 
     String milestoneOneResult = readSavedResult(page, MILESTONE_ONE_RESULT_KEY);
     String milestoneTwoResult = readSavedResult(page, MILESTONE_TWO_RESULT_KEY);
@@ -222,7 +222,12 @@ final class BrowserSmokeTest {
     page.screenshot(
         new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-solver-result.png")));
     assertRenderedSolverPresentation(
-        page, Levels.levelTwo(), new GridPosition(3, 0), true, SOLVER_STATUS_SIGNATURE, false);
+        page,
+        Levels.levelTwo(),
+        Levels.levelTwo().primarySolver().goal(),
+        true,
+        LEVEL_TWO_STATUS_SIGNATURE,
+        true);
     BrowserGameScenario.openMilestoneThree(controls);
     page.reload();
     waitForRenderedControl(page, 640, 280);
@@ -232,7 +237,7 @@ final class BrowserSmokeTest {
         null, page.evaluate("key => window.localStorage.getItem(key)", MILESTONE_THREE_RESULT_KEY));
     BrowserGameScenario.startMilestoneThreeFromMainMenu(controls);
     waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
-    assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
+    assertEquals("6000:24", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
 
     String milestoneThreeResult = readSavedResult(page, MILESTONE_THREE_RESULT_KEY);
     assertFalse(milestoneTwoResult.equals(milestoneThreeResult));
@@ -243,8 +248,8 @@ final class BrowserSmokeTest {
         Levels.levelThree(),
         Levels.levelThree().primarySolver().goal(),
         false,
-        SCOUT_STATUS_SIGNATURE,
-        true);
+        LEVEL_THREE_STATUS_SIGNATURE,
+        false);
     controls.clickButtonAndWaitForChange(
         GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
     controls.waitForButton(
@@ -401,6 +406,7 @@ final class BrowserSmokeTest {
     try (BrowserContext context =
         browser.newContext(
             new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
+      // Legacy outcomes deliberately prove that the redesign preserves stable progression keys.
       context.addInitScript(
           "window.localStorage.setItem('maze-game.best-result.milestone-1', '10000:40');"
               + "window.localStorage.setItem('maze-game.best-result.milestone-2', '9500:38');"
@@ -423,16 +429,15 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
 
-        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(0, 2)));
-        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(1, 1)));
-        controls.placeWalls(Levels.levelSix(), List.of(new GridPosition(3, 4)));
+        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(0, 1)));
+        assertWallCell(page, controls.cellCenter(Levels.levelSix(), new GridPosition(0, 3)));
+        controls.placeWalls(Levels.levelSix(), List.of(BrowserGameScenario.LEVEL_SIX_WALL));
         controls.clickButton(
             GamePhase.BUILDING,
             Levels.levelSix(),
             false,
             MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
-        for (GridPosition slowFloor :
-            List.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4))) {
+        for (GridPosition slowFloor : BrowserGameScenario.LEVEL_SIX_SLOW_FLOORS) {
           controls.clickCell(Levels.levelSix(), slowFloor);
         }
         page.screenshot(
@@ -443,7 +448,7 @@ final class BrowserSmokeTest {
             GamePhase.RESULT, Levels.levelSix(), true, MazeGameLayout.RESULT_RETRY);
 
         waitForSavedResult(page, LEVEL_SIX_RESULT_KEY);
-        assertEquals("6500:20", readSavedResult(page, LEVEL_SIX_RESULT_KEY));
+        assertEquals("7000:22", readSavedResult(page, LEVEL_SIX_RESULT_KEY));
         assertTrue(
             levelLog.errors().isEmpty(),
             () -> String.join(System.lineSeparator(), levelLog.errors()));
@@ -456,6 +461,7 @@ final class BrowserSmokeTest {
     try (BrowserContext context =
         browser.newContext(
             new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
+      // Legacy outcomes deliberately prove that the redesign preserves stable progression keys.
       context.addInitScript(
           "window.localStorage.setItem('maze-game.best-result.milestone-1', '10000:40');"
               + "window.localStorage.setItem('maze-game.best-result.milestone-2', '9500:38');"
@@ -491,7 +497,7 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.RESULT, Levels.levelSeven(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         waitForSavedResult(page, LEVEL_SEVEN_RESULT_KEY);
-        assertEquals("6500:16", readSavedResult(page, LEVEL_SEVEN_RESULT_KEY));
+        assertEquals("8750:26", readSavedResult(page, LEVEL_SEVEN_RESULT_KEY));
         controls.clickButton(
             GamePhase.RESULT, Levels.levelSeven(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 
@@ -509,7 +515,7 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.RESULT, Levels.levelEight(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         waitForSavedResult(page, LEVEL_EIGHT_RESULT_KEY);
-        assertEquals("7500:22", readSavedResult(page, LEVEL_EIGHT_RESULT_KEY));
+        assertEquals("17000:46", readSavedResult(page, LEVEL_EIGHT_RESULT_KEY));
         controls.clickButton(
             GamePhase.RESULT, Levels.levelEight(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 
@@ -527,7 +533,7 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         waitForSavedResult(page, LEVEL_NINE_RESULT_KEY);
-        assertEquals("7750:20", readSavedResult(page, LEVEL_NINE_RESULT_KEY));
+        assertEquals("17250:54", readSavedResult(page, LEVEL_NINE_RESULT_KEY));
         controls.clickButton(
             GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 
@@ -538,12 +544,13 @@ final class BrowserSmokeTest {
                 .setPath(reportDirectory.resolve("desktop-level-10-presets.png")));
         controls.dragPlacedCell(
             Levels.levelTen(),
-            BrowserGameScenario.LEVEL_TEN_PRESET_SLOW_FLOOR,
+            BrowserGameScenario.LEVEL_TEN_PRESET_WALL,
             BrowserGameScenario.LEVEL_TEN_PRESET_MOVE_DESTINATION);
         controls.dragPlacedCell(
             Levels.levelTen(),
             BrowserGameScenario.LEVEL_TEN_PRESET_MOVE_DESTINATION,
-            BrowserGameScenario.LEVEL_TEN_PRESET_SLOW_FLOOR);
+            BrowserGameScenario.LEVEL_TEN_PRESET_WALL);
+        controls.placeWalls(Levels.levelTen(), BrowserGameScenario.LEVEL_TEN_WALLS);
         controls.clickButton(
             GamePhase.BUILDING,
             Levels.levelTen(),
@@ -559,7 +566,7 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.RESULT, Levels.levelTen(), false, MazeGameLayout.RESULT_RETRY);
         waitForSavedResult(page, LEVEL_TEN_RESULT_KEY);
-        assertEquals("12750:34", readSavedResult(page, LEVEL_TEN_RESULT_KEY));
+        assertEquals("11500:71", readSavedResult(page, LEVEL_TEN_RESULT_KEY));
         assertTrue(
             levelLog.errors().isEmpty(),
             () -> String.join(System.lineSeparator(), levelLog.errors()));
@@ -772,12 +779,13 @@ final class BrowserSmokeTest {
         primaryControls.waitForButton(
             GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
         assertOpenCell(page, primaryControls.cellCenter(Levels.levelOne(), EDITED_CELL));
+        primaryControls.placeWalls(Levels.levelOne(), List.of(BrowserGameScenario.LEVEL_ONE_WALL));
 
         primaryControls.clickButton(
             GamePhase.BUILDING, Levels.levelOne(), false, MazeGameLayout.BUILD_START);
         resizeAndAssert(page, rotated);
         waitForSavedResult(page, MILESTONE_ONE_RESULT_KEY);
-        assertEquals("10000:40", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
+        assertEquals("9000:36", readSavedResult(page, MILESTONE_ONE_RESULT_KEY));
         rotatedControls.waitForButton(
             GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         rotatedControls.clickButton(
@@ -791,7 +799,7 @@ final class BrowserSmokeTest {
         primaryControls.clickButton(
             GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
-        assertEquals("9500:38", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+        assertEquals("4500:18", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
         primaryControls.waitForButton(
             GamePhase.RESULT, Levels.levelTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 
@@ -807,7 +815,7 @@ final class BrowserSmokeTest {
         primaryControls.clickButton(
             GamePhase.BUILDING, Levels.levelThree(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_THREE_RESULT_KEY);
-        assertEquals("6500:26", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
+        assertEquals("6000:24", readSavedResult(page, MILESTONE_THREE_RESULT_KEY));
         primaryControls.waitForButton(
             GamePhase.RESULT, Levels.levelThree(), true, MazeGameLayout.RESULT_REPLAY);
         Files.createDirectories(Objects.requireNonNull(screenshotPath.getParent()));
@@ -986,7 +994,7 @@ final class BrowserSmokeTest {
         paletteSupplyBadgeBounds(
             layout.bounds(MazeGameLayout.paletteItemId(PlaceableCellType.WALL)));
 
-    assertTrue(lightPixelCount(image, inset(wallBadge, 3.0F)) > 0, "expected infinity badge");
+    assertTrue(lightPixelCount(image, inset(wallBadge, 3.0F)) > 0, "expected supply badge");
     assertTrue(
         layout.element(MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR)).isEmpty(),
         "zero-start Slow Floor should not receive palette bounds");

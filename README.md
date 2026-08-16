@@ -7,12 +7,14 @@ module uses gdx-teavm 1.6.1, which embeds TeaVM 0.15.0. TeaVM JavaScript generat
 without Gradle's configuration cache because gdx-teavm 1.6.1 captures a non-serializable task
 logger.
 
-Maze Game now includes ten authored levels, persistent unlock progression and per-level best
-results, finite/infinite Wall and Slow Floor inventory, responsive click/drag building, fixed level
-geometry, movable preset cells, and four distinct solver behaviors. Levels 7–9 introduce Seeker in
-authored play, grow from 5x5 through 7x7, and add fixed Slow Floors while keeping one solver active
-per level. Level 10 extends that progression to a 10x10 Random puzzle with two preset Slow Floors
-and four more available from its focused palette.
+Maze Game includes ten authored levels, persistent unlock progression and per-level best results,
+finite/infinite Wall and Slow Floor inventory, responsive click/drag building, fixed level geometry,
+movable preset cells, and four distinct solver behaviors. Levels 1–4 are preset tutorials that
+introduce Random, Scout, Tracker, and Seeker with only one or two remaining Wall placements. Level 5
+opens the grid completely and introduces Slow Floors beside infinite Walls. Levels 6–9 combine the
+known systems on increasingly large single-solver boards, and Level 10 introduces two solvers on a
+10x10 grid for the first time. The complete current catalog is specified in the
+[level progression design](docs/level-progression-design.md).
 
 ## Local Commands
 
@@ -48,9 +50,8 @@ See [the JavaScript release guide](docs/javascript-release.md) for the browser s
 browser-storage limitations, JavaScript/WebAssembly strategy, and rollback procedure.
 The [WebAssembly rollout decision](docs/webassembly-rollout.md) records the preview URL, comparison
 metrics, compatibility evidence, constraints, and regression baseline.
-The [Milestone 3 release baseline](docs/milestone-3-release.md) records the accepted levels,
-playtest evidence, mobile behavior, and known constraints. The earlier
-[Milestone 2 baseline](docs/milestone-2-release.md) remains as release history.
+The [Milestone 3 release baseline](docs/milestone-3-release.md) and earlier
+[Milestone 2 baseline](docs/milestone-2-release.md) remain as release history.
 The [Milestone 4 roadmap](roadmap/milestone-4.md) defines the inventory-based Wall and Slow Floor
 building system. Authored supply, transactional maze inventory, shared solver timing, phase-safe
 session editing, responsive click/drag building, placed-cell repositioning, and the balanced fourth

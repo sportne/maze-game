@@ -16,7 +16,7 @@ final class SolverPresentationTest {
   @Test
   void selectsPlayerFacingIdentityFromAppearanceAndGoalType() {
     SolverPresentation random = SolverPresentation.forSolver(Levels.levelOne().primarySolver());
-    SolverPresentation scout = SolverPresentation.forSolver(Levels.levelThree().primarySolver());
+    SolverPresentation scout = SolverPresentation.forSolver(Levels.levelTwo().primarySolver());
     SolverPresentation tracker =
         SolverPresentation.forSolver(
             new LevelSolver(
@@ -41,9 +41,9 @@ final class SolverPresentationTest {
     assertEquals("Level 1", random.levelTitle("Level 1"));
     assertEquals("Scout", scout.name());
     assertEquals("acorn", scout.goalName());
-    assertEquals("Level 3 | Scout", scout.levelTitle("Level 3"));
-    assertEquals("Level 3 | Scout", scout.statusTitle("Level 3", 300.0F));
-    assertEquals("Scout", scout.statusTitle("Level 3", 299.0F));
+    assertEquals("Level 2 | Scout", scout.levelTitle("Level 2"));
+    assertEquals("Level 2 | Scout", scout.statusTitle("Level 2", 300.0F));
+    assertEquals("Scout", scout.statusTitle("Level 2", 299.0F));
     assertEquals("Tracker", tracker.name());
     assertEquals("trash can", tracker.goalName());
     assertEquals("Tracker", tracker.statusTitle("Tracker Fixture", 299.0F));

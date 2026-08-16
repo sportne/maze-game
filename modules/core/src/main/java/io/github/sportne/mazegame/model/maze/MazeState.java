@@ -6,6 +6,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPathfinder;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +19,10 @@ public record MazeState(
   public MazeState {
     Objects.requireNonNull(levelDefinition, "levelDefinition");
     Objects.requireNonNull(placedCells, "placedCells");
-    placedCells = Map.copyOf(placedCells);
+    // TeaVM's WebAssembly implementation of Map.copyOf(emptyMap) produces an empty immutable trie
+    // whose get operation divides by its zero-sized table. A copied HashMap preserves the same
+    // immutable public contract and remains portable when a released level has no preset cells.
+    placedCells = Collections.unmodifiableMap(new HashMap<>(placedCells));
     for (Map.Entry<GridPosition, PlaceableCellType> entry : placedCells.entrySet()) {
       validatePlacedCell(levelDefinition, entry.getKey(), entry.getValue());
     }

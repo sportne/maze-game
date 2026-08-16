@@ -137,12 +137,13 @@ final class RandomSolverSimulationTest {
 
   @Test
   void reachesGoalWhenRandomWalkArrivesThere() {
-    MazeState maze = verticalCorridor(Levels.levelOne());
+    LevelDefinition level = levelWithSeed(1L);
+    MazeState maze = verticalCorridor(level);
     RandomSolverSimulation simulation = new RandomSolverSimulation(maze);
 
     SolverRunResult result = simulation.update(Duration.ofSeconds(1));
 
-    assertEquals(Levels.levelOne().primarySolver().goal(), result.position());
+    assertEquals(level.primarySolver().goal(), result.position());
     assertEquals(SolverRunStatus.REACHED_GOAL, result.status());
     assertEquals(4, result.moveCount());
   }

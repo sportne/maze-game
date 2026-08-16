@@ -1,5 +1,8 @@
 # Milestone 2 Level Design
 
+> Historical layout record. The current Level 2 is the Scout tutorial specified in the
+> [ten-level progression design](level-progression-design.md).
+
 ## Accepted Specification
 
 Milestone 2 keeps the existing normal-wall rules and deterministic random solver. Its difficulty

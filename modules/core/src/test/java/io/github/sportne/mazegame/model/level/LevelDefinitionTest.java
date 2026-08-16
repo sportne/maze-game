@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 final class LevelDefinitionTest {
   @Test
-  void milestoneOneMatchesRoadmapValues() {
+  void firstLevelMatchesTheTutorialProgressionValues() {
     LevelDefinition level = Levels.levelOne();
 
     assertEquals("milestone-1", level.id());
@@ -26,12 +26,12 @@ final class LevelDefinitionTest {
     assertEquals(GridSize.square(5), level.gridSize());
     assertEquals(new GridPosition(4, 2), level.primarySolver().start());
     assertEquals(new GridPosition(0, 2), level.primarySolver().goal());
-    assertEquals(Duration.ofSeconds(30), level.buildTime());
+    assertEquals(Duration.ofSeconds(20), level.buildTime());
     assertEquals(Duration.ofSeconds(5), level.targetSolveTime());
     assertEquals(Duration.ofSeconds(10), level.maximumSolveTime());
     assertEquals(Duration.ofMillis(250), level.solverMoveInterval());
     assertEquals(SolverBehavior.RANDOM, level.primarySolver().behavior());
-    assertEquals(1L, level.primarySolver().randomSeed().orElseThrow());
+    assertEquals(58L, level.primarySolver().randomSeed().orElseThrow());
   }
 
   @Test
@@ -63,31 +63,11 @@ final class LevelDefinitionTest {
             "level-10"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
     assertEquals(
-        List.of(
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            Levels.levelSix().fixedCells(),
-            Levels.levelSeven().fixedCells(),
-            Levels.levelEight().fixedCells(),
-            Levels.levelNine().fixedCells(),
-            Levels.levelTen().fixedCells()),
-        Levels.catalog().levels().stream().map(LevelDefinition::fixedCells).toList());
+        List.of(0, 0, 0, 0, 0, 12, 0, 9, 22, 15),
+        Levels.catalog().levels().stream().map(level -> level.fixedCells().size()).toList());
     assertEquals(
-        List.of(
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            Levels.levelTen().presetCells()),
-        Levels.catalog().levels().stream().map(LevelDefinition::presetCells).toList());
+        List.of(9, 9, 13, 13, 0, 0, 14, 9, 0, 10),
+        Levels.catalog().levels().stream().map(level -> level.presetCells().size()).toList());
   }
 
   @Test
@@ -176,14 +156,15 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void releasedLevelsExplicitlyAuthorInfiniteWallsAndZeroSlowFloors() {
-    for (LevelDefinition level :
-        List.of(Levels.levelOne(), Levels.levelTwo(), Levels.levelThree())) {
-      assertEquals(CellSupply.infinite(), level.supplyFor(PlaceableCellType.WALL));
+  void firstFourLevelsReserveSlowFloorsForTheirLevelFiveIntroduction() {
+    for (LevelDefinition level : Levels.catalog().levels().subList(0, 4)) {
       assertEquals(CellSupply.finite(0), level.supplyFor(PlaceableCellType.SLOW_FLOOR));
-      assertEquals(PlaceableCellSupply.unlimitedWallsOnly(), level.placeableCellSupplies());
       assertEquals(List.of(PlaceableCellType.WALL), level.initiallyAvailableCellTypes());
     }
+    assertEquals(CellSupply.infinite(), Levels.levelFive().supplyFor(PlaceableCellType.WALL));
+    assertEquals(
+        List.of(PlaceableCellType.WALL, PlaceableCellType.SLOW_FLOOR),
+        Levels.levelFive().initiallyAvailableCellTypes());
   }
 
   @Test

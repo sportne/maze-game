@@ -49,6 +49,8 @@ appearance and drag behavior communicate mutability; fixed cells remain the only
 non-color lock treatment. Debug, desktop pointer, touch, JavaScript, WebAssembly, and Safari paths
 all consume the same materialized `MazeState`.
 
-Level 10 is the first released use: Slow Floors at `(7,4)` and `(2,8)` consume two of six authored
-Slow Floors, leaving four in the palette. Its accepted solution can keep those presets in place or
-move them away and restore them before the run.
+Preset Walls now shape the introductory tutorials and selected later levels. They consume authored
+Wall supply, which leaves only the intended one or two tutorial edits in the palette while still
+allowing the initial maze to be rearranged. Level 10 also uses ten preset Walls alongside fixed
+geometry. Exact released coordinates and remaining inventory are recorded in the
+[level progression design](level-progression-design.md).

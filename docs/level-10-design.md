@@ -1,5 +1,8 @@
 # Level 10 Design
 
+> Historical layout record. The current 10x10 Level 10 introduces two solvers and is specified in
+> the [ten-level progression design](level-progression-design.md).
+
 ## Decision
 
 Level 10 grows the board directly from 7x7 to 10x10 while retaining one active solver. It returns

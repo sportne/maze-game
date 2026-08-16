@@ -331,7 +331,7 @@ final class MazeGameRendererTest {
     renderer.render(layout(GamePhase.RESULT), snapshot(GamePhase.RESULT, failedResult));
 
     assertTrue(font.capturedText().contains("Level 1"));
-    assertTrue(font.capturedText().contains("Build: 30.0s"));
+    assertTrue(font.capturedText().contains("Build: 20.0s"));
     assertTrue(font.capturedText().contains("Delay past 5.0s; keep a path to the cheese"));
     assertTrue(font.capturedText().contains("Start Solver"));
     assertTrue(font.capturedText().contains("Level 1 | 7.5s | >5.0s"));
@@ -348,22 +348,22 @@ final class MazeGameRendererTest {
   }
 
   @Test
-  void fourthLevelBuildFeedbackTeachesToolsWithoutRevealingScoutRule() {
+  void buildFeedbackReflectsEachLevelsAvailableToolsAndGoal() {
     String instructions = MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelFour()));
 
-    assertEquals("Tap or drag tools; delay past 5.5s; keep a path", instructions);
+    assertEquals("Delay past 5.5s; keep a path to the carrot", instructions);
     assertFalse(instructions.toLowerCase(java.util.Locale.ROOT).contains("left"));
     assertEquals(
         "Delay past 5.0s; keep a path to the cheese",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelOne())));
     assertEquals(
-        "Tap or drag tools; delay past 7.3s; keep a path",
+        "Tap or drag tools; delay past 14.5s; keep a path",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelEight())));
     assertEquals(
-        "Tap or drag tools; delay past 7.5s; keep a path",
+        "Tap or drag tools; delay past 15.5s; keep a path",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelNine())));
     assertEquals(
-        "Tap or drag tools; delay past 12.5s; keep a path",
+        "Tap or drag tools; delay both past 11.0s; keep paths",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelTen())));
   }
 
@@ -743,7 +743,7 @@ final class MazeGameRendererTest {
 
   @Test
   void scoutPresentationFollowsTheLevelThroughEveryGameplayPhase() {
-    LevelDefinition scoutLevel = Levels.levelThree();
+    LevelDefinition scoutLevel = Levels.levelTwo();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
@@ -786,10 +786,10 @@ final class MazeGameRendererTest {
     renderer.render(
         scoutLayout(GamePhase.RESULT), scoutSnapshot(GamePhase.RESULT, result, progress));
 
-    assertTrue(font.capturedText().contains("Delay past 6.0s; keep a path to the acorn"));
+    assertTrue(font.capturedText().contains("Delay past 4.0s; keep a path to the acorn"));
     assertFalse(font.capturedText().contains("Scout follows a consistent search pattern"));
-    assertTrue(font.capturedText().contains("Scout | 7.0s | >6.0s"));
-    assertTrue(font.capturedText().contains("Scout | Success | >6.0s"));
+    assertTrue(font.capturedText().contains("Scout | 5.0s | >4.0s"));
+    assertTrue(font.capturedText().contains("Scout | Success | >4.0s"));
     assertTrue(font.capturedText().contains("Back"));
     assertTrue(spriteBatch.drawnRegionXs().contains(20));
   }
@@ -864,7 +864,7 @@ final class MazeGameRendererTest {
     assertTrue(spriteBatch.drawnRegionXs().contains(2));
     assertFalse(spriteBatch.drawnRegionXs().contains(1));
 
-    LevelDefinition trackerLevel = Levels.levelSix();
+    LevelDefinition trackerLevel = Levels.levelSeven();
     SolverRunResult trackerResult =
         new SolverRunResult(
             trackerLevel.primarySolver().start(), Duration.ZERO, 0, SolverRunStatus.RUNNING);
@@ -920,7 +920,7 @@ final class MazeGameRendererTest {
 
   @Test
   void multiSolverLevelDrawsBothCharactersAndBothMatchingGoals() {
-    LevelDefinition level = Levels.levelFive();
+    LevelDefinition level = Levels.levelTen();
     RecordingSpriteBatch spriteBatch = allocate(RecordingSpriteBatch.class);
     RecordingFont font = recordingFont();
     MazeGameRenderer renderer = renderer(spriteBatch, allocate(RecordingShapeRenderer.class), font);
@@ -934,7 +934,7 @@ final class MazeGameRendererTest {
         snapshot(
             GamePhase.SOLVER_RUNNING,
             level,
-            MazeState.empty(level),
+            MazeState.initial(level),
             0.0F,
             null,
             0.0F,
@@ -1131,13 +1131,12 @@ final class MazeGameRendererTest {
   }
 
   private static ScreenLayout scoutLayout(GamePhase phase) {
-    return MazeGameLayout.forPhase(
-        phase, 1280, 720, Levels.levelThree().gridSize(), true, 3, false);
+    return MazeGameLayout.forPhase(phase, 1280, 720, Levels.levelTwo().gridSize(), true, 3, false);
   }
 
   private static GameRenderSnapshot scoutSnapshot(
       GamePhase phase, SolverRunResult result, List<LevelProgress> progress) {
-    LevelDefinition level = Levels.levelThree();
+    LevelDefinition level = Levels.levelTwo();
     return snapshot(
         phase,
         level,
@@ -1161,7 +1160,7 @@ final class MazeGameRendererTest {
         phase,
         LEVEL,
         MazeState.empty(LEVEL),
-        30.0F,
+        20.0F,
         null,
         0.0F,
         solverRunResult,

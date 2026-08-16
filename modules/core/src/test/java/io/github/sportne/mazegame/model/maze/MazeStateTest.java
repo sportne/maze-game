@@ -1,14 +1,18 @@
 package io.github.sportne.mazegame.model.maze;
 
+import static io.github.sportne.mazegame.TestLevels.singleSolverLevel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.sportne.mazegame.model.cell.PlaceableCellSupply;
 import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
 import io.github.sportne.mazegame.model.level.Levels;
+import io.github.sportne.mazegame.model.level.SolverBehavior;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -185,9 +189,23 @@ final class MazeStateTest {
 
   @Test
   void acceptsWindingPathThroughMostlyBlockedMaze() {
+    LevelDefinition level =
+        singleSolverLevel(
+            "winding-path",
+            "Winding Path",
+            LEVEL.gridSize(),
+            LEVEL.primarySolver().start(),
+            LEVEL.primarySolver().goal(),
+            LEVEL.buildTime(),
+            LEVEL.targetSolveTime(),
+            LEVEL.maximumSolveTime(),
+            Duration.ofMillis(250),
+            PlaceableCellSupply.unlimitedWallsOnly(),
+            SolverBehavior.RANDOM,
+            1L);
     MazeState maze =
         new MazeState(
-            LEVEL,
+            level,
             wallCells(
                 Set.of(
                     new GridPosition(0, 0),

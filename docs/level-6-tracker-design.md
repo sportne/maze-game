@@ -1,5 +1,8 @@
 # Level 6 Tracker Design
 
+> Historical layout record. The current Level 6 returns to Scout and introduces fixed geometry as
+> specified in the [ten-level progression design](level-progression-design.md).
+
 ## Decision
 
 Level 6 is Tracker's introductory authored level. It uses a compact 5x5 grid, two fixed Walls, one
