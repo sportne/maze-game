@@ -15,10 +15,39 @@ import io.github.sportne.mazegame.model.level.SolverBehavior;
 import io.github.sportne.mazegame.model.maze.MazeState;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 final class RandomSolverSimulationTest {
+  @Test
+  void portableBoundedSelectionMatchesJdkSequence() {
+    Random random = new Random(107L);
+
+    assertEquals(0, RandomSolverSimulation.nextIndex(random, 1));
+    assertEquals(1, RandomSolverSimulation.nextIndex(random, 2));
+    assertEquals(0, RandomSolverSimulation.nextIndex(random, 3));
+    assertEquals(0, RandomSolverSimulation.nextIndex(random, 4));
+    assertEquals(2, RandomSolverSimulation.nextIndex(random, 5));
+    assertEquals(5, RandomSolverSimulation.nextIndex(random, 7));
+    assertEquals(2, RandomSolverSimulation.nextIndex(random, 16));
+    assertEquals(16, RandomSolverSimulation.nextIndex(random, 20));
+    assertEquals(1, RandomSolverSimulation.nextIndex(random, 3));
+    assertEquals(2, RandomSolverSimulation.nextIndex(random, 5));
+    assertEquals(0, RandomSolverSimulation.nextIndex(random, 7));
+    assertEquals(11, RandomSolverSimulation.nextIndex(random, 20));
+  }
+
+  @Test
+  void portableBoundedSelectionRejectsInvalidArguments() {
+    Random random = new Random(1L);
+
+    assertThrows(NullPointerException.class, () -> RandomSolverSimulation.nextIndex(null, 1));
+    assertThrows(IllegalArgumentException.class, () -> RandomSolverSimulation.nextIndex(random, 0));
+    assertThrows(
+        IllegalArgumentException.class, () -> RandomSolverSimulation.nextIndex(random, -1));
+  }
+
   @Test
   void startsAtSolverStartWithoutMoves() {
     RandomSolverSimulation simulation =

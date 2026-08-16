@@ -229,6 +229,30 @@ public final class MazeGameDebugHarness {
     return this;
   }
 
+  /** Simulates clicking the enabled Level 7 card. */
+  public MazeGameDebugHarness clickLevelSeven() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(7)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /** Simulates clicking the enabled Level 8 card. */
+  public MazeGameDebugHarness clickLevelEight() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(8)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
+  /** Simulates clicking the enabled Level 9 card. */
+  public MazeGameDebugHarness clickLevelNine() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(9)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
   /**
    * Drags one palette item to a grid cell through the desktop pointer path.
    *
@@ -251,7 +275,7 @@ public final class MazeGameDebugHarness {
   /**
    * Simulates clicking a locked future level card.
    *
-   * @param index zero-based level card index from 1 to 5
+   * @param index zero-based level card index from 1 to 8
    * @return this harness for fluent scripting
    */
   public MazeGameDebugHarness clickLockedLevel(int index) {

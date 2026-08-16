@@ -220,7 +220,7 @@ final class MazeGameLayoutTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 1, 2, 5, 6})
+  @ValueSource(ints = {0, 1, 2, 5, 6, 7, 8, 9})
   void levelSelectionDeclaresExactlyTheRequestedCards(int levelCount) {
     ScreenLayout layout =
         MazeGameLayout.forPhase(
@@ -232,6 +232,25 @@ final class MazeGameLayoutTest {
             .map(LayoutElement::id)
             .filter(id -> id.startsWith(MazeGameLayout.LEVEL_CARD_PREFIX))
             .count());
+  }
+
+  @Test
+  void denseNineCardSelectionFitsMinimumCompactViewports() {
+    for (int[] viewport : List.of(new int[] {568, 270}, new int[] {320, 568})) {
+      ScreenLayout layout =
+          MazeGameLayout.forPhase(
+              GamePhase.LEVEL_SELECT, viewport[0], viewport[1], GRID_SIZE, false, 9, false);
+      ScreenRectangle title = layout.bounds(MazeGameLayout.LEVEL_SELECT_TITLE);
+      ScreenRectangle back = layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK);
+
+      assertTrue(LayoutValidator.validate(layout).isEmpty());
+      for (int levelNumber = 1; levelNumber <= 9; levelNumber++) {
+        ScreenRectangle card = layout.bounds(MazeGameLayout.levelCardId(levelNumber));
+        assertFalse(card.overlaps(title));
+        assertFalse(card.overlaps(back));
+        assertTrue(card.width() >= 44.0F && card.height() >= 44.0F);
+      }
+    }
   }
 
   @Test

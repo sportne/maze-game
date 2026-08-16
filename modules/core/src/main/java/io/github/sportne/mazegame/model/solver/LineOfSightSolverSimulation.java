@@ -31,7 +31,7 @@ final class LineOfSightSolverSimulation extends TimedSolverSimulation {
     }
     var moves = openNeighbors(RandomSolverSimulation.SEEDED_MOVE_ORDER);
     if (!moves.isEmpty()) {
-      moveTo(moves.get(random.nextInt(moves.size())));
+      moveTo(moves.get(RandomSolverSimulation.nextIndex(random, moves.size())));
     }
   }
 

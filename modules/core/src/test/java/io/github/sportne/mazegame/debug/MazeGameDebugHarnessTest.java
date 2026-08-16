@@ -62,6 +62,30 @@ final class MazeGameDebugHarnessTest {
   private static final Set<GridPosition> LEVEL_SIX_SLOW_FLOORS =
       Set.of(new GridPosition(2, 3), new GridPosition(1, 3), new GridPosition(1, 4));
 
+  private static final Set<GridPosition> LEVEL_SEVEN_WALLS = Set.of(new GridPosition(4, 2));
+
+  private static final Set<GridPosition> LEVEL_SEVEN_SLOW_FLOORS =
+      Set.of(new GridPosition(3, 0), new GridPosition(3, 1), new GridPosition(3, 2));
+
+  private static final Set<GridPosition> LEVEL_EIGHT_WALLS = Set.of(new GridPosition(3, 1));
+
+  private static final Set<GridPosition> LEVEL_EIGHT_SLOW_FLOORS =
+      Set.of(
+          new GridPosition(0, 0),
+          new GridPosition(0, 1),
+          new GridPosition(0, 2),
+          new GridPosition(2, 1));
+
+  private static final Set<GridPosition> LEVEL_NINE_WALLS = Set.of(new GridPosition(0, 2));
+
+  private static final Set<GridPosition> LEVEL_NINE_SLOW_FLOORS =
+      Set.of(
+          new GridPosition(0, 0),
+          new GridPosition(0, 1),
+          new GridPosition(1, 0),
+          new GridPosition(2, 0),
+          new GridPosition(0, 3));
+
   @Test
   void rejectsInvalidScreenDimensions() {
     assertThrows(IllegalArgumentException.class, () -> new MazeGameDebugHarness(0, 720));
@@ -241,18 +265,51 @@ final class MazeGameDebugHarnessTest {
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.levelSeven(), harness.snapshot().mazeState().levelDefinition());
+
+    LEVEL_SEVEN_WALLS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
+    LEVEL_SEVEN_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(10));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.levelEight(), harness.snapshot().mazeState().levelDefinition());
+
+    LEVEL_EIGHT_WALLS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
+    LEVEL_EIGHT_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(9));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.levelNine(), harness.snapshot().mazeState().levelDefinition());
+
+    LEVEL_NINE_WALLS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
+    LEVEL_NINE_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(10));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
     assertFalse(harness.snapshot().hasNextLevel());
-    harness.clickReplay().advance(Duration.ofSeconds(8)).clickRetry();
+    harness.clickReplay().advance(Duration.ofSeconds(10)).clickRetry();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelSix(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelNine(), harness.snapshot().mazeState().levelDefinition());
 
     harness
         .clickStartRun()
-        .advance(Duration.ofSeconds(8))
+        .advance(Duration.ofSeconds(10))
         .clickResultMainMenu()
         .clickMainMenuStart()
-        .clickLevelSix();
+        .clickLevelNine();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelSix(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelNine(), harness.snapshot().mazeState().levelDefinition());
   }
 }

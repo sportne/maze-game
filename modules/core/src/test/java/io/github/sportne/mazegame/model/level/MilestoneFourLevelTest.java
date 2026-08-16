@@ -32,7 +32,15 @@ final class MilestoneFourLevelTest {
   void catalogsTheExactAcceptedFourthLevelAfterTheReleasedLevels() {
     assertEquals(
         List.of(
-            "milestone-1", "milestone-2", "milestone-3", "milestone-4", "milestone-5", "level-6"),
+            "milestone-1",
+            "milestone-2",
+            "milestone-3",
+            "milestone-4",
+            "milestone-5",
+            "level-6",
+            "level-7",
+            "level-8",
+            "level-9"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
     assertEquals("Level 4", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());

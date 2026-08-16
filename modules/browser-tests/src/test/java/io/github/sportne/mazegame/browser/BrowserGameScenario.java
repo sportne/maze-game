@@ -33,6 +33,24 @@ final class BrowserGameScenario {
           new GridPosition(3, 1),
           new GridPosition(4, 0),
           new GridPosition(5, 1));
+  static final GridPosition LEVEL_SEVEN_WALL = new GridPosition(4, 2);
+  static final List<GridPosition> LEVEL_SEVEN_SLOW_FLOORS =
+      List.of(new GridPosition(3, 0), new GridPosition(3, 1), new GridPosition(3, 2));
+  static final GridPosition LEVEL_EIGHT_WALL = new GridPosition(3, 1);
+  static final List<GridPosition> LEVEL_EIGHT_SLOW_FLOORS =
+      List.of(
+          new GridPosition(0, 0),
+          new GridPosition(0, 1),
+          new GridPosition(0, 2),
+          new GridPosition(2, 1));
+  static final GridPosition LEVEL_NINE_WALL = new GridPosition(0, 2);
+  static final List<GridPosition> LEVEL_NINE_SLOW_FLOORS =
+      List.of(
+          new GridPosition(0, 0),
+          new GridPosition(0, 1),
+          new GridPosition(1, 0),
+          new GridPosition(2, 0),
+          new GridPosition(0, 3));
 
   private BrowserGameScenario() {}
 
@@ -51,6 +69,12 @@ final class BrowserGameScenario {
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(5));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(6));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(7));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(8));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(9));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(

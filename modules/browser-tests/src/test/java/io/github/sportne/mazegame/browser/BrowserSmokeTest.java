@@ -76,6 +76,9 @@ final class BrowserSmokeTest {
   private static final long SCOUT_STATUS_SIGNATURE = 7_285_752_804_637_341_284L;
   private static final String SITE_PATH = "/maze-game/";
   private static final String LEVEL_SIX_RESULT_KEY = "maze-game.best-result.level-6";
+  private static final String LEVEL_SEVEN_RESULT_KEY = "maze-game.best-result.level-7";
+  private static final String LEVEL_EIGHT_RESULT_KEY = "maze-game.best-result.level-8";
+  private static final String LEVEL_NINE_RESULT_KEY = "maze-game.best-result.level-9";
   private static final Set<String> COMMON_ASSETS =
       Set.of(
           "styles.css",
@@ -120,6 +123,7 @@ final class BrowserSmokeTest {
         runGameFlow(page, server.uri(), browserLog, artifactDirectory, reportDirectory, browser);
         runBuildGestureFixtureFlows(browser, server.uri(), reportDirectory);
         runLevelSixReleaseFlow(browser, server.uri(), reportDirectory);
+        runLevelsSevenToNineReleaseFlow(browser, server.uri(), reportDirectory);
         runMobileTouchFlows(browser, server.uri(), reportDirectory);
       } catch (Throwable failure) {
         captureFailure(page, browserLog, reportDirectory, failure);
@@ -208,7 +212,7 @@ final class BrowserSmokeTest {
     controls.waitForButton(GamePhase.RESULT, Levels.levelOne(), true, MazeGameLayout.RESULT_RETRY);
     BrowserGameScenario.startMilestoneTwo(controls);
     waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
-    assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+    assertEquals("9500:38", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
 
     String milestoneOneResult = readSavedResult(page, MILESTONE_ONE_RESULT_KEY);
     String milestoneTwoResult = readSavedResult(page, MILESTONE_TWO_RESULT_KEY);
@@ -398,7 +402,7 @@ final class BrowserSmokeTest {
             new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
       context.addInitScript(
           "window.localStorage.setItem('maze-game.best-result.milestone-1', '10000:40');"
-              + "window.localStorage.setItem('maze-game.best-result.milestone-2', '15000:60');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-2', '9500:38');"
               + "window.localStorage.setItem('maze-game.best-result.milestone-3', '6500:26');"
               + "window.localStorage.setItem('maze-game.best-result.milestone-4', '5750:20');"
               + "window.localStorage.setItem('maze-game.best-result.milestone-5', '9000:69');");
@@ -435,7 +439,7 @@ final class BrowserSmokeTest {
         controls.clickButton(
             GamePhase.BUILDING, Levels.levelSix(), false, MazeGameLayout.BUILD_START);
         controls.waitForButton(
-            GamePhase.RESULT, Levels.levelSix(), false, MazeGameLayout.RESULT_RETRY);
+            GamePhase.RESULT, Levels.levelSix(), true, MazeGameLayout.RESULT_RETRY);
 
         waitForSavedResult(page, LEVEL_SIX_RESULT_KEY);
         assertEquals("6500:20", readSavedResult(page, LEVEL_SIX_RESULT_KEY));
@@ -443,6 +447,107 @@ final class BrowserSmokeTest {
             levelLog.errors().isEmpty(),
             () -> String.join(System.lineSeparator(), levelLog.errors()));
       }
+    }
+  }
+
+  private static void runLevelsSevenToNineReleaseFlow(
+      Browser browser, URI applicationUri, Path reportDirectory) throws IOException {
+    try (BrowserContext context =
+        browser.newContext(
+            new Browser.NewContextOptions().setViewportSize(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))) {
+      context.addInitScript(
+          "window.localStorage.setItem('maze-game.best-result.milestone-1', '10000:40');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-2', '9500:38');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-3', '6500:26');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-4', '5750:20');"
+              + "window.localStorage.setItem('maze-game.best-result.milestone-5', '9000:69');"
+              + "window.localStorage.setItem('maze-game.best-result.level-6', '6500:20');");
+      try (Page page = context.newPage()) {
+        BrowserLog levelLog = BrowserLog.forAuxiliaryTouchContext();
+        levelLog.observe(page);
+        page.navigate(applicationUri.toString());
+        waitForRenderedControl(page, 640, 280);
+        BrowserControls controls =
+            new BrowserControls(page, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, false);
+        controls.clickButton(
+            GamePhase.MAIN_MENU, Levels.levelOne(), false, MazeGameLayout.MAIN_MENU_START);
+        controls.waitForButton(
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(7));
+        controls.clickButton(
+            GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(7));
+        controls.waitForButton(
+            GamePhase.BUILDING, Levels.levelSeven(), false, MazeGameLayout.BUILD_START);
+
+        placePassingCells(
+            controls,
+            Levels.levelSeven(),
+            BrowserGameScenario.LEVEL_SEVEN_WALL,
+            BrowserGameScenario.LEVEL_SEVEN_SLOW_FLOORS);
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-level-7.png")));
+        controls.clickButton(
+            GamePhase.BUILDING, Levels.levelSeven(), false, MazeGameLayout.BUILD_START);
+        controls.waitForButton(
+            GamePhase.RESULT, Levels.levelSeven(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        waitForSavedResult(page, LEVEL_SEVEN_RESULT_KEY);
+        assertEquals("6500:16", readSavedResult(page, LEVEL_SEVEN_RESULT_KEY));
+        controls.clickButton(
+            GamePhase.RESULT, Levels.levelSeven(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+
+        controls.waitForButton(
+            GamePhase.BUILDING, Levels.levelEight(), false, MazeGameLayout.BUILD_START);
+        placePassingCells(
+            controls,
+            Levels.levelEight(),
+            BrowserGameScenario.LEVEL_EIGHT_WALL,
+            BrowserGameScenario.LEVEL_EIGHT_SLOW_FLOORS);
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-level-8.png")));
+        controls.clickButton(
+            GamePhase.BUILDING, Levels.levelEight(), false, MazeGameLayout.BUILD_START);
+        controls.waitForButton(
+            GamePhase.RESULT, Levels.levelEight(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+        waitForSavedResult(page, LEVEL_EIGHT_RESULT_KEY);
+        assertEquals("7500:22", readSavedResult(page, LEVEL_EIGHT_RESULT_KEY));
+        controls.clickButton(
+            GamePhase.RESULT, Levels.levelEight(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+
+        controls.waitForButton(
+            GamePhase.BUILDING, Levels.levelNine(), false, MazeGameLayout.BUILD_START);
+        placePassingCells(
+            controls,
+            Levels.levelNine(),
+            BrowserGameScenario.LEVEL_NINE_WALL,
+            BrowserGameScenario.LEVEL_NINE_SLOW_FLOORS);
+        page.screenshot(
+            new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-level-9.png")));
+        controls.clickButton(
+            GamePhase.BUILDING, Levels.levelNine(), false, MazeGameLayout.BUILD_START);
+        controls.waitForButton(
+            GamePhase.RESULT, Levels.levelNine(), false, MazeGameLayout.RESULT_RETRY);
+        waitForSavedResult(page, LEVEL_NINE_RESULT_KEY);
+        assertEquals("7750:20", readSavedResult(page, LEVEL_NINE_RESULT_KEY));
+        assertTrue(
+            levelLog.errors().isEmpty(),
+            () -> String.join(System.lineSeparator(), levelLog.errors()));
+      }
+    }
+  }
+
+  private static void placePassingCells(
+      BrowserControls controls,
+      LevelDefinition level,
+      GridPosition wall,
+      List<GridPosition> slowFloors)
+      throws IOException {
+    controls.placeWalls(level, List.of(wall));
+    controls.clickButton(
+        GamePhase.BUILDING,
+        level,
+        false,
+        MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+    for (GridPosition slowFloor : slowFloors) {
+      controls.clickCell(level, slowFloor);
     }
   }
 
@@ -653,7 +758,7 @@ final class BrowserSmokeTest {
         primaryControls.clickButton(
             GamePhase.BUILDING, Levels.levelTwo(), false, MazeGameLayout.BUILD_START);
         waitForSavedResult(page, MILESTONE_TWO_RESULT_KEY);
-        assertEquals("15000:60", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
+        assertEquals("9500:38", readSavedResult(page, MILESTONE_TWO_RESULT_KEY));
         primaryControls.waitForButton(
             GamePhase.RESULT, Levels.levelTwo(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 

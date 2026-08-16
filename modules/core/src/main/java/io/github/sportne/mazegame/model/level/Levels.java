@@ -152,10 +152,115 @@ public final class Levels {
                   SolverAppearance.TRACKER_RACCOON,
                   GoalType.TRASH_CAN)));
 
+  /** Seventh 5x5 level introducing Seeker's line-of-sight behavior. */
+  private static final LevelDefinition LEVEL_SEVEN =
+      new LevelDefinition(
+          "level-7",
+          "Level 7",
+          GridSize.square(5),
+          Duration.ofSeconds(20),
+          Duration.ofSeconds(6),
+          Duration.ofSeconds(10),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 1),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 3)),
+          List.of(
+              new FixedCell(new GridPosition(0, 0), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 0), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 2), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 3), FixedCellType.WALL),
+              new FixedCell(new GridPosition(4, 1), FixedCellType.WALL)),
+          List.of(
+              new LevelSolver(
+                  new GridPosition(4, 0),
+                  new GridPosition(0, 4),
+                  SolverBehavior.LINE_OF_SIGHT,
+                  OptionalLong.of(107L),
+                  SolverAppearance.SEEKER_RABBIT,
+                  GoalType.CARROT)));
+
+  /** Eighth 6x6 level growing the grid around Scout and fixed Slow Floors. */
+  private static final LevelDefinition LEVEL_EIGHT =
+      new LevelDefinition(
+          "level-8",
+          "Level 8",
+          GridSize.square(6),
+          Duration.ofSeconds(25),
+          Duration.ofMillis(7300),
+          Duration.ofSeconds(8),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 1),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 4)),
+          List.of(
+              new FixedCell(new GridPosition(0, 4), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 0), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(3, 0), FixedCellType.WALL),
+              new FixedCell(new GridPosition(3, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(4, 2), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 4), FixedCellType.SLOW_FLOOR),
+              new FixedCell(new GridPosition(4, 3), FixedCellType.SLOW_FLOOR)),
+          List.of(
+              new LevelSolver(
+                  new GridPosition(5, 0),
+                  new GridPosition(0, 5),
+                  SolverBehavior.LEFT_PRIORITY,
+                  OptionalLong.empty(),
+                  SolverAppearance.SCOUT_SQUIRREL,
+                  GoalType.ACORN)));
+
+  /** Ninth 7x7 level growing the grid around Tracker and fixed Slow Floors. */
+  private static final LevelDefinition LEVEL_NINE =
+      new LevelDefinition(
+          "level-9",
+          "Level 9",
+          GridSize.square(7),
+          Duration.ofSeconds(30),
+          Duration.ofMillis(7500),
+          Duration.ofSeconds(9),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 1),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 5)),
+          List.of(
+              new FixedCell(new GridPosition(1, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 4), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(3, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(4, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 6), FixedCellType.WALL),
+              new FixedCell(new GridPosition(6, 4), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 3), FixedCellType.SLOW_FLOOR),
+              new FixedCell(new GridPosition(2, 4), FixedCellType.SLOW_FLOOR),
+              new FixedCell(new GridPosition(4, 5), FixedCellType.SLOW_FLOOR)),
+          List.of(
+              new LevelSolver(
+                  new GridPosition(6, 0),
+                  new GridPosition(0, 6),
+                  SolverBehavior.LEAST_VISITED,
+                  OptionalLong.empty(),
+                  SolverAppearance.TRACKER_RACCOON,
+                  GoalType.TRASH_CAN)));
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
       new LevelCatalog(
-          List.of(LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, LEVEL_FIVE, LEVEL_SIX));
+          List.of(
+              LEVEL_ONE,
+              LEVEL_TWO,
+              LEVEL_THREE,
+              LEVEL_FOUR,
+              LEVEL_FIVE,
+              LEVEL_SIX,
+              LEVEL_SEVEN,
+              LEVEL_EIGHT,
+              LEVEL_NINE));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -204,6 +309,21 @@ public final class Levels {
   /** Returns the sixth authored level featuring Tracker and fixed geometry. */
   public static LevelDefinition levelSix() {
     return LEVEL_SIX;
+  }
+
+  /** Returns the seventh authored level featuring Seeker and fixed geometry. */
+  public static LevelDefinition levelSeven() {
+    return LEVEL_SEVEN;
+  }
+
+  /** Returns the eighth authored level featuring Scout on a 6x6 grid. */
+  public static LevelDefinition levelEight() {
+    return LEVEL_EIGHT;
+  }
+
+  /** Returns the ninth authored level featuring Tracker on a 7x7 grid. */
+  public static LevelDefinition levelNine() {
+    return LEVEL_NINE;
   }
 
   /**

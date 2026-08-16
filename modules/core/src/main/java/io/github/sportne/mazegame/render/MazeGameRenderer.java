@@ -863,8 +863,9 @@ public final class MazeGameRenderer {
       if (snapshot.levelDefinition().solvers().size() == 1) {
         return String.format(Locale.ROOT, "Tap or drag tools; delay past %s; keep a path", target);
       }
+      String solverScope = snapshot.levelDefinition().solvers().size() == 2 ? "both" : "all";
       return String.format(
-          Locale.ROOT, "Tap or drag tools; delay both past %s; keep paths", target);
+          Locale.ROOT, "Tap or drag tools; delay %s past %s; keep paths", solverScope, target);
     }
     String goalName =
         SolverPresentation.forSolver(snapshot.levelDefinition().primarySolver()).goalName();

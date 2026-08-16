@@ -87,7 +87,10 @@ final class GameSessionTest {
             Levels.levelThree().id(),
             Levels.levelFour().id(),
             Levels.levelFive().id(),
-            Levels.levelSix().id()),
+            Levels.levelSix().id(),
+            Levels.levelSeven().id(),
+            Levels.levelEight().id(),
+            Levels.levelNine().id()),
         store.loadedLevelIds);
   }
 
@@ -798,11 +801,9 @@ final class GameSessionTest {
   @MethodSource("authoredLevels")
   void initializesEveryAuthoredLevelFromItsDefinition(LevelDefinition level) {
     RecordingBestResultStore store = new RecordingBestResultStore();
-    store.results.put(Levels.levelOne().id(), new BestResult(Duration.ofSeconds(10), 40));
-    store.results.put(Levels.levelTwo().id(), new BestResult(Duration.ofSeconds(15), 60));
-    store.results.put(Levels.levelThree().id(), new BestResult(Duration.ofMillis(6500), 26));
-    store.results.put(Levels.levelFour().id(), new BestResult(Duration.ofMillis(5750), 20));
-    store.results.put(Levels.levelFive().id(), new BestResult(Duration.ofSeconds(9), 69));
+    for (LevelDefinition authored : Levels.catalog().levels()) {
+      store.results.put(authored.id(), new BestResult(Duration.ofSeconds(10), 40));
+    }
     GameSession session = new GameSession(store);
 
     assertTrue(session.startLevel(level.id()));

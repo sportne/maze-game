@@ -51,6 +51,7 @@ and planned cards remain in the parent `roadmap/` directory.
 - [GRID-01: Add fixed authored grid cells](grid-01-fixed-authored-cells.md)
 - [SOLVER-01: Design and deliver a third solver type](solver-01-third-solver-type.md)
 - [SOLVER-02: Design and deliver a Tracker level](solver-02-tracker-level.md)
+- [LEVELS-01: Add three authored levels](levels-01-three-new-levels.md)
 
 ## TeaVM and GitHub Pages
 

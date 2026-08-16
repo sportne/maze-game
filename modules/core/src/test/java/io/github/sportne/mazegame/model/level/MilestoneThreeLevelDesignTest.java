@@ -132,7 +132,10 @@ final class MilestoneThreeLevelDesignTest {
             PROPOSED_LEVEL,
             Levels.levelFour(),
             Levels.levelFive(),
-            Levels.levelSix()),
+            Levels.levelSix(),
+            Levels.levelSeven(),
+            Levels.levelEight(),
+            Levels.levelNine()),
         Levels.catalog().levels());
   }
 

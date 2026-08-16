@@ -133,13 +133,16 @@ Status: complete.
 - [SOLVER-02: Design and deliver a Tracker level](done/solver-02-tracker-level.md) is complete. The
   accepted [Level 6 design](../docs/level-6-tracker-design.md) introduces Tracker, fixed geometry,
   and exhaustively balanced combined inventory.
+- [LEVELS-01: Add three authored levels](done/levels-01-three-new-levels.md) is complete. The accepted
+  [Levels 7–9 design](../docs/levels-7-9-design.md) introduces Seeker in authored play, grows the
+  grids from 5x5 through 7x7, and adds fixed Slow Floors without increasing concurrent solvers.
 
 ## Deferred Ideas
 
 These remain outside the planned Milestone 4 scope. Proposed items are not committed to a release
 milestone, while completed foundations are not yet used by a released level:
 
-- Grid progression beyond the six authored levels.
+- Grid progression beyond the nine authored levels.
 - [Right-Turn Floor](gameplay-02-right-turn-floor.md) and
   [North–South Rail Gate](gameplay-03-north-south-rail-gate.md) implementation.
 - Retro/pixel visual style.

@@ -114,14 +114,14 @@ chosen Random seed.
 
 ## Progression and Presentation
 
-Level 5 unlocks Level 6 through the existing catalog-order progression. Level 6 is the final
-available level, stores its result under `level-6`, and retains the same retry, replay, Back, and Main
-Menu behavior as earlier entries. Fixed cells restore automatically on every fresh attempt while
-player inventory and placed cells reset normally.
+Level 5 unlocks Level 6 through the existing catalog-order progression. Level 6 stores its result
+under `level-6`, unlocks Level 7 after a pass, and retains the same retry, replay, Back, and Main Menu
+behavior as earlier entries. Fixed cells restore automatically on every fresh attempt while player
+inventory and placed cells reset normally.
 
 The existing dynamic selection, build, result, desktop, portrait, compact-landscape, JavaScript, and
 WebAssembly layouts consume the sixth catalog entry without a new special-case layout. Production
-renderer coverage uses Level 6 for the Tracker/trash-can pairing and final-level label.
+renderer coverage uses Level 6 for the Tracker/trash-can pairing; Level 9 owns the final-level label.
 
 ## Verification
 
