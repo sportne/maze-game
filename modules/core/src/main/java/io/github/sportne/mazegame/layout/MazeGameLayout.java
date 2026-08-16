@@ -296,7 +296,7 @@ public final class MazeGameLayout {
   }
 
   private static ScreenLayout levelSelect(int screenWidth, int screenHeight, int levelCount) {
-    if (isCompact(screenWidth, screenHeight)) {
+    if (isCompact(screenWidth, screenHeight) || levelCount > 9) {
       return compactLevelSelect(screenWidth, screenHeight, levelCount);
     }
     List<LayoutElement> elements = new ArrayList<>();
@@ -648,7 +648,8 @@ public final class MazeGameLayout {
     List<LayoutElement> elements = new ArrayList<>();
     boolean landscape = isCompactLandscape(screenWidth, screenHeight);
     boolean dense = levelCount > 6;
-    int columns = landscape ? (dense ? 5 : 3) : (dense ? 3 : 2);
+    boolean wideDense = dense && screenWidth >= 800 && screenWidth > screenHeight;
+    int columns = landscape || wideDense ? (dense ? 5 : 3) : (dense ? 3 : 2);
     float gap = dense ? 8.0F : 12.0F;
     float buttonWidth =
         Math.min(160.0F, (screenWidth - 2.0F * COMPACT_MARGIN - gap * (columns - 1)) / columns);
@@ -656,7 +657,7 @@ public final class MazeGameLayout {
     float totalWidth = columns * buttonWidth + (columns - 1) * gap;
     float left = (screenWidth - totalWidth) / 2.0F;
     float topRowY =
-        landscape
+        landscape || wideDense
             ? dense ? screenHeight - 124.0F : screenHeight / 2.0F + 16.0F
             : screenHeight / 2.0F + 100.0F;
     elements.add(

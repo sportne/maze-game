@@ -273,7 +273,7 @@ final class MazeGameRendererTest {
     MazeGameRenderer renderer =
         renderer(
             allocate(RecordingSpriteBatch.class), allocate(RecordingShapeRenderer.class), font);
-    LevelDefinition finalLevel = Levels.levelNine();
+    LevelDefinition finalLevel = Levels.levelTen();
     SolverRunResult result =
         new SolverRunResult(
             finalLevel.primarySolver().goal(),
@@ -361,6 +361,9 @@ final class MazeGameRendererTest {
     assertEquals(
         "Tap or drag tools; delay past 7.5s; keep a path",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelNine())));
+    assertEquals(
+        "Tap or drag tools; delay past 12.5s; keep a path",
+        MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelTen())));
   }
 
   @Test

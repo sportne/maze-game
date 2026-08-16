@@ -31,7 +31,16 @@ final class MazeGameLayoutTest {
       int screenHeight,
       LevelDefinition level,
       boolean hasNextLevel) {
-    ScreenLayout layout = layout(phase, screenWidth, screenHeight, level.gridSize(), hasNextLevel);
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(
+            phase,
+            screenWidth,
+            screenHeight,
+            level.gridSize(),
+            true,
+            Levels.catalog().levels().size(),
+            hasNextLevel,
+            level.initiallyAvailableCellTypes());
 
     assertTrue(
         LayoutValidator.validate(layout).isEmpty(),
@@ -197,7 +206,8 @@ final class MazeGameLayoutTest {
                 gridSize,
                 false,
                 Levels.catalog().levels().size(),
-                hasNextLevel);
+                hasNextLevel,
+                level.initiallyAvailableCellTypes());
 
         assertTrue(
             LayoutValidator.validate(layout).isEmpty(),
@@ -213,14 +223,14 @@ final class MazeGameLayoutTest {
             .ifPresent(
                 grid ->
                     assertTrue(
-                        grid.bounds().width() / gridSize.columns() >= 32.0F,
+                        grid.bounds().width() / gridSize.columns() >= 24.0F,
                         () -> "grid cell too small for " + phase + " at " + width + "x" + height));
       }
     }
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 1, 2, 5, 6, 7, 8, 9})
+  @ValueSource(ints = {0, 1, 2, 5, 6, 7, 8, 9, 10})
   void levelSelectionDeclaresExactlyTheRequestedCards(int levelCount) {
     ScreenLayout layout =
         MazeGameLayout.forPhase(
@@ -235,21 +245,67 @@ final class MazeGameLayoutTest {
   }
 
   @Test
-  void denseNineCardSelectionFitsMinimumCompactViewports() {
+  void denseTenCardSelectionFitsMinimumCompactViewports() {
     for (int[] viewport : List.of(new int[] {568, 270}, new int[] {320, 568})) {
       ScreenLayout layout =
           MazeGameLayout.forPhase(
-              GamePhase.LEVEL_SELECT, viewport[0], viewport[1], GRID_SIZE, false, 9, false);
+              GamePhase.LEVEL_SELECT, viewport[0], viewport[1], GRID_SIZE, false, 10, false);
       ScreenRectangle title = layout.bounds(MazeGameLayout.LEVEL_SELECT_TITLE);
       ScreenRectangle back = layout.bounds(MazeGameLayout.LEVEL_SELECT_BACK);
 
       assertTrue(LayoutValidator.validate(layout).isEmpty());
-      for (int levelNumber = 1; levelNumber <= 9; levelNumber++) {
+      for (int levelNumber = 1; levelNumber <= 10; levelNumber++) {
         ScreenRectangle card = layout.bounds(MazeGameLayout.levelCardId(levelNumber));
         assertFalse(card.overlaps(title));
         assertFalse(card.overlaps(back));
         assertTrue(card.width() >= 44.0F && card.height() >= 44.0F);
       }
+    }
+  }
+
+  @Test
+  void denseTenCardSelectionUsesTwoRowsOnWideViewports() {
+    ScreenLayout layout =
+        MazeGameLayout.forPhase(GamePhase.LEVEL_SELECT, 1280, 720, GRID_SIZE, false, 10, false);
+
+    assertEquals(
+        layout.bounds(MazeGameLayout.levelCardId(1)).y(),
+        layout.bounds(MazeGameLayout.levelCardId(5)).y());
+    assertEquals(
+        layout.bounds(MazeGameLayout.levelCardId(1)).x(),
+        layout.bounds(MazeGameLayout.levelCardId(6)).x());
+    assertTrue(LayoutValidator.validate(layout).isEmpty());
+  }
+
+  @Test
+  void onlyTheTenByTenBoardNeedsDenseCellsAtShortestLandscapeHeight() {
+    for (int[] viewport : List.of(new int[] {844, 286}, new int[] {756, 286})) {
+      for (LevelDefinition level : Levels.catalog().levels().subList(0, 9)) {
+        ScreenRectangle grid =
+            MazeGameLayout.forPhase(
+                    GamePhase.BUILDING,
+                    viewport[0],
+                    viewport[1],
+                    level.gridSize(),
+                    false,
+                    10,
+                    true,
+                    level.initiallyAvailableCellTypes())
+                .bounds(MazeGameLayout.GAME_GRID);
+        assertTrue(grid.width() / level.gridSize().columns() >= 32.0F);
+      }
+      ScreenRectangle denseGrid =
+          MazeGameLayout.forPhase(
+                  GamePhase.BUILDING,
+                  viewport[0],
+                  viewport[1],
+                  Levels.levelTen().gridSize(),
+                  false,
+                  10,
+                  false,
+                  Levels.levelTen().initiallyAvailableCellTypes())
+              .bounds(MazeGameLayout.GAME_GRID);
+      assertEquals(24.0F, denseGrid.width() / 10.0F);
     }
   }
 

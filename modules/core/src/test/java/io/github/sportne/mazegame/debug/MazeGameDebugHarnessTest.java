@@ -78,6 +78,15 @@ final class MazeGameDebugHarnessTest {
 
   private static final Set<GridPosition> LEVEL_NINE_WALLS = Set.of(new GridPosition(0, 2));
 
+  private static final Set<GridPosition> LEVEL_TEN_SLOW_FLOORS =
+      Set.of(
+          new GridPosition(7, 4),
+          new GridPosition(2, 8),
+          new GridPosition(5, 6),
+          new GridPosition(4, 6),
+          new GridPosition(3, 6),
+          new GridPosition(2, 9));
+
   private static final Set<GridPosition> LEVEL_NINE_SLOW_FLOORS =
       Set.of(
           new GridPosition(0, 0),
@@ -298,18 +307,27 @@ final class MazeGameDebugHarnessTest {
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
     assertTrue(harness.snapshot().resultPassed());
+    assertTrue(harness.snapshot().hasNextLevel());
+    harness.clickNextLevel();
+    assertEquals(Levels.levelTen(), harness.snapshot().mazeState().levelDefinition());
+
+    LEVEL_TEN_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickStartRun().advance(Duration.ofSeconds(14));
+
+    assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());
+    assertTrue(harness.snapshot().resultPassed());
     assertFalse(harness.snapshot().hasNextLevel());
-    harness.clickReplay().advance(Duration.ofSeconds(10)).clickRetry();
+    harness.clickReplay().advance(Duration.ofSeconds(14)).clickRetry();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelNine(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelTen(), harness.snapshot().mazeState().levelDefinition());
 
     harness
         .clickStartRun()
-        .advance(Duration.ofSeconds(10))
+        .advance(Duration.ofSeconds(14))
         .clickResultMainMenu()
         .clickMainMenuStart()
-        .clickLevelNine();
+        .clickLevelTen();
     assertEquals(GamePhase.BUILDING, harness.snapshot().gamePhase());
-    assertEquals(Levels.levelNine(), harness.snapshot().mazeState().levelDefinition());
+    assertEquals(Levels.levelTen(), harness.snapshot().mazeState().levelDefinition());
   }
 }

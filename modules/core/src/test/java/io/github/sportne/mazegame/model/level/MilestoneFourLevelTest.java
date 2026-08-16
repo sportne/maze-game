@@ -40,7 +40,8 @@ final class MilestoneFourLevelTest {
             "level-6",
             "level-7",
             "level-8",
-            "level-9"),
+            "level-9",
+            "level-10"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
     assertEquals("Level 4", LEVEL.name());
     assertEquals(GridSize.square(7), LEVEL.gridSize());

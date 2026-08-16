@@ -57,6 +57,7 @@ final class SafariReleaseTest {
   private static final String LEVEL_SEVEN_RESULT_KEY = "maze-game.best-result.level-7";
   private static final String LEVEL_EIGHT_RESULT_KEY = "maze-game.best-result.level-8";
   private static final String LEVEL_NINE_RESULT_KEY = "maze-game.best-result.level-9";
+  private static final String LEVEL_TEN_RESULT_KEY = "maze-game.best-result.level-10";
   private static final Set<String> JAVASCRIPT_ASSETS =
       Set.of(
           "app.js",
@@ -205,7 +206,8 @@ final class SafariReleaseTest {
                 LEVEL_SIX_RESULT_KEY,
                 LEVEL_SEVEN_RESULT_KEY,
                 LEVEL_EIGHT_RESULT_KEY,
-                LEVEL_NINE_RESULT_KEY));
+                LEVEL_NINE_RESULT_KEY,
+                LEVEL_TEN_RESULT_KEY));
     driver.navigate().refresh();
     waitForRenderedControl(driver, 640, 280);
     assertPageStarted(driver);
@@ -322,10 +324,26 @@ final class SafariReleaseTest {
         BrowserGameScenario.LEVEL_NINE_SLOW_FLOORS);
     controls.clickButton(GamePhase.BUILDING, Levels.levelNine(), false, MazeGameLayout.BUILD_START);
     controls.waitForButton(
-        GamePhase.RESULT, Levels.levelNine(), false, MazeGameLayout.RESULT_RETRY);
+        GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
     waitForSavedResult(driver, LEVEL_NINE_RESULT_KEY);
     String levelNineResult = readSavedResult(driver, LEVEL_NINE_RESULT_KEY);
     assertEquals("7750:20", levelNineResult);
+
+    controls.clickButton(
+        GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
+    controls.waitForButton(
+        GamePhase.BUILDING, Levels.levelTen(), false, MazeGameLayout.BUILD_START);
+    controls.clickButton(
+        GamePhase.BUILDING,
+        Levels.levelTen(),
+        false,
+        MazeGameLayout.paletteItemId(PlaceableCellType.SLOW_FLOOR));
+    controls.placeWalls(Levels.levelTen(), BrowserGameScenario.LEVEL_TEN_SLOW_FLOORS);
+    controls.clickButton(GamePhase.BUILDING, Levels.levelTen(), false, MazeGameLayout.BUILD_START);
+    controls.waitForButton(GamePhase.RESULT, Levels.levelTen(), false, MazeGameLayout.RESULT_RETRY);
+    waitForSavedResult(driver, LEVEL_TEN_RESULT_KEY);
+    String levelTenResult = readSavedResult(driver, LEVEL_TEN_RESULT_KEY);
+    assertEquals("12750:34", levelTenResult);
 
     assertRequiredAssetsReachable(driver, activeRequiredAssets);
     assertRuntimeErrorsEmpty(driver);
@@ -341,6 +359,7 @@ final class SafariReleaseTest {
     assertEquals(levelSevenResult, readSavedResult(driver, LEVEL_SEVEN_RESULT_KEY));
     assertEquals(levelEightResult, readSavedResult(driver, LEVEL_EIGHT_RESULT_KEY));
     assertEquals(levelNineResult, readSavedResult(driver, LEVEL_NINE_RESULT_KEY));
+    assertEquals(levelTenResult, readSavedResult(driver, LEVEL_TEN_RESULT_KEY));
     assertPageStarted(driver);
     assertReleaseLocation(driver, activeReleaseUrl);
     installRuntimeErrorCapture(driver);
@@ -361,6 +380,7 @@ final class SafariReleaseTest {
     evidence.add(target + " Level 7 Seeker saved result: " + levelSevenResult);
     evidence.add(target + " Level 8 6x6 Scout saved result: " + levelEightResult);
     evidence.add(target + " Level 9 7x7 Tracker saved result: " + levelNineResult);
+    evidence.add(target + " Level 10 10x10 Random saved result: " + levelTenResult);
     evidence.add(target + " required assets: HTTP 2xx with expected MIME types");
     evidence.add(target + " audio context after interaction: running");
     evidence.add(target + " Tracker level, refresh, interaction, and persistence: PASS");

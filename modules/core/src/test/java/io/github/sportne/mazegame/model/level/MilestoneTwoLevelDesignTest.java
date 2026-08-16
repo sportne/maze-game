@@ -84,7 +84,8 @@ final class MilestoneTwoLevelDesignTest {
             Levels.levelSix(),
             Levels.levelSeven(),
             Levels.levelEight(),
-            Levels.levelNine()),
+            Levels.levelNine(),
+            Levels.levelTen()),
         Levels.catalog().levels());
   }
 

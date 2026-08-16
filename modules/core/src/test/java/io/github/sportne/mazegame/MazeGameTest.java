@@ -62,7 +62,7 @@ final class MazeGameTest {
     MazeGame game = new MazeGame();
 
     game.openLevelSelect();
-    game.handleScreenClick(396, 638 - 398, Input.Buttons.LEFT, 1280, 720);
+    clickLevelOne(game);
 
     assertEquals(GamePhase.BUILDING, game.gamePhase());
     assertFalse(game.runRequested());
@@ -73,7 +73,7 @@ final class MazeGameTest {
   void buildBackReturnsToLevelSelection() {
     MazeGame game = new MazeGame();
     game.openLevelSelect();
-    game.handleScreenClick(396, 638 - 398, Input.Buttons.LEFT, 1280, 720);
+    clickLevelOne(game);
     ScreenRectangle back =
         game.debugScreenLayout(GamePhase.BUILDING, 1280, 720).bounds(MazeGameLayout.BUILD_BACK);
 
@@ -85,6 +85,18 @@ final class MazeGameTest {
         720);
 
     assertEquals(GamePhase.LEVEL_SELECT, game.gamePhase());
+  }
+
+  private static void clickLevelOne(MazeGame game) {
+    ScreenRectangle card =
+        game.debugScreenLayout(GamePhase.LEVEL_SELECT, 1280, 720)
+            .bounds(MazeGameLayout.levelCardId(1));
+    game.handleScreenClick(
+        Math.round(card.x() + card.width() / 2.0F),
+        Math.round(720.0F - card.y() - card.height() / 2.0F),
+        Input.Buttons.LEFT,
+        1280,
+        720);
   }
 
   @Test

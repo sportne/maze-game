@@ -38,8 +38,16 @@ final class LevelDefinitionTest {
   void catalogUsesLevelNamesWhileKeepingStablePersistenceIds() {
     assertEquals(
         List.of(
-            "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8",
-            "Level 9"),
+            "Level 1",
+            "Level 2",
+            "Level 3",
+            "Level 4",
+            "Level 5",
+            "Level 6",
+            "Level 7",
+            "Level 8",
+            "Level 9",
+            "Level 10"),
         Levels.catalog().levels().stream().map(LevelDefinition::name).toList());
     assertEquals(
         List.of(
@@ -51,7 +59,8 @@ final class LevelDefinitionTest {
             "level-6",
             "level-7",
             "level-8",
-            "level-9"),
+            "level-9",
+            "level-10"),
         Levels.catalog().levels().stream().map(LevelDefinition::id).toList());
     assertEquals(
         List.of(
@@ -63,7 +72,8 @@ final class LevelDefinitionTest {
             Levels.levelSix().fixedCells(),
             Levels.levelSeven().fixedCells(),
             Levels.levelEight().fixedCells(),
-            Levels.levelNine().fixedCells()),
+            Levels.levelNine().fixedCells(),
+            Levels.levelTen().fixedCells()),
         Levels.catalog().levels().stream().map(LevelDefinition::fixedCells).toList());
   }
 

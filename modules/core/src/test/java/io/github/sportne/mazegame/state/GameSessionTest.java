@@ -90,7 +90,8 @@ final class GameSessionTest {
             Levels.levelSix().id(),
             Levels.levelSeven().id(),
             Levels.levelEight().id(),
-            Levels.levelNine().id()),
+            Levels.levelNine().id(),
+            Levels.levelTen().id()),
         store.loadedLevelIds);
   }
 

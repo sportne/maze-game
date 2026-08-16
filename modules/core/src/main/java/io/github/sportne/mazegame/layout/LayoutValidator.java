@@ -6,7 +6,7 @@ import java.util.List;
 /** Validates declared screen layout contracts. */
 public final class LayoutValidator {
   private static final float MINIMUM_TOUCH_TARGET = 44.0F;
-  private static final float MINIMUM_GRID_CELL = 32.0F;
+  private static final float MINIMUM_GRID_CELL = 24.0F;
 
   /** Prevents instantiation of this utility. */
   private LayoutValidator() {}

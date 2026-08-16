@@ -103,7 +103,7 @@ final class LayoutValidatorTest {
   }
 
   @Test
-  void reportsGridCellsSmallerThanThirtyTwoPixels() {
+  void reportsGridCellsSmallerThanTwentyFourPixels() {
     ScreenLayout layout =
         new ScreenLayout(
             GamePhase.BUILDING,
@@ -112,7 +112,7 @@ final class LayoutValidatorTest {
                 new LayoutElement(
                     "grid",
                     LayoutElementKind.GRID,
-                    new ScreenRectangle(0.0F, 0.0F, 155.0F, 160.0F),
+                    new ScreenRectangle(0.0F, 0.0F, 115.0F, 120.0F),
                     LayoutFitPolicy.MUST_FIT)),
             GridSize.square(5));
 

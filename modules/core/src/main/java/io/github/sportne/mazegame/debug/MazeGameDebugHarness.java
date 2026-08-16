@@ -253,6 +253,14 @@ public final class MazeGameDebugHarness {
     return this;
   }
 
+  /** Simulates clicking the enabled Level 10 card. */
+  public MazeGameDebugHarness clickLevelTen() {
+    clickButton(
+        currentScreenLayout(GamePhase.LEVEL_SELECT).bounds(MazeGameLayout.levelCardId(10)),
+        Input.Buttons.LEFT);
+    return this;
+  }
+
   /**
    * Drags one palette item to a grid cell through the desktop pointer path.
    *

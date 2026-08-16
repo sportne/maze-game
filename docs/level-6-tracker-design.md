@@ -121,7 +121,8 @@ inventory and placed cells reset normally.
 
 The existing dynamic selection, build, result, desktop, portrait, compact-landscape, JavaScript, and
 WebAssembly layouts consume the sixth catalog entry without a new special-case layout. Production
-renderer coverage uses Level 6 for the Tracker/trash-can pairing; Level 9 owns the final-level label.
+renderer coverage uses Level 6 for the Tracker/trash-can pairing; the catalog's last level owns the
+final-level label.
 
 ## Verification
 

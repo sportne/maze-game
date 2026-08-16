@@ -72,7 +72,7 @@ s s s . # a
 S . . . . #
 ```
 
-## Level 9: 7x7 Tracker Finale
+## Level 9: 7x7 Tracker Revisit Puzzle
 
 | Parameter | Value |
 | --- | --- |
@@ -123,7 +123,8 @@ full-inventory solutions remain for every level. The accepted saved results are 
 ## Progression and Presentation
 
 Level 6 unlocks Level 7, followed by Levels 8 and 9 in stable catalog order. Results use `level-7`,
-`level-8`, and `level-9` persistence keys. Level 9 owns the final-level presentation.
+`level-8`, and `level-9` persistence keys. Level 9 originally owned the final-level presentation;
+it now unlocks Level 10.
 
 Nine level cards require three desktop rows, five compact-landscape columns over two rows, and three
 compact-portrait columns over three rows. Dense compact cards use a reduced gap and 72-pixel height;

@@ -51,6 +51,14 @@ final class BrowserGameScenario {
           new GridPosition(1, 0),
           new GridPosition(2, 0),
           new GridPosition(0, 3));
+  static final List<GridPosition> LEVEL_TEN_SLOW_FLOORS =
+      List.of(
+          new GridPosition(7, 4),
+          new GridPosition(2, 8),
+          new GridPosition(5, 6),
+          new GridPosition(4, 6),
+          new GridPosition(3, 6),
+          new GridPosition(2, 9));
 
   private BrowserGameScenario() {}
 
@@ -75,6 +83,8 @@ final class BrowserGameScenario {
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(8));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(9));
+    controls.clickButton(
+        GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(10));
     controls.clickButton(
         GamePhase.LEVEL_SELECT, Levels.levelOne(), false, MazeGameLayout.levelCardId(1));
     controls.waitForButton(

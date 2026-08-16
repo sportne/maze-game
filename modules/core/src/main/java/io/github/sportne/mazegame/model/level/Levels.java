@@ -248,6 +248,48 @@ public final class Levels {
                   SolverAppearance.TRACKER_RACCOON,
                   GoalType.TRASH_CAN)));
 
+  /** Tenth 10x10 level returning to Random with fixed geometry and only Slow Floors. */
+  private static final LevelDefinition LEVEL_TEN =
+      new LevelDefinition(
+          "level-10",
+          "Level 10",
+          GridSize.square(10),
+          Duration.ofSeconds(35),
+          Duration.ofMillis(12500),
+          Duration.ofMillis(13500),
+          Duration.ofMillis(250),
+          List.of(
+              PlaceableCellSupply.finite(PlaceableCellType.WALL, 0),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 6)),
+          List.of(
+              new FixedCell(new GridPosition(0, 3), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 3), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 3), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 2), FixedCellType.WALL),
+              new FixedCell(new GridPosition(3, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(4, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 5), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 3), FixedCellType.WALL),
+              new FixedCell(new GridPosition(5, 4), FixedCellType.WALL),
+              new FixedCell(new GridPosition(6, 7), FixedCellType.WALL),
+              new FixedCell(new GridPosition(7, 7), FixedCellType.WALL),
+              new FixedCell(new GridPosition(8, 7), FixedCellType.WALL),
+              new FixedCell(new GridPosition(7, 1), FixedCellType.WALL),
+              new FixedCell(new GridPosition(7, 2), FixedCellType.WALL),
+              new FixedCell(new GridPosition(1, 7), FixedCellType.WALL),
+              new FixedCell(new GridPosition(2, 7), FixedCellType.WALL),
+              new FixedCell(new GridPosition(8, 2), FixedCellType.SLOW_FLOOR),
+              new FixedCell(new GridPosition(3, 8), FixedCellType.SLOW_FLOOR)),
+          List.of(
+              new LevelSolver(
+                  new GridPosition(9, 0),
+                  new GridPosition(0, 9),
+                  SolverBehavior.RANDOM,
+                  OptionalLong.of(1484L),
+                  SolverAppearance.CLASSIC_MOUSE,
+                  GoalType.CHEESE)));
+
   /** Authored levels in stable display order. */
   private static final LevelCatalog CATALOG =
       new LevelCatalog(
@@ -260,7 +302,8 @@ public final class Levels {
               LEVEL_SIX,
               LEVEL_SEVEN,
               LEVEL_EIGHT,
-              LEVEL_NINE));
+              LEVEL_NINE,
+              LEVEL_TEN));
 
   /** Prevents instantiation of this static catalog. */
   private Levels() {}
@@ -324,6 +367,11 @@ public final class Levels {
   /** Returns the ninth authored level featuring Tracker on a 7x7 grid. */
   public static LevelDefinition levelNine() {
     return LEVEL_NINE;
+  }
+
+  /** Returns the tenth authored level featuring Random on a 10x10 grid. */
+  public static LevelDefinition levelTen() {
+    return LEVEL_TEN;
   }
 
   /**
