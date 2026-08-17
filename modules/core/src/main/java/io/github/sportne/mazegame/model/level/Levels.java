@@ -122,7 +122,8 @@ public final class Levels {
           Duration.ofMillis(250),
           List.of(
               PlaceableCellSupply.infinite(PlaceableCellType.WALL),
-              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2)),
+              PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 2),
+              PlaceableCellSupply.finite(PlaceableCellType.ALTERNATING_GATE, 0)),
           List.of(
               new LevelSolver(
                   new GridPosition(6, 3),
@@ -203,17 +204,17 @@ public final class Levels {
                   SolverAppearance.SEEKER_RABBIT,
                   GoalType.CARROT)));
 
-  /** 9x9 level applying both cells to a larger seeded Random route. */
+  /** 9x9 level introducing an Alternating Gate on a larger seeded Random route. */
   private static final LevelDefinition LEVEL_NINE =
       new LevelDefinition(
           "level-9",
           "Level 9",
           GridSize.square(9),
           Duration.ofSeconds(30),
-          Duration.ofMillis(15500),
+          Duration.ofMillis(17500),
           Duration.ofSeconds(19),
           Duration.ofMillis(250),
-          finiteSupplies(1, 4),
+          finiteSupplies(1, 4, 1),
           fixedWalls(
               p(0, 2), p(0, 3), p(1, 2), p(1, 3), p(1, 4), p(1, 7), p(3, 3), p(4, 1), p(4, 3),
               p(4, 5), p(4, 7), p(4, 8), p(5, 7), p(6, 4), p(6, 5), p(6, 6), p(6, 8), p(7, 5),
@@ -354,9 +355,15 @@ public final class Levels {
   }
 
   private static List<PlaceableCellSupply> finiteSupplies(int walls, int slowFloors) {
+    return finiteSupplies(walls, slowFloors, 0);
+  }
+
+  private static List<PlaceableCellSupply> finiteSupplies(
+      int walls, int slowFloors, int alternatingGates) {
     return List.of(
         PlaceableCellSupply.finite(PlaceableCellType.WALL, walls),
-        PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, slowFloors));
+        PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, slowFloors),
+        PlaceableCellSupply.finite(PlaceableCellType.ALTERNATING_GATE, alternatingGates));
   }
 
   private static List<FixedCell> fixedWalls(GridPosition... positions) {

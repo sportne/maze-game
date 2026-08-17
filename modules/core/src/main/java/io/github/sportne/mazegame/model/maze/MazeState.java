@@ -6,6 +6,7 @@ import io.github.sportne.mazegame.model.cell.PlaceableCellType;
 import io.github.sportne.mazegame.model.grid.GridPathfinder;
 import io.github.sportne.mazegame.model.grid.GridPosition;
 import io.github.sportne.mazegame.model.level.LevelDefinition;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -15,6 +16,9 @@ import java.util.Objects;
 /** Immutable mutable cells and derived inventory for one authored level attempt. */
 public record MazeState(
     LevelDefinition levelDefinition, Map<GridPosition, PlaceableCellType> placedCells) {
+  /** Duration of each open or closed phase. Gates start open and toggle every second. */
+  public static final Duration ALTERNATING_GATE_PHASE_DURATION = Duration.ofSeconds(1);
+
   /** Creates a validated, defensively copied maze. */
   public MazeState {
     Objects.requireNonNull(levelDefinition, "levelDefinition");
@@ -146,6 +150,27 @@ public record MazeState(
         && levelDefinition.fixedCellAt(position).map(type -> !type.blocksMovement()).orElse(true);
   }
 
+  /** Returns whether a position can be entered at the supplied elapsed run time. */
+  public boolean isTraversableAt(GridPosition position, Duration elapsedRunTime) {
+    Objects.requireNonNull(position, "position");
+    Objects.requireNonNull(elapsedRunTime, "elapsedRunTime");
+    if (elapsedRunTime.isNegative()) {
+      throw new IllegalArgumentException("elapsedRunTime must not be negative");
+    }
+    return isTraversable(position)
+        && (!hasAlternatingGateAt(position) || alternatingGateOpenAt(elapsedRunTime));
+  }
+
+  /** Returns whether the shared alternating-gate phase is open at an elapsed run time. */
+  public static boolean alternatingGateOpenAt(Duration elapsedRunTime) {
+    Objects.requireNonNull(elapsedRunTime, "elapsedRunTime");
+    if (elapsedRunTime.isNegative()) {
+      throw new IllegalArgumentException("elapsedRunTime must not be negative");
+    }
+    long phase = elapsedRunTime.toMillis() / ALTERNATING_GATE_PHASE_DURATION.toMillis();
+    return phase % 2L == 0L;
+  }
+
   /** Returns whether entering a cell delays the next solver decision by one movement interval. */
   public boolean delaysNextDecisionAt(GridPosition position) {
     requireInsideGrid(position);
@@ -182,11 +207,13 @@ public record MazeState(
       return switch (fixedType) {
         case WALL -> CellContent.NORMAL_WALL;
         case SLOW_FLOOR -> CellContent.SLOW_FLOOR;
+        case ALTERNATING_GATE -> CellContent.ALTERNATING_GATE;
       };
     }
     return switch (placedCells.get(position)) {
       case WALL -> CellContent.NORMAL_WALL;
       case SLOW_FLOOR -> CellContent.SLOW_FLOOR;
+      case ALTERNATING_GATE -> CellContent.ALTERNATING_GATE;
       case null -> CellContent.EMPTY;
     };
   }
@@ -222,6 +249,11 @@ public record MazeState(
     if (!position.isWithin(levelDefinition.gridSize())) {
       throw new IllegalArgumentException("position must be inside the grid");
     }
+  }
+
+  private boolean hasAlternatingGateAt(GridPosition position) {
+    return placedCells.get(position) == PlaceableCellType.ALTERNATING_GATE
+        || levelDefinition.fixedCellAt(position).orElse(null) == FixedCellType.ALTERNATING_GATE;
   }
 
   private static void validatePlacedCell(

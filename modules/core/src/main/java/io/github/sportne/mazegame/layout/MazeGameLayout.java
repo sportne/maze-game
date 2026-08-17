@@ -277,6 +277,7 @@ public final class MazeGameLayout {
         + switch (type) {
           case WALL -> "wall";
           case SLOW_FLOOR -> "slow-floor";
+          case ALTERNATING_GATE -> "alternating-gate";
         };
   }
 

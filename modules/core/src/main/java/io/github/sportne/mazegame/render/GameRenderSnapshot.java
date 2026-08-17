@@ -10,6 +10,7 @@ import io.github.sportne.mazegame.model.solver.SolverRunResult;
 import io.github.sportne.mazegame.state.CellPaletteState;
 import io.github.sportne.mazegame.state.GamePhase;
 import io.github.sportne.mazegame.state.LevelProgress;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,6 +105,17 @@ public record GameRenderSnapshot(
   /** Returns the primary solver result, or null before a run starts. */
   public SolverRunResult solverRunResult() {
     return solverRunResults.isEmpty() ? null : solverRunResults.get(0);
+  }
+
+  /** Returns the shared elapsed run time used to render time-dependent cells. */
+  public Duration runElapsedTime() {
+    Duration elapsed = Duration.ZERO;
+    for (SolverRunResult result : solverRunResults) {
+      if (result.elapsedTime().compareTo(elapsed) > 0) {
+        elapsed = result.elapsedTime();
+      }
+    }
+    return elapsed;
   }
 
   private static List<Optional<CardinalDirection>> emptyDirections(

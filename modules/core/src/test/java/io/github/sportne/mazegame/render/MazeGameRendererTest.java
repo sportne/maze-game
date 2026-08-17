@@ -360,7 +360,7 @@ final class MazeGameRendererTest {
         "Tap or drag tools; delay past 14.5s; keep a path",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelEight())));
     assertEquals(
-        "Tap or drag tools; delay past 15.5s; keep a path",
+        "Tap or drag tools; delay past 17.5s; keep a path",
         MazeGameRenderer.buildInstructions(buildSnapshot(Levels.levelNine())));
     assertEquals(
         "Tap or drag tools; delay both past 11.0s; keep paths",
@@ -445,6 +445,25 @@ final class MazeGameRendererTest {
             tooltipSnapshot);
 
     assertTrue(tooltipFont.capturedText().contains("* Slow 0 OUT"));
+  }
+
+  @Test
+  void alternatingGateUsesDistinctOpenClosedFillsAndExplainsItsPeriodInTheTooltip() {
+    LevelDefinition level = alternatingGateLevel();
+    GridPosition gate = new GridPosition(2, 2);
+    MazeState maze = new MazeState(level, Map.of(gate, PlaceableCellType.ALTERNATING_GATE));
+    CellPaletteState state =
+        new CellPaletteState(
+            PlaceableCellType.ALTERNATING_GATE, CellSupply.finite(1), CellSupply.finite(0), true);
+
+    assertEquals(
+        Color.BLACK, MazeGameRenderer.cellColor(maze, null, 0.0F, gate, Duration.ofMillis(999)));
+    assertEquals(
+        new Color(0.10F, 0.42F, 0.50F, 1.0F),
+        MazeGameRenderer.cellColor(maze, null, 0.0F, gate, Duration.ofSeconds(1)));
+    assertEquals("* Alternating Gate 0 OUT", MazeGameRenderer.paletteLabel(state));
+    assertEquals(
+        "Toggles every second.", MazeGameRenderer.paletteRule(PlaceableCellType.ALTERNATING_GATE));
   }
 
   @Test
@@ -1191,6 +1210,25 @@ final class MazeGameRendererTest {
         List.of(
             PlaceableCellSupply.infinite(PlaceableCellType.WALL),
             PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 1)),
+        SolverBehavior.RANDOM,
+        1L);
+  }
+
+  private static LevelDefinition alternatingGateLevel() {
+    return singleSolverLevel(
+        "alternating-gate-render",
+        "Alternating Gate Render",
+        GridSize.square(5),
+        new GridPosition(4, 2),
+        new GridPosition(0, 2),
+        Duration.ofSeconds(25),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(10),
+        Duration.ofMillis(250),
+        List.of(
+            PlaceableCellSupply.finite(PlaceableCellType.WALL, 0),
+            PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 0),
+            PlaceableCellSupply.finite(PlaceableCellType.ALTERNATING_GATE, 1)),
         SolverBehavior.RANDOM,
         1L);
   }

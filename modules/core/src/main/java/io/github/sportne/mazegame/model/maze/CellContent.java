@@ -16,6 +16,9 @@ public enum CellContent {
   /** A walkable floor that delays the next solver decision. */
   SLOW_FLOOR,
 
+  /** A gate cell whose run-time phase determines whether it blocks entry. */
+  ALTERNATING_GATE,
+
   /** The fixed cell where the solver begins a run. */
   SOLVER_START,
 

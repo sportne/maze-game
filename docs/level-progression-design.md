@@ -36,7 +36,7 @@ presets have consumed their authored supply. `∞` means unlimited.
 | 6 | 7x7 | Scout squirrel / acorn | 12 fixed Walls | 1 Wall, 3 Slow Floors | >6.5s / 8s | 7s, 22 moves |
 | 7 | 7x7 | Tracker raccoon / trash can | 14 preset Walls | 1 Wall, 3 Slow Floors | >7s / 10s | 8.75s, 26 moves |
 | 8 | 8x8 | Seeker rabbit / carrot | 9 fixed + 9 preset Walls | 1 Wall, 4 Slow Floors | >14.5s / 18s | 17s, 46 moves |
-| 9 | 9x9 | Random mouse / cheese | 22 fixed Walls | 1 Wall, 4 Slow Floors | >15.5s / 19s | 17.25s, 54 moves |
+| 9 | 9x9 | Random mouse / cheese | 22 fixed Walls | 1 Wall, 4 Slow Floors, 1 Alternating Gate | >17.5s / 19s | Timeout, 61 moves |
 | 10 | 10x10 | Random mouse / cheese and Scout squirrel / acorn | 15 fixed + 10 preset Walls | 2 Walls, 6 Slow Floors | >11s / 13.5s | 11.5s, 71 total moves |
 
 All solvers use the shared 250ms movement interval. Targets are exclusive: reaching a goal at the
@@ -71,8 +71,12 @@ This makes the second cell type necessary without limiting Wall experimentation.
 
 Level 6 introduces locked, fixed Walls and returns to Scout. Level 7 contrasts them with movable
 preset Walls around Tracker. Level 8 mixes both ownership states on an 8x8 Seeker board. Level 9
-grows to 9x9 and applies the combined cell vocabulary to a long seeded Random route. These levels
-retain one solver so board ownership, scale, and mixed inventory are learned before concurrency.
+introduces the shared-clock Alternating Gate on a 9x9 Random board; the accepted gate at `(1,8)`
+turns the otherwise failing 17.25-second mixed-cell route into a 19-second timeout. The full timing,
+editing, rendering, and replay rules are specified in the
+[Alternating Gate contract](alternating-gate.md).
+These levels retain one solver so board ownership, scale, and mixed inventory are learned before
+concurrency.
 
 ### Level 10: First Concurrent Run
 

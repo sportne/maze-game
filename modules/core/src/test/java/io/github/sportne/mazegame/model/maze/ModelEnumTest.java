@@ -9,16 +9,21 @@ import org.junit.jupiter.api.Test;
 
 final class ModelEnumTest {
   @Test
-  void placeableCellTypesIncludeWallAndSlowFloor() {
+  void placeableCellTypesIncludeEverySupportedBuildTool() {
     assertArrayEquals(
-        new PlaceableCellType[] {PlaceableCellType.WALL, PlaceableCellType.SLOW_FLOOR},
+        new PlaceableCellType[] {
+          PlaceableCellType.WALL, PlaceableCellType.SLOW_FLOOR, PlaceableCellType.ALTERNATING_GATE
+        },
         PlaceableCellType.values());
   }
 
   @Test
-  void fixedCellTypesIncludeWallAndSlowFloorEffects() {
+  void fixedCellTypesIncludeEveryAuthoredCellEffect() {
     assertArrayEquals(
-        new FixedCellType[] {FixedCellType.WALL, FixedCellType.SLOW_FLOOR}, FixedCellType.values());
+        new FixedCellType[] {
+          FixedCellType.WALL, FixedCellType.SLOW_FLOOR, FixedCellType.ALTERNATING_GATE
+        },
+        FixedCellType.values());
   }
 
   @Test

@@ -6,5 +6,8 @@ public enum PlaceableCellType {
   WALL,
 
   /** A walkable cell that delays the next solver decision. */
-  SLOW_FLOOR
+  SLOW_FLOOR,
+
+  /** A gate that starts open and alternates between open and blocking during a run. */
+  ALTERNATING_GATE
 }

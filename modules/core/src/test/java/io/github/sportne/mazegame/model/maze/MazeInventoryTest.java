@@ -376,7 +376,8 @@ final class MazeInventoryTest {
         Duration.ofMillis(250),
         List.of(
             new PlaceableCellSupply(PlaceableCellType.WALL, wallSupply),
-            new PlaceableCellSupply(PlaceableCellType.SLOW_FLOOR, slowFloorSupply)),
+            new PlaceableCellSupply(PlaceableCellType.SLOW_FLOOR, slowFloorSupply),
+            new PlaceableCellSupply(PlaceableCellType.ALTERNATING_GATE, wallSupply)),
         SolverBehavior.RANDOM,
         1L);
   }

@@ -52,6 +52,8 @@ final class MazeGameDebugHarnessTest {
 
   private static final Set<GridPosition> LEVEL_NINE_WALLS = Set.of(new GridPosition(7, 1));
 
+  private static final Set<GridPosition> LEVEL_NINE_GATES = Set.of(new GridPosition(1, 8));
+
   private static final Set<GridPosition> LEVEL_TEN_WALLS =
       Set.of(new GridPosition(9, 3), new GridPosition(4, 0));
 
@@ -283,6 +285,8 @@ final class MazeGameDebugHarnessTest {
     LEVEL_NINE_WALLS.forEach(harness::leftClickCell);
     harness.clickPaletteItem(PlaceableCellType.SLOW_FLOOR);
     LEVEL_NINE_SLOW_FLOORS.forEach(harness::leftClickCell);
+    harness.clickPaletteItem(PlaceableCellType.ALTERNATING_GATE);
+    LEVEL_NINE_GATES.forEach(harness::leftClickCell);
     harness.clickStartRun().advance(Duration.ofSeconds(19));
 
     assertEquals(GamePhase.RESULT, harness.snapshot().gamePhase());

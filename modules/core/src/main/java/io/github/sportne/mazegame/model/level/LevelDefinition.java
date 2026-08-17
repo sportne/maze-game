@@ -196,6 +196,9 @@ public record LevelDefinition(
 
   private static List<PlaceableCellSupply> validateSupplies(List<PlaceableCellSupply> supplies) {
     Objects.requireNonNull(supplies, "placeableCellSupplies");
+    if (supplies.isEmpty()) {
+      throw new IllegalArgumentException("placeableCellSupplies must not be empty");
+    }
     List<PlaceableCellSupply> copied = List.copyOf(supplies);
     EnumSet<PlaceableCellType> seen = EnumSet.noneOf(PlaceableCellType.class);
     for (PlaceableCellSupply entry : copied) {
@@ -204,10 +207,16 @@ public record LevelDefinition(
         throw new IllegalArgumentException("duplicate supply for " + entry.type());
       }
     }
-    if (!seen.equals(EnumSet.allOf(PlaceableCellType.class))) {
-      throw new IllegalArgumentException("every placeable cell type must have exactly one supply");
+    if (seen.equals(EnumSet.allOf(PlaceableCellType.class))) {
+      return copied;
     }
-    return copied;
+    List<PlaceableCellSupply> normalized = new java.util.ArrayList<>(copied);
+    for (PlaceableCellType type : PlaceableCellType.values()) {
+      if (!seen.contains(type)) {
+        normalized.add(PlaceableCellSupply.finite(type, 0));
+      }
+    }
+    return List.copyOf(normalized);
   }
 
   private static List<LevelSolver> validateSolvers(

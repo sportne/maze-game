@@ -8,12 +8,14 @@ without Gradle's configuration cache because gdx-teavm 1.6.1 captures a non-seri
 logger.
 
 Maze Game includes ten authored levels, persistent unlock progression and per-level best results,
-finite/infinite Wall and Slow Floor inventory, responsive click/drag building, fixed level geometry,
+finite/infinite Wall, Slow Floor, and Alternating Gate inventory, responsive click/drag building,
+fixed level geometry,
 movable preset cells, and four distinct solver behaviors. Levels 1–4 are preset tutorials that
 introduce Random, Scout, Tracker, and Seeker with only one or two remaining Wall placements. Level 5
 opens the grid completely and introduces Slow Floors beside infinite Walls. Levels 6–9 combine the
-known systems on increasingly large single-solver boards, and Level 10 introduces two solvers on a
-10x10 grid for the first time. The complete current catalog is specified in the
+known systems on increasingly large single-solver boards, with Level 9 introducing a gate that
+opens and closes every second. Level 10 introduces two solvers on a 10x10 grid for the first time.
+The complete current catalog is specified in the
 [level progression design](docs/level-progression-design.md).
 
 ## Local Commands

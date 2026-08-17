@@ -526,6 +526,12 @@ final class BrowserSmokeTest {
             Levels.levelNine(),
             BrowserGameScenario.LEVEL_NINE_WALL,
             BrowserGameScenario.LEVEL_NINE_SLOW_FLOORS);
+        controls.clickButton(
+            GamePhase.BUILDING,
+            Levels.levelNine(),
+            false,
+            MazeGameLayout.paletteItemId(PlaceableCellType.ALTERNATING_GATE));
+        controls.clickCell(Levels.levelNine(), BrowserGameScenario.LEVEL_NINE_ALTERNATING_GATE);
         page.screenshot(
             new Page.ScreenshotOptions().setPath(reportDirectory.resolve("desktop-level-9.png")));
         controls.clickButton(
@@ -533,7 +539,7 @@ final class BrowserSmokeTest {
         controls.waitForButton(
             GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
         waitForSavedResult(page, LEVEL_NINE_RESULT_KEY);
-        assertEquals("17250:54", readSavedResult(page, LEVEL_NINE_RESULT_KEY));
+        assertEquals("19000:61", readSavedResult(page, LEVEL_NINE_RESULT_KEY));
         controls.clickButton(
             GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
 

@@ -179,7 +179,7 @@ final class LevelDefinitionTest {
   }
 
   @Test
-  void suppliesRequireExactlyOneEntryForEverySupportedType() {
+  void suppliesRejectEmptyAndDuplicateEntriesWhileDefaultingOmittedTypesToZero() {
     assertThrows(NullPointerException.class, () -> levelWithSupplies(null));
     assertThrows(IllegalArgumentException.class, () -> levelWithSupplies(List.of()));
     assertThrows(
@@ -190,6 +190,11 @@ final class LevelDefinitionTest {
                     PlaceableCellSupply.infinite(PlaceableCellType.WALL),
                     PlaceableCellSupply.finite(PlaceableCellType.WALL, 2),
                     PlaceableCellSupply.finite(PlaceableCellType.SLOW_FLOOR, 1))));
+    LevelDefinition legacy =
+        levelWithSupplies(List.of(PlaceableCellSupply.infinite(PlaceableCellType.WALL)));
+    assertEquals(CellSupply.infinite(), legacy.supplyFor(PlaceableCellType.WALL));
+    assertEquals(CellSupply.finite(0), legacy.supplyFor(PlaceableCellType.SLOW_FLOOR));
+    assertEquals(CellSupply.finite(0), legacy.supplyFor(PlaceableCellType.ALTERNATING_GATE));
     assertThrows(
         NullPointerException.class, () -> new PlaceableCellSupply(null, CellSupply.finite(1)));
     assertThrows(

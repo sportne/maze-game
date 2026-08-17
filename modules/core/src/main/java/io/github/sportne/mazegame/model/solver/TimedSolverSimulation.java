@@ -94,7 +94,7 @@ abstract class TimedSolverSimulation implements SolverSimulation {
   }
 
   final boolean isOpen(GridPosition candidate) {
-    return mazeState.isTraversable(candidate);
+    return mazeState.isTraversableAt(candidate, elapsedTime);
   }
 
   /** Returns legal neighbors in the exact supplied behavior-specific decision order. */

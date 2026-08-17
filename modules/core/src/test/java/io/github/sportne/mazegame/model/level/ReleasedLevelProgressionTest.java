@@ -38,7 +38,7 @@ final class ReleasedLevelProgressionTest {
           cells(walls(p(2, 3)), slows(p(1, 2), p(2, 2), p(3, 2))),
           cells(walls(p(1, 2)), slows(p(1, 1), p(2, 0), p(2, 1))),
           cells(walls(p(2, 6)), slows(p(2, 5), p(2, 4), p(3, 4), p(1, 5))),
-          cells(walls(p(7, 1)), slows(p(7, 0), p(3, 6), p(7, 2), p(8, 1))),
+          cells(cells(walls(p(7, 1)), slows(p(7, 0), p(3, 6), p(7, 2), p(8, 1))), gates(p(1, 8))),
           cells(
               walls(p(9, 3), p(4, 0)),
               slows(p(7, 0), p(8, 0), p(7, 1), p(9, 1), p(6, 1), p(8, 4))));
@@ -174,7 +174,8 @@ final class ReleasedLevelProgressionTest {
             reached(Levels.levelSix(), 7000, 22),
             reached(Levels.levelSeven(), 8750, 26),
             reached(Levels.levelEight(), 17000, 46),
-            reached(Levels.levelNine(), 17250, 54));
+            new SolverRunResult(
+                p(2, 5), Levels.levelNine().maximumSolveTime(), 61, SolverRunStatus.TIMED_OUT));
 
     for (int index = 5; index < 9; index++) {
       LevelDefinition level = Levels.catalog().levels().get(index);
@@ -185,6 +186,27 @@ final class ReleasedLevelProgressionTest {
       assertEquals(expected.get(index - 5), run(passing));
       assertTrue(passed(run(passing), level));
     }
+  }
+
+  @Test
+  void levelNineIntroducesOneAlternatingGateThatCompletesTheAcceptedSolution() {
+    LevelDefinition level = Levels.levelNine();
+    MazeState withoutGate =
+        apply(
+            MazeState.initial(level),
+            cells(walls(p(7, 1)), slows(p(7, 0), p(3, 6), p(7, 2), p(8, 1))));
+    MazeState passing = apply(MazeState.initial(level), PASSING_EDITS.get(8));
+
+    assertEquals(CellSupply.finite(1), level.supplyFor(PlaceableCellType.ALTERNATING_GATE));
+    assertEquals(
+        List.of(
+            PlaceableCellType.WALL,
+            PlaceableCellType.SLOW_FLOOR,
+            PlaceableCellType.ALTERNATING_GATE),
+        level.initiallyAvailableCellTypes());
+    assertEquals(reached(level, 17250, 54), run(withoutGate));
+    assertFalse(passed(run(withoutGate), level));
+    assertTrue(passed(run(passing), level));
   }
 
   @Test
@@ -291,6 +313,10 @@ final class ReleasedLevelProgressionTest {
 
   private static Map<GridPosition, PlaceableCellType> slows(GridPosition... positions) {
     return typedCells(PlaceableCellType.SLOW_FLOOR, positions);
+  }
+
+  private static Map<GridPosition, PlaceableCellType> gates(GridPosition... positions) {
+    return typedCells(PlaceableCellType.ALTERNATING_GATE, positions);
   }
 
   private static Map<GridPosition, PlaceableCellType> typedCells(

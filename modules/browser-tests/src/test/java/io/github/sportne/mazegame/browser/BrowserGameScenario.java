@@ -39,6 +39,7 @@ final class BrowserGameScenario {
           new GridPosition(3, 4),
           new GridPosition(1, 5));
   static final GridPosition LEVEL_NINE_WALL = new GridPosition(7, 1);
+  static final GridPosition LEVEL_NINE_ALTERNATING_GATE = new GridPosition(1, 8);
   static final List<GridPosition> LEVEL_NINE_SLOW_FLOORS =
       List.of(
           new GridPosition(7, 0),

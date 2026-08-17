@@ -320,12 +320,19 @@ final class SafariReleaseTest {
         Levels.levelNine(),
         BrowserGameScenario.LEVEL_NINE_WALL,
         BrowserGameScenario.LEVEL_NINE_SLOW_FLOORS);
+    controls.clickButton(
+        GamePhase.BUILDING,
+        Levels.levelNine(),
+        false,
+        MazeGameLayout.paletteItemId(PlaceableCellType.ALTERNATING_GATE));
+    controls.placeWalls(
+        Levels.levelNine(), List.of(BrowserGameScenario.LEVEL_NINE_ALTERNATING_GATE));
     controls.clickButton(GamePhase.BUILDING, Levels.levelNine(), false, MazeGameLayout.BUILD_START);
     controls.waitForButton(
         GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);
     waitForSavedResult(driver, LEVEL_NINE_RESULT_KEY);
     String levelNineResult = readSavedResult(driver, LEVEL_NINE_RESULT_KEY);
-    assertEquals("17250:54", levelNineResult);
+    assertEquals("19000:61", levelNineResult);
 
     controls.clickButton(
         GamePhase.RESULT, Levels.levelNine(), true, MazeGameLayout.RESULT_NEXT_LEVEL);

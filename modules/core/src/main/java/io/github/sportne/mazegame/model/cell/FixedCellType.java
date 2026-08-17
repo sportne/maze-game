@@ -6,7 +6,10 @@ public enum FixedCellType {
   WALL(true, false),
 
   /** A walkable fixed floor that delays the next solver decision. */
-  SLOW_FLOOR(false, true);
+  SLOW_FLOOR(false, true),
+
+  /** A fixed gate that alternates between open and blocking during a run. */
+  ALTERNATING_GATE(false, false);
 
   private final boolean blocksMovement;
   private final boolean delaysNextDecision;

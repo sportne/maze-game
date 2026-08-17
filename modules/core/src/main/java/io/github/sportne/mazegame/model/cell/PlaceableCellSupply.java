@@ -21,8 +21,11 @@ public record PlaceableCellSupply(PlaceableCellType type, CellSupply supply) {
     return new PlaceableCellSupply(type, CellSupply.infinite());
   }
 
-  /** Supplies unlimited Walls and no Slow Floors. */
+  /** Supplies unlimited Walls and no other placeable cells. */
   public static List<PlaceableCellSupply> unlimitedWallsOnly() {
-    return List.of(infinite(PlaceableCellType.WALL), finite(PlaceableCellType.SLOW_FLOOR, 0));
+    return List.of(
+        infinite(PlaceableCellType.WALL),
+        finite(PlaceableCellType.SLOW_FLOOR, 0),
+        finite(PlaceableCellType.ALTERNATING_GATE, 0));
   }
 }
